@@ -3,15 +3,20 @@ export const calculateBalance = (selectedFeelingsCount: number): number => {
 };
 
 export const getBalanceColor = (percentage: number): string => {
-  if (percentage >= 80) {
-    return "hsl(120, 60%, 45%)"; // Green
-  } else if (percentage >= 60) {
-    return "hsl(85, 70%, 45%)"; // Yellow-Green
-  } else if (percentage >= 40) {
-    return "hsl(50, 100%, 50%)"; // Yellow
-  } else if (percentage >= 20) {
-    return "hsl(25, 100%, 50%)"; // Orange
+  let hue: number;
+  if (percentage <= 50) {
+    // Interpolate hue from red (0) to orange (30) for 0-50%
+    hue = percentage * 0.6; // 0% -> 0 (red), 50% -> 30 (orange)
   } else {
-    return "hsl(0, 85%, 50%)"; // Red
+    // Interpolate hue from orange (30) to green (120) for 50-100%
+    hue = 30 + (percentage - 50) * 1.8; // 50% -> 30 (orange), 100% -> 120 (green)
   }
+
+  // Keep saturation relatively constant for a vibrant look
+  const saturation = 85; // You can adjust this value
+
+  // Interpolate lightness from dark (30%) to normal (50%) based on percentage
+  const lightness = 30 + (percentage / 100) * 20; // 0% -> 30%, 100% -> 50%
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
