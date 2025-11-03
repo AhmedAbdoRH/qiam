@@ -64,29 +64,46 @@ export const ValueSheet = ({
   const balancePercentage = calculateBalance(localSelectedFeelings.length);
   const balanceColor = getBalanceColor(balancePercentage);
 
+  // Convert an HSL color string like "hsl(h, s%, l%)" to HSLA with given alpha
+  const withAlpha = (hsl: string, alpha: number): string => {
+    return hsl.startsWith("hsl(")
+      ? hsl.replace("hsl(", "hsla(").replace(")", `, ${alpha})`)
+      : hsl;
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
         className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto"
       >
+        {/* Thin, sticky balance bar at the very top of the sheet */}
+        <div
+          className="sticky top-0 z-50 h-[6px] w-full"
+          aria-label={`نسبة الاتزان: ${balancePercentage}%`}
+          style={{
+            background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.85)} 0%, ${withAlpha(balanceColor, 0.35)} 50%, ${withAlpha(balanceColor, 0.85)} 100%)`,
+            boxShadow: `0 6px 18px ${withAlpha(balanceColor, 0.28)}`,
+          }}
+        />
         <SheetHeader className="text-right mb-6">
-          <SheetTitle className="text-2xl font-bold text-foreground">
+          {/* <SheetTitle className="text-2xl font-bold text-foreground">
             {valueName}
-          </SheetTitle>
+          </SheetTitle> */}
           <SheetDescription className="text-right">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-bold text-lg mt-2"
-              style={{ backgroundColor: balanceColor }}
-            >
-              <span>نسبة الاتزان: {balancePercentage}%</span>
-            </div>
+              className="sticky top-0 left-0 right-0 z-20 h-[6px] w-full overflow-hidden"
+              style={{
+                background: `linear-gradient(to right, ${withAlpha(balanceColor, 0.4)} 0%, ${withAlpha(balanceColor, 0.1)} 100%)`,
+                boxShadow: `0 0 15px ${withAlpha(balanceColor, 0.6)}`,
+              }}
+            ></div>
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3>
+            {/* <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3> */}
             <div className="space-y-4">
               {FEELINGS.map((feeling) => (
                 <div

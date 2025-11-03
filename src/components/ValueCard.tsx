@@ -1,84 +1,109 @@
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import type { LucideIcon } from "lucide-react";
 import {
-  Star,
-  Crown,
-  Shield,
-  Unlock,
-  Key,
-  Sun,
-  Moon,
-  Sparkles,
-  Feather,
-  Gem,
+  Activity,
   Anchor,
+  ArrowUp,
+  ArrowUpCircle,
+  ArrowUpRight,
+  Award,
   Book,
+  Brain,
+  CheckCircle,
+  ChevronsUp,
+  Circle,
+  CircleDot,
+  Coins,
+  Crown,
+  Diamond,
+  Eye,
+  Feather,
+  Flower,
+  Gem,
+  Gift,
   GraduationCap,
   Hammer,
-  Target,
-  Trophy,
-  Eye,
+  Hand,
   Heart,
-  Brain,
+  HeartPulse,
+  Hourglass,
   Infinity,
-  Gift,
+  Key,
+  Leaf,
+  Lightbulb,
+  Lock,
   Mic,
-  ShieldCheck,
+  Moon,
+  Palette,
   RotateCcw,
-  Circle,
+  Search,
+  Shield,
+  ShieldCheck,
+  Smile,
+  Sparkles,
+  Star,
+  Stars,
+  Sun,
+  Target,
+  ThumbsUp,
+  Trophy,
+  Unlock,
+  Wand2,
+  Zap,
+  ExternalLink,
 } from "lucide-react";
 
 const valueIconMap: Record<string, LucideIcon> = {
-  "الألوهية": Sun,
+  "الألوهية": Star,
   "القوة": Shield,
   "المتانة": Anchor,
   "الحكمة": Book,
-  "العزة": Crown,
+  "العزة": Award,
   "القهارية": Target,
-  "الهيمنة": Shield,
-  "العظمة": Crown,
-  "القدر": Infinity,
+  "الهيمنة": Zap,
+  "العظمة": Diamond,
+  "القدر": Hourglass,
   "البراءة": Feather,
   "الصمدية": Gem,
-  "السلام": Heart,
-  "التعالي": Crown,
+  "السلام": Flower,
+  "التعالي": ArrowUp,
   "الرحيمية": Heart,
-  "الغنى": Gem,
+  "الغنى": Coins,
   "المغفرة": Unlock,
   "الحمد": Sparkles,
-  "اللطف": Feather,
+  "اللطف": Leaf,
   "الأولية": Key,
-  "الكِبر": Crown,
-  "التكبر": Crown,
+  "الكِبر": ChevronsUp,
+  "التكبر": ArrowUpRight,
   "الكرامة": Trophy,
   "الظهور": Sun,
   "الولاية": ShieldCheck,
-  "الرحمانية": Heart,
-  "الواحدية": Star,
+  "الرحمانية": HeartPulse,
+  "الواحدية": Circle,
   "الرزق": Gift,
   "الخبرة": GraduationCap,
   "الخلق": Hammer,
-  "الغفارية": Unlock,
+  "الغفارية": Hand,
   "التصور": Brain,
-  "الفتح": Key,
-  "القداسة": Sparkles,
-  "العلو": Sun,
-  "التبيين": Eye,
+  "الفتح": ExternalLink,
+  "القداسة": Wand2,
+  "العلو": ArrowUpCircle,
+  "التبيين": Search,
   "الملك": Crown,
-  "البر": Heart,
+  "البر": ThumbsUp,
   "القيومية": Infinity,
-  "الجبر": Shield,
+  "الجبر": Lock,
   "التوبة": RotateCcw,
   "الآخرية": Moon,
   "السمع": Mic,
-  "الوهابية": Gift,
-  "البطون": Circle,
+  "الوهابية": Stars,
+  "البطون": CircleDot,
   "البصر": Eye,
-  "الود": Heart,
-  "الأمن": ShieldCheck,
-  "الحياة": Sun,
-  "العلم": GraduationCap,
-  "الخلاقية": Hammer,
+  "الود": Smile,
+  "الأمن": CheckCircle,
+  "الحياة": Activity,
+  "العلم": Lightbulb,
+  "الخلاقية": Palette,
 };
 
 function getValueIcon(name: string): LucideIcon {
@@ -105,26 +130,28 @@ export const ValueCard = ({ name, balancePercentage, onClick }: ValueCardProps) 
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl p-5 min-h-[140px] transition-all duration-500 hover:scale-[1.03] active:95"
+      className="group relative overflow-hidden rounded-2xl p-5 min-h-[140px] transition-all duration-500 hover:scale-[1.03] active:scale-95"
       style={{
         background: `var(--gradient-card)`,
         boxShadow: `0 20px 60px rgba(0, 0, 0, 0.25)`,
       }}
     >
-      {/* Subtle bottom-side accent glow overlays */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-50 group-hover:opacity-70"
-        style={{
-          background: `radial-gradient(160px 90px at 88% 100%, ${withAlpha(accentColor, 0.20)} 0%, transparent 70%),
-                      linear-gradient(to top, ${withAlpha(accentColor, 0.10)} 0%, transparent 55%)`,
-        }}
-      />
+      {/* Dynamic, smooth accent glow inside the card */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute -bottom-16 -right-12 w-[240px] h-[140px] opacity-55 group-hover:opacity-75 glow-anim"
+          style={{
+            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.22)} 0%, transparent 60%)`,
+            willChange: "transform",
+          }}
+        />
+      </div>
       
       <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
         <div
           className="flex items-center justify-center w-14 h-14"
         >
-          <Icon className="w-8 h-8 text-white" />
+          <Icon className="w-8 h-8 text-white" strokeWidth={1.2} />
         </div>
         <h3 className="text-white font-bold text-base md:text-xl text-center leading-tight drop-shadow-lg">
           {name}

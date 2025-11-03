@@ -72,4 +72,17 @@ All colors MUST be HSL.
   .balance-gradient {
     transition: background 0.5s ease;
   }
+
+  /* Smooth, slow glow movement for card accent */
+  .glow-anim {
+    animation: glow-move 16s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow-move {
+    0%   { transform: translate3d(0, 0, 0); }
+    25%  { transform: translate3d(-10%, -3%, 0); }
+    50%  { transform: translate3d(-20%, -6%, 0); }
+    75%  { transform: translate3d(-30%, -3%, 0); }
+    100% { transform: translate3d(-40%, 0%, 0); }
+  }
 }
