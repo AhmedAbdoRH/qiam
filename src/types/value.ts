@@ -2,6 +2,7 @@ export interface ValueData {
   id: string;
   name: string;
   selectedFeelings: string[];
+  feelingNotes: Record<string, string>; // ملاحظات لكل شعور
   notes: string;
   balancePercentage: number;
 }

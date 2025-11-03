@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      spiritual_values: {
+        Row: {
+          balance_percentage: number | null
+          created_at: string | null
+          feeling_notes: Json | null
+          id: string
+          notes: string | null
+          selected_feelings: Json | null
+          updated_at: string | null
+          user_id: string
+          value_id: string
+          value_name: string
+        }
+        Insert: {
+          balance_percentage?: number | null
+          created_at?: string | null
+          feeling_notes?: Json | null
+          id?: string
+          notes?: string | null
+          selected_feelings?: Json | null
+          updated_at?: string | null
+          user_id: string
+          value_id: string
+          value_name: string
+        }
+        Update: {
+          balance_percentage?: number | null
+          created_at?: string | null
+          feeling_notes?: Json | null
+          id?: string
+          notes?: string | null
+          selected_feelings?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          value_id?: string
+          value_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

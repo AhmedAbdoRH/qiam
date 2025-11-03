@@ -17,8 +17,9 @@ interface ValueSheetProps {
   onClose: () => void;
   valueName: string;
   selectedFeelings: string[];
+  feelingNotes: Record<string, string>;
   notes: string;
-  onUpdate: (selectedFeelings: string[], notes: string) => void;
+  onUpdate: (selectedFeelings: string[], feelingNotes: Record<string, string>, notes: string) => void;
 }
 
 export const ValueSheet = ({
@@ -26,16 +27,19 @@ export const ValueSheet = ({
   onClose,
   valueName,
   selectedFeelings,
+  feelingNotes,
   notes,
   onUpdate,
 }: ValueSheetProps) => {
   const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
+  const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
   const [localNotes, setLocalNotes] = useState(notes);
 
   useEffect(() => {
     setLocalSelectedFeelings(selectedFeelings);
+    setLocalFeelingNotes(feelingNotes);
     setLocalNotes(notes);
-  }, [selectedFeelings, notes, valueName]);
+  }, [selectedFeelings, feelingNotes, notes, valueName]);
 
   const handleFeelingToggle = (feeling: string) => {
     const newSelectedFeelings = localSelectedFeelings.includes(feeling)
@@ -43,12 +47,18 @@ export const ValueSheet = ({
       : [...localSelectedFeelings, feeling];
     
     setLocalSelectedFeelings(newSelectedFeelings);
-    onUpdate(newSelectedFeelings, localNotes);
+    onUpdate(newSelectedFeelings, localFeelingNotes, localNotes);
+  };
+
+  const handleFeelingNoteChange = (feeling: string, note: string) => {
+    const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
+    setLocalFeelingNotes(newFeelingNotes);
+    onUpdate(localSelectedFeelings, newFeelingNotes, localNotes);
   };
 
   const handleNotesChange = (value: string) => {
     setLocalNotes(value);
-    onUpdate(localSelectedFeelings, value);
+    onUpdate(localSelectedFeelings, localFeelingNotes, value);
   };
 
   const balancePercentage = calculateBalance(localSelectedFeelings.length);
@@ -77,24 +87,32 @@ export const ValueSheet = ({
         <div className="space-y-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {FEELINGS.map((feeling) => (
                 <div
                   key={feeling}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                  className="space-y-2 p-3 rounded-lg bg-secondary/50"
                 >
-                  <Checkbox
-                    id={feeling}
-                    checked={localSelectedFeelings.includes(feeling)}
-                    onCheckedChange={() => handleFeelingToggle(feeling)}
-                    className="border-2 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id={feeling}
+                      checked={localSelectedFeelings.includes(feeling)}
+                      onCheckedChange={() => handleFeelingToggle(feeling)}
+                      className="border-2 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                    />
+                    <Label
+                      htmlFor={feeling}
+                      className="text-base text-foreground cursor-pointer flex-1"
+                    >
+                      {feeling}
+                    </Label>
+                  </div>
+                  <Textarea
+                    value={localFeelingNotes[feeling] || ""}
+                    onChange={(e) => handleFeelingNoteChange(feeling, e.target.value)}
+                    placeholder={`ملاحظات عن ${feeling}...`}
+                    className="min-h-[60px] text-sm bg-background/50 border-border text-foreground placeholder:text-muted-foreground resize-none"
                   />
-                  <Label
-                    htmlFor={feeling}
-                    className="text-base text-foreground cursor-pointer flex-1"
-                  >
-                    {feeling}
-                  </Label>
                 </div>
               ))}
             </div>
