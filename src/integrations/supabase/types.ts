@@ -22,8 +22,9 @@ export type Database = {
           id: string
           notes: string | null
           selected_feelings: Json | null
+          session_id: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           value_id: string
           value_name: string
         }
@@ -34,8 +35,9 @@ export type Database = {
           id?: string
           notes?: string | null
           selected_feelings?: Json | null
+          session_id?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           value_id: string
           value_name: string
         }
@@ -46,8 +48,9 @@ export type Database = {
           id?: string
           notes?: string | null
           selected_feelings?: Json | null
+          session_id?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           value_id?: string
           value_name?: string
         }
