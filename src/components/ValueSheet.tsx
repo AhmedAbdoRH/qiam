@@ -85,30 +85,9 @@ export const ValueSheet = ({
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto"
+        className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto p-0"
       >
-        <SheetHeader className="text-right mb-6">
-          <SheetTitle className="text-2xl font-bold text-foreground">
-            {valueName}
-          </SheetTitle>
-        </SheetHeader>
-
         {/* Balance percentage slider */}
-        <div className="space-y-4 mb-6 p-4 rounded-lg bg-secondary/30">
-          <div className="flex items-center justify-between">
-            <Label className="text-base font-semibold text-foreground">
-              نسبة الاتزان
-            </Label>
-            <span 
-              className="text-2xl font-bold px-3 py-1 rounded-md"
-              style={{ 
-                color: balanceColor,
-                backgroundColor: withAlpha(balanceColor, 0.1)
-              }}
-            >
-              {localBalancePercentage}%
-            </span>
-          </div>
           <Slider
             value={[localBalancePercentage]}
             onValueChange={handleBalanceChange}
@@ -116,27 +95,22 @@ export const ValueSheet = ({
             min={0}
             step={1}
             className="w-full"
+            rangeClassName="bg-[--slider-color]"
             style={{
               // @ts-ignore
               '--slider-color': balanceColor,
+              background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(balanceColor, 0.6)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.05)} 100%)`,
             } as React.CSSProperties}
           />
-          <div
-            className="h-2 w-full rounded-full"
-            style={{
-              background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(balanceColor, 0.6)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.05)} 100%)`,
-            }}
-          />
-        </div>
 
-        <div className="space-y-6">
-          <div className="space-y-4">
+        <div className="pt-6">
+          <div className="space-y-2">
             {/* <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3> */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               {FEELINGS.map((feeling) => (
                 <div
                   key={feeling}
-                  className="space-y-2 p-3 rounded-lg bg-secondary/50"
+                  className="flex flex-row items-center gap-3 p-3 rounded-lg bg-secondary/50"
                 >
                   <div className="flex items-center gap-3">
                     <Checkbox
@@ -156,7 +130,7 @@ export const ValueSheet = ({
                     value={localFeelingNotes[feeling] || ""}
                     onChange={(e) => handleFeelingNoteChange(feeling, e.target.value)}
                     placeholder={`ملاحظات عن ${feeling}...`}
-                    className="min-h-[60px] text-sm bg-background/50 border-border text-foreground placeholder:text-muted-foreground resize-none"
+                    className="min-h-[60px] text-sm bg-background/50 border-border text-foreground placeholder:text-muted-foreground resize-none flex-1"
                   />
                 </div>
               ))}

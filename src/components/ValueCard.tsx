@@ -141,7 +141,7 @@ export const ValueCard = ({ name, balancePercentage, onClick }: ValueCardProps) 
         <div
           className="absolute -bottom-16 -right-12 w-[240px] h-[140px] opacity-55 group-hover:opacity-75 glow-anim"
           style={{
-            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.22)} 0%, transparent 60%)`,
+            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.5)} 0%, transparent 90%)`,
             willChange: "transform",
           }}
         />
