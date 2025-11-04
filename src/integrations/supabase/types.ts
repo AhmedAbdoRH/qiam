@@ -24,7 +24,7 @@ export type Database = {
           selected_feelings: Json | null
           session_id: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
           value_id: string
           value_name: string
         }
@@ -37,7 +37,7 @@ export type Database = {
           selected_feelings?: Json | null
           session_id?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
           value_id: string
           value_name: string
         }
@@ -50,7 +50,7 @@ export type Database = {
           selected_feelings?: Json | null
           session_id?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
           value_id?: string
           value_name?: string
         }
