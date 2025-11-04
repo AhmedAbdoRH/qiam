@@ -110,9 +110,13 @@ const Index = () => {
     });
 
     // Update database
-    if (!user) return;
+    if (!user) {
+      console.error("Attempted to save value without a logged-in user.");
+      return;
+    }
     
     try {
+      console.log("Attempting to upsert data for user:", user.id, "with valueId:", valueId);
       const { error } = await supabase
         .from("spiritual_values")
         .upsert({
@@ -123,13 +127,15 @@ const Index = () => {
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
-        });
+        }, { onConflict: 'user_id,value_id' });
 
       if (error) {
-        console.error("Error saving value:", error);
+        console.error("Error saving value to Supabase:", error);
+      } else {
+        console.log("Value saved successfully for user:", user.id, "valueId:", valueId);
       }
     } catch (error) {
-      console.error("Error saving value:", error);
+      console.error("Unexpected error during Supabase upsert:", error);
     }
   };
 
