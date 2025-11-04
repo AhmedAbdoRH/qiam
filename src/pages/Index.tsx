@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { VALUES, ValueData } from "@/types/value";
-import { calculateBalance } from "@/utils/balanceCalculator";
 import { supabase } from "@/integrations/supabase/client";
 
 // Generate or retrieve a unique session ID for this browser
@@ -86,9 +85,9 @@ const Index = () => {
     valueId: string,
     selectedFeelings: string[],
     feelingNotes: Record<string, string>,
-    notes: string
+    notes: string,
+    balancePercentage: number
   ) => {
-    const balancePercentage = calculateBalance(selectedFeelings.length);
     const newValueData = {
       id: valueId,
       name: VALUES[parseInt(valueId)],
@@ -120,7 +119,11 @@ const Index = () => {
           onConflict: "session_id,value_id"
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving value:", error);
+      } else {
+        console.log("Data saved successfully:", valueId);
+      }
     } catch (error) {
       console.error("Error saving value:", error);
     }
@@ -173,8 +176,9 @@ const Index = () => {
           selectedFeelings={selectedValueData.selectedFeelings}
           feelingNotes={selectedValueData.feelingNotes}
           notes={selectedValueData.notes}
-          onUpdate={(selectedFeelings, feelingNotes, notes) =>
-            handleValueUpdate(selectedValue!, selectedFeelings, feelingNotes, notes)
+          balancePercentage={selectedValueData.balancePercentage}
+          onUpdate={(selectedFeelings, feelingNotes, notes, balancePercentage) =>
+            handleValueUpdate(selectedValue!, selectedFeelings, feelingNotes, notes, balancePercentage)
           }
         />
       )}

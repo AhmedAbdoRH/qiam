@@ -9,8 +9,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { FEELINGS } from "@/types/value";
-import { calculateBalance, getBalanceColor } from "@/utils/balanceCalculator";
+import { getBalanceColor } from "@/utils/balanceCalculator";
 
 interface ValueSheetProps {
   isOpen: boolean;
@@ -19,7 +20,8 @@ interface ValueSheetProps {
   selectedFeelings: string[];
   feelingNotes: Record<string, string>;
   notes: string;
-  onUpdate: (selectedFeelings: string[], feelingNotes: Record<string, string>, notes: string) => void;
+  balancePercentage: number;
+  onUpdate: (selectedFeelings: string[], feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
 }
 
 export const ValueSheet = ({
@@ -29,17 +31,20 @@ export const ValueSheet = ({
   selectedFeelings,
   feelingNotes,
   notes,
+  balancePercentage,
   onUpdate,
 }: ValueSheetProps) => {
   const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
   const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
   const [localNotes, setLocalNotes] = useState(notes);
+  const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
 
   useEffect(() => {
     setLocalSelectedFeelings(selectedFeelings);
     setLocalFeelingNotes(feelingNotes);
     setLocalNotes(notes);
-  }, [selectedFeelings, feelingNotes, notes, valueName]);
+    setLocalBalancePercentage(balancePercentage);
+  }, [selectedFeelings, feelingNotes, notes, balancePercentage, valueName]);
 
   const handleFeelingToggle = (feeling: string) => {
     const newSelectedFeelings = localSelectedFeelings.includes(feeling)
@@ -47,22 +52,27 @@ export const ValueSheet = ({
       : [...localSelectedFeelings, feeling];
     
     setLocalSelectedFeelings(newSelectedFeelings);
-    onUpdate(newSelectedFeelings, localFeelingNotes, localNotes);
+    onUpdate(newSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage);
   };
 
   const handleFeelingNoteChange = (feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
     setLocalFeelingNotes(newFeelingNotes);
-    onUpdate(localSelectedFeelings, newFeelingNotes, localNotes);
+    onUpdate(localSelectedFeelings, newFeelingNotes, localNotes, localBalancePercentage);
   };
 
   const handleNotesChange = (value: string) => {
     setLocalNotes(value);
-    onUpdate(localSelectedFeelings, localFeelingNotes, value);
+    onUpdate(localSelectedFeelings, localFeelingNotes, value, localBalancePercentage);
   };
 
-  const balancePercentage = calculateBalance(localSelectedFeelings.length);
-  const balanceColor = getBalanceColor(balancePercentage);
+  const handleBalanceChange = (value: number[]) => {
+    const newBalance = value[0];
+    setLocalBalancePercentage(newBalance);
+    onUpdate(localSelectedFeelings, localFeelingNotes, localNotes, newBalance);
+  };
+
+  const balanceColor = getBalanceColor(localBalancePercentage);
 
   // Convert an HSL color string like "hsl(h, s%, l%)" to HSLA with given alpha
   const withAlpha = (hsl: string, alpha: number): string => {
@@ -77,29 +87,47 @@ export const ValueSheet = ({
         side="bottom" 
         className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto"
       >
-        {/* Thin, sticky balance bar at the very top of the sheet */}
-        <div
-          className="sticky top-0 z-50 h-[6px] w-full"
-          aria-label={`نسبة الاتزان: ${balancePercentage}%`}
-          style={{
-            background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.85)} 0%, ${withAlpha(balanceColor, 0.35)} 50%, ${withAlpha(balanceColor, 0.85)} 100%)`,
-            boxShadow: `0 6px 18px ${withAlpha(balanceColor, 0.28)}`,
-          }}
-        />
         <SheetHeader className="text-right mb-6">
-          {/* <SheetTitle className="text-2xl font-bold text-foreground">
+          <SheetTitle className="text-2xl font-bold text-foreground">
             {valueName}
-          </SheetTitle> */}
-          <SheetDescription className="text-right">
-            <div 
-              className="sticky top-0 left-0 right-0 z-20 h-[6px] w-full overflow-hidden"
-              style={{
-                background: `linear-gradient(to right, ${withAlpha(balanceColor, 0.4)} 0%, ${withAlpha(balanceColor, 0.1)} 100%)`,
-                boxShadow: `0 0 15px ${withAlpha(balanceColor, 0.6)}`,
-              }}
-            ></div>
-          </SheetDescription>
+          </SheetTitle>
         </SheetHeader>
+
+        {/* Balance percentage slider */}
+        <div className="space-y-4 mb-6 p-4 rounded-lg bg-secondary/30">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-semibold text-foreground">
+              نسبة الاتزان
+            </Label>
+            <span 
+              className="text-2xl font-bold px-3 py-1 rounded-md"
+              style={{ 
+                color: balanceColor,
+                backgroundColor: withAlpha(balanceColor, 0.1)
+              }}
+            >
+              {localBalancePercentage}%
+            </span>
+          </div>
+          <Slider
+            value={[localBalancePercentage]}
+            onValueChange={handleBalanceChange}
+            max={100}
+            min={0}
+            step={1}
+            className="w-full"
+            style={{
+              // @ts-ignore
+              '--slider-color': balanceColor,
+            } as React.CSSProperties}
+          />
+          <div
+            className="h-2 w-full rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(balanceColor, 0.6)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.05)} 100%)`,
+            }}
+          />
+        </div>
 
         <div className="space-y-6">
           <div className="space-y-4">
