@@ -162,20 +162,26 @@ const Behavioral = () => {
 
   const handleUpdateOverallBalancePercentage = (newPercentage: number) => {
     if (selectedBehavioralValueForTasks) {
-      const valueId = BEHAVIORAL_VALUES.indexOf(selectedBehavioralValueForTasks).toString();
-      const currentData = getValueData(valueId);
-      handleValueUpdate(
-        valueId,
-        currentData.selectedFeelings,
-        currentData.feelingNotes,
-        currentData.notes,
-        newPercentage
-      );
+      const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
+      if (valueIndex !== -1) {
+        const valueId = valueIndex.toString();
+        const currentData = getValueData(valueId);
+        handleValueUpdate(
+          valueId,
+          currentData.selectedFeelings,
+          currentData.feelingNotes,
+          currentData.notes,
+          newPercentage
+        );
+      }
     }
   };
 
   const currentOverallBalancePercentage = selectedBehavioralValueForTasks
-    ? getValueData(BEHAVIORAL_VALUES.indexOf(selectedBehavioralValueForTasks).toString()).balancePercentage
+    ? (() => {
+        const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
+        return valueIndex !== -1 ? getValueData(valueIndex.toString()).balancePercentage : 100;
+      })()
     : 100;
 
   // Sort values with "الألوهية" always first
