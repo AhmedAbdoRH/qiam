@@ -82,17 +82,23 @@ const Index = () => {
   };
 
   const getValueData = (valueId: string): ValueData => {
+    if (valuesData[valueId]) {
+      return valuesData[valueId];
+    }
+    
     const valueIndex = parseInt(valueId);
-        const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
-        return {
-            id: valueId,
-            name: valueName,
-        selectedFeelings: [],
-        feelingNotes: {},
-        notes: "",
-        balancePercentage: 100,
-      }
-    ;
+    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length 
+      ? VALUES[valueIndex] 
+      : "Unknown Value";
+    
+    return {
+      id: valueId,
+      name: valueName,
+      selectedFeelings: [],
+      feelingNotes: {},
+      notes: "",
+      balancePercentage: 100,
+    };
   };
 
   const handleValueUpdate = async (
