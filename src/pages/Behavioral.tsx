@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
-import { ValueSheet } from "@/components/ValueSheet";
+import { TaskSheet } from "@/components/TaskSheet"; // New import
 import { VALUES, ValueData } from "@/types/value";
 import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +9,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
+interface Behavior {
+  id: string;
+  name: string;
+  progress: number;
+}
+
 const Behavioral = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
-  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [selectedBehavioralValueForTasks, setSelectedBehavioralValueForTasks] = useState<string | null>(null); // New state
+  const [behaviors, setBehaviors] = useState<Behavior[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -147,7 +154,29 @@ const Behavioral = () => {
     }
   };
 
-  const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
+  const handleUpdateBehaviors = (updatedBehaviors: Behavior[]) => {
+    setBehaviors(updatedBehaviors);
+    // Here you would typically save these behaviors to a backend
+    console.log("Updated behaviors:", updatedBehaviors);
+  };
+
+  const handleUpdateOverallBalancePercentage = (newPercentage: number) => {
+    if (selectedBehavioralValueForTasks) {
+      const valueId = BEHAVIORAL_VALUES.indexOf(selectedBehavioralValueForTasks).toString();
+      const currentData = getValueData(valueId);
+      handleValueUpdate(
+        valueId,
+        currentData.selectedFeelings,
+        currentData.feelingNotes,
+        currentData.notes,
+        newPercentage
+      );
+    }
+  };
+
+  const currentOverallBalancePercentage = selectedBehavioralValueForTasks
+    ? getValueData(BEHAVIORAL_VALUES.indexOf(selectedBehavioralValueForTasks).toString()).balancePercentage
+    : 100;
 
   // Sort values with "الألوهية" always first
   const sortedValues = BEHAVIORAL_VALUES.map((valueName, index) => ({
@@ -185,7 +214,7 @@ const Behavioral = () => {
               key={index}
               name={valueName}
               balancePercentage={valueData.balancePercentage}
-              onClick={() => setSelectedValue(index.toString())}
+              onClick={() => setSelectedBehavioralValueForTasks(valueName)}
             />
           ))}
         </div>
@@ -206,26 +235,15 @@ const Behavioral = () => {
         </Button>
       </div>
 
-      {selectedValueData && (
-        <ValueSheet
-          isOpen={!!selectedValueData}
-          valueName={selectedValueData.name}
-          selectedFeelings={selectedValueData.selectedFeelings}
-          feelingNotes={selectedValueData.feelingNotes}
-          notes={selectedValueData.notes}
-          balancePercentage={selectedValueData.balancePercentage}
-          onClose={() => setSelectedValue(null)}
-          onUpdate={(selectedFeelings, feelingNotes, notes, balancePercentage) =>
-            handleValueUpdate(
-              selectedValueData.id,
-              selectedFeelings,
-              feelingNotes,
-              notes,
-              balancePercentage
-            )
-          }
-        />
-      )}
+      <TaskSheet
+        isOpen={!!selectedBehavioralValueForTasks}
+        onClose={() => setSelectedBehavioralValueForTasks(null)}
+        valueName={selectedBehavioralValueForTasks || ""}
+        behaviors={behaviors}
+        onUpdateBehaviors={handleUpdateBehaviors}
+        overallBalancePercentage={currentOverallBalancePercentage}
+        onUpdateOverallBalancePercentage={handleUpdateOverallBalancePercentage}
+      />
     </div>
   );
 };

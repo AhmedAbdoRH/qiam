@@ -108,6 +108,16 @@ const Auth = () => {
                 dir="ltr"
               />
             </div>
+            <Button
+              variant="ghost"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0"
+              onClick={() => {
+                setEmail("a777medgedo@gmail.com");
+                setPassword("123456");
+              }}
+            >
+              Fill Login
+            </Button>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>

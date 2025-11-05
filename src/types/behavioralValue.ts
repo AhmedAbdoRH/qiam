@@ -1,5 +1,4 @@
 export const BEHAVIORAL_VALUES = [
-  "الألوهية",
   "القوة",
   "المتانة",
   "الحكمة",
