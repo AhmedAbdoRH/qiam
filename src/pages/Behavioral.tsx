@@ -76,16 +76,23 @@ const Behavioral = () => {
   };
 
   const getValueData = (valueId: string): ValueData => {
-    return (
-      valuesData[valueId] || {
-        id: valueId,
-        name: BEHAVIORAL_VALUES[parseInt(valueId)],
-        selectedFeelings: [],
-        feelingNotes: {},
-        notes: "",
-        balancePercentage: 100,
-      }
-    );
+    if (valuesData[valueId]) {
+      return valuesData[valueId];
+    }
+    
+    const valueIndex = parseInt(valueId);
+    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < BEHAVIORAL_VALUES.length 
+      ? BEHAVIORAL_VALUES[valueIndex] 
+      : "Unknown Value";
+    
+    return {
+      id: valueId,
+      name: valueName,
+      selectedFeelings: [],
+      feelingNotes: {},
+      notes: "",
+      balancePercentage: 100,
+    };
   };
 
   const handleValueUpdate = async (
