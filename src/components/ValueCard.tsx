@@ -139,9 +139,9 @@ export const ValueCard = ({ name, balancePercentage, onClick }: ValueCardProps) 
       {/* Dynamic, smooth accent glow inside the card */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -bottom-16 -right-12 w-[240px] h-[140px] opacity-55 group-hover:opacity-75 glow-anim"
+          className="absolute -bottom-20 -right-16 w-[300px] h-[200px] opacity-55 group-hover:opacity-75 glow-anim"
           style={{
-            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.5)} 0%, transparent 90%)`,
+            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.22)} 0%, transparent 60%)`,
             willChange: "transform",
           }}
         />

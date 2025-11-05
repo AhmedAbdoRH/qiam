@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Behavioral from "./pages/Behavioral";
 import NotFound from "./pages/NotFound";
+import BottomNavBar from "./components/BottomNavBar";
 
 const queryClient = new QueryClient();
 
@@ -19,10 +21,12 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/behavioral" element={<Behavioral />} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <BottomNavBar />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

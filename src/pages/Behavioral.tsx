@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { VALUES, ValueData } from "@/types/value";
+import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-const Index = () => {
+const Behavioral = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
@@ -33,22 +34,16 @@ const Index = () => {
     if (!user) return;
     
     try {
-```
       const { data, error } = await supabase
-        .from("spiritual_values") // Confirmed to load from 'spiritual_values' table
+        .from("behavioral_values")
         .select("*")
         .eq("user_id", user.id);
-      console.log('Supabase data:', data, 'Supabase error:', error);
 
       if (error) throw error;
 
       if (data) {
         const formattedData: Record<string, ValueData> = {};
         data.forEach((item) => {
-          if (!item.value_id || typeof item.value_id !== 'string' || item.value_id.trim() === '') {
-            console.warn('Skipping item due to invalid or empty value_id:', item);
-            return;
-          }
           // Parse selected_feelings safely
           const selectedFeelings = Array.isArray(item.selected_feelings)
             ? (item.selected_feelings as string[])
@@ -62,11 +57,9 @@ const Index = () => {
               ? (item.feeling_notes as Record<string, string>)
               : {};
 
-          const valueIndex = parseInt(item.value_id);
-          const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
           formattedData[item.value_id] = {
             id: item.value_id,
-            name: valueName,
+            name: BEHAVIORAL_VALUES[parseInt(item.value_id)],
             selectedFeelings,
             feelingNotes,
             notes: item.notes || "",
@@ -83,17 +76,16 @@ const Index = () => {
   };
 
   const getValueData = (valueId: string): ValueData => {
-    const valueIndex = parseInt(valueId);
-        const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
-        return {
-            id: valueId,
-            name: valueName,
+    return (
+      valuesData[valueId] || {
+        id: valueId,
+        name: BEHAVIORAL_VALUES[parseInt(valueId)],
         selectedFeelings: [],
         feelingNotes: {},
         notes: "",
         balancePercentage: 100,
       }
-    ;
+    );
   };
 
   const handleValueUpdate = async (
@@ -103,11 +95,9 @@ const Index = () => {
     notes: string,
     balancePercentage: number
   ) => {
-    const valueIndex = parseInt(valueId);
-    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
     const newValueData = {
       id: valueId,
-      name: valueName,
+      name: BEHAVIORAL_VALUES[parseInt(valueId)],
       selectedFeelings,
       feelingNotes,
       notes,
@@ -129,11 +119,11 @@ const Index = () => {
     try {
       console.log("Attempting to upsert data for user:", user.id, "with valueId:", valueId);
       const { error } = await supabase
-        .from("spiritual_values")
+        .from("behavioral_values")
         .upsert({
           user_id: user.id,
           value_id: valueId,
-          value_name: valueName,
+          value_name: BEHAVIORAL_VALUES[parseInt(valueId)],
           selected_feelings: selectedFeelings,
           feeling_notes: feelingNotes,
           notes: notes,
@@ -153,7 +143,7 @@ const Index = () => {
   const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
 
   // Sort values with "الألوهية" always first
-  const sortedValues = VALUES.map((valueName, index) => ({
+  const sortedValues = BEHAVIORAL_VALUES.map((valueName, index) => ({
     index,
     valueName,
     valueData: getValueData(index.toString()),
@@ -233,4 +223,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Behavioral;
