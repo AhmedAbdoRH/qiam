@@ -33,9 +33,8 @@ const Index = () => {
     if (!user) return;
     
     try {
-```
       const { data, error } = await supabase
-        .from("spiritual_values") // Confirmed to load from 'spiritual_values' table
+        .from("spiritual_values")
         .select("*")
         .eq("user_id", user.id);
       console.log('Supabase data:', data, 'Supabase error:', error);
