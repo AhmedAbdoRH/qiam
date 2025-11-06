@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 
 interface SubTask {
   id: string;
@@ -263,7 +263,14 @@ const handleAddBehavior = () => {
                       onChange={(e) => setNewSubTaskNames({ ...newSubTaskNames, [behavior.id]: e.target.value })}
                       className="flex-grow text-sm"
                     />
-                    <Button onClick={() => handleAddSubTask(behavior.id)} size="sm">إضافة</Button>
+                    <Button
+                      onClick={() => handleAddSubTask(behavior.id)}
+                      size="icon"
+                      variant="secondary"
+                      aria-label="إضافة مهمة فرعية"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}
@@ -278,7 +285,14 @@ const handleAddBehavior = () => {
               onChange={(e) => setNewBehaviorName(e.target.value)}
               className="flex-grow"
             />
-            <Button onClick={handleAddBehavior}>إضافة</Button>
+            <Button
+              onClick={handleAddBehavior}
+              size="icon"
+              variant="secondary"
+              aria-label="إضافة سلوك جديد"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </SheetContent>
