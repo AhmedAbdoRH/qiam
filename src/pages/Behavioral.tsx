@@ -9,16 +9,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-interface Behavior {
+interface SubTask {
   id: string;
   name: string;
   progress: number;
 }
 
+interface Behavior {
+  id: string;
+  name: string;
+  progress: number;
+  subTasks?: SubTask[];
+}
+
 const Behavioral = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
-  const [selectedBehavioralValueForTasks, setSelectedBehavioralValueForTasks] = useState<string | null>(null); // New state
-  const [behaviors, setBehaviors] = useState<Behavior[]>([]);
+  const [selectedBehavioralValueForTasks, setSelectedBehavioralValueForTasks] = useState<string | null>(null);
+  const [behaviorsByValue, setBehaviorsByValue] = useState<Record<string, Behavior[]>>({});
   const [dataLoading, setDataLoading] = useState(true);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -50,6 +57,8 @@ const Behavioral = () => {
 
       if (data) {
         const formattedData: Record<string, ValueData> = {};
+        const formattedBehaviors: Record<string, Behavior[]> = {};
+        
         data.forEach((item) => {
           // Parse selected_feelings safely
           const selectedFeelings = Array.isArray(item.selected_feelings)
@@ -64,6 +73,11 @@ const Behavioral = () => {
               ? (item.feeling_notes as Record<string, string>)
               : {};
 
+          // Parse behaviors safely
+          const behaviors = Array.isArray(item.behaviors)
+            ? (item.behaviors as unknown as Behavior[])
+            : [];
+
           formattedData[item.value_id] = {
             id: item.value_id,
             name: BEHAVIORAL_VALUES[parseInt(item.value_id)],
@@ -72,8 +86,11 @@ const Behavioral = () => {
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 100,
           };
+          
+          formattedBehaviors[item.value_id] = behaviors;
         });
         setValuesData(formattedData);
+        setBehaviorsByValue(formattedBehaviors);
       }
     } catch (error) {
       console.error("Error loading values:", error);
@@ -154,10 +171,40 @@ const Behavioral = () => {
     }
   };
 
-  const handleUpdateBehaviors = (updatedBehaviors: Behavior[]) => {
-    setBehaviors(updatedBehaviors);
-    // Here you would typically save these behaviors to a backend
-    console.log("Updated behaviors:", updatedBehaviors);
+  const handleUpdateBehaviors = async (updatedBehaviors: Behavior[]) => {
+    if (!selectedBehavioralValueForTasks || !user) return;
+    
+    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
+    if (valueIndex === -1) return;
+    
+    const valueId = valueIndex.toString();
+    
+    // Update local state
+    setBehaviorsByValue({
+      ...behaviorsByValue,
+      [valueId]: updatedBehaviors,
+    });
+    
+    // Save to database
+    try {
+      const { error } = await supabase
+        .from("behavioral_values")
+        .upsert(
+          {
+            user_id: user.id,
+            value_id: valueId,
+            value_name: BEHAVIORAL_VALUES[valueIndex],
+            behaviors: updatedBehaviors as any,
+          },
+          { onConflict: 'user_id,value_id' }
+        );
+
+      if (error) {
+        console.error("Error saving behaviors:", error);
+      }
+    } catch (error) {
+      console.error("Unexpected error saving behaviors:", error);
+    }
   };
 
   const handleUpdateOverallBalancePercentage = (newPercentage: number) => {
@@ -245,7 +292,11 @@ const Behavioral = () => {
         isOpen={!!selectedBehavioralValueForTasks}
         onClose={() => setSelectedBehavioralValueForTasks(null)}
         valueName={selectedBehavioralValueForTasks || ""}
-        behaviors={behaviors}
+        behaviors={
+          selectedBehavioralValueForTasks
+            ? behaviorsByValue[BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks).toString()] || []
+            : []
+        }
         onUpdateBehaviors={handleUpdateBehaviors}
         overallBalancePercentage={currentOverallBalancePercentage}
         onUpdateOverallBalancePercentage={handleUpdateOverallBalancePercentage}

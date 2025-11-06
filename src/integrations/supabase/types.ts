@@ -17,6 +17,7 @@ export type Database = {
       behavioral_values: {
         Row: {
           balance_percentage: number | null
+          behaviors: Json | null
           created_at: string | null
           feeling_notes: Json | null
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           balance_percentage?: number | null
+          behaviors?: Json | null
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           balance_percentage?: number | null
+          behaviors?: Json | null
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
