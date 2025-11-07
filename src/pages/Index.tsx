@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
@@ -7,6 +7,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+
+const areArraysEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  return a.every((item, index) => item === b[index]);
+};
+
+const areRecordsEqual = (a: Record<string, string>, b: Record<string, string>) => {
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every((key) => a[key] === b[key]);
+};
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -37,7 +49,6 @@ const Index = () => {
         .from("spiritual_values")
         .select("*")
         .eq("user_id", user.id);
-      console.log('Supabase data:', data, 'Supabase error:', error);
 
       if (error) throw error;
 
@@ -81,7 +92,7 @@ const Index = () => {
     }
   };
 
-  const getValueData = (valueId: string): ValueData => {
+  const getValueData = useCallback((valueId: string): ValueData => {
     if (valuesData[valueId]) {
       return valuesData[valueId];
     }
@@ -99,9 +110,9 @@ const Index = () => {
       notes: "",
       balancePercentage: 100,
     };
-  };
+  }, [valuesData]);
 
-  const handleValueUpdate = async (
+  const handleValueUpdate = useCallback(async (
     valueId: string,
     selectedFeelings: string[],
     feelingNotes: Record<string, string>,
@@ -119,11 +130,25 @@ const Index = () => {
       balancePercentage,
     };
 
+    const existingValue = valuesData[valueId];
+    const existingFeelings = existingValue?.selectedFeelings ?? [];
+    const existingFeelingNotes = existingValue?.feelingNotes ?? {};
+    const hasChanges =
+      !existingValue ||
+      existingValue.notes !== notes ||
+      existingValue.balancePercentage !== balancePercentage ||
+      !areArraysEqual(existingFeelings, selectedFeelings) ||
+      !areRecordsEqual(existingFeelingNotes, feelingNotes);
+
+    if (!hasChanges) {
+      return;
+    }
+
     // Update local state
-    setValuesData({
-      ...valuesData,
+    setValuesData((prev) => ({
+      ...prev,
       [valueId]: newValueData,
-    });
+    }));
 
     // Update database
     if (!user) {
@@ -132,7 +157,6 @@ const Index = () => {
     }
     
     try {
-      console.log("Attempting to upsert data for user:", user.id, "with valueId:", valueId);
       const { error } = await supabase
         .from("spiritual_values")
         .upsert({
@@ -147,24 +171,29 @@ const Index = () => {
 
       if (error) {
         console.error("Error saving value to Supabase:", error);
-      } else {
-        console.log("Value saved successfully for user:", user.id, "valueId:", valueId);
       }
     } catch (error) {
       console.error("Unexpected error during Supabase upsert:", error);
     }
-  };
+  }, [user, valuesData]);
 
-  const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
+  const selectedValueData = useMemo(
+    () => (selectedValue ? getValueData(selectedValue) : null),
+    [selectedValue, getValueData]
+  );
 
   // Sort values by balance percentage
-  const sortedValues = VALUES.map((valueName, index) => ({
-    index,
-    valueName,
-    valueData: getValueData(index.toString()),
-  })).sort((a, b) => {
-    return a.valueData.balancePercentage - b.valueData.balancePercentage;
-  });
+  const sortedValues = useMemo(
+    () =>
+      VALUES.map((valueName, index) => ({
+        index,
+        valueName,
+        valueData: getValueData(index.toString()),
+      })).sort(
+        (a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage
+      ),
+    [getValueData]
+  );
 
   if (loading || dataLoading) {
     return (
