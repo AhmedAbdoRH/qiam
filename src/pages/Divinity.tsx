@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getBalanceColor } from '@/utils/balanceCalculator';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
 } from '@/components/ui/sheet';
 
 // Convert an HSL color string to HSLA with given alpha
@@ -37,39 +36,144 @@ const divineNames = [
 
 export default function Divinity() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
-  const [notes, setNotes] = useLocalStorage<Record<string, string>>('divinityNotes', {});
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [currentNote, setCurrentNote] = useState('');
-  
-  // Initialize all divine names with 50% progress by default
-  const [progress, setProgress] = useLocalStorage<Record<string, number>>(
-    'divinityProgress',
-    divineNames.reduce((acc, name) => ({ ...acc, [name]: 50 }), {})
-  );
-  
+  const [progress, setProgress] = useState<Record<string, number>>({});
   const [currentProgress, setCurrentProgress] = useState(50);
+  const { toast } = useToast();
+
+  // Fetch data from database
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('divine_names')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        const notesMap: Record<string, string> = {};
+        const progressMap: Record<string, number> = {};
+
+        data?.forEach((item) => {
+          notesMap[item.divine_name] = item.notes || '';
+          progressMap[item.divine_name] = item.progress || 50;
+        });
+
+        setNotes(notesMap);
+        setProgress(progressMap);
+      } catch (error) {
+        console.error('Error fetching divine names:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
   
   const handleOpenNote = (name: string) => {
     setSelectedName(name);
     setCurrentNote(notes[name] || '');
     setCurrentProgress(progress[name] ?? 50);
   };
-  
-  const handleSave = () => {
-    if (selectedName) {
+
+  // Auto-save notes
+  const handleNoteChange = async (value: string) => {
+    setCurrentNote(value);
+    
+    if (!selectedName) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('divine_names')
+        .upsert({
+          user_id: user.id,
+          divine_name: selectedName,
+          notes: value,
+          progress: currentProgress
+        }, {
+          onConflict: 'user_id,divine_name'
+        });
+
+      setNotes({ ...notes, [selectedName]: value });
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل حفظ الملاحظة',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Auto-save progress
+  const handleProgressChange = async (value: number[]) => {
+    const newProgress = value[0];
+    setCurrentProgress(newProgress);
+    
+    if (!selectedName) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('divine_names')
+        .upsert({
+          user_id: user.id,
+          divine_name: selectedName,
+          notes: currentNote,
+          progress: newProgress
+        }, {
+          onConflict: 'user_id,divine_name'
+        });
+
+      setProgress({ ...progress, [selectedName]: newProgress });
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل حفظ التقدم',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (!selectedName) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('divine_names')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('divine_name', selectedName);
+
       const newNotes = { ...notes };
-      if (currentNote.trim()) {
-        newNotes[selectedName] = currentNote;
-      } else {
-        delete newNotes[selectedName];
-      }
+      delete newNotes[selectedName];
       setNotes(newNotes);
-      
-      // Ensure progress is always a number between 0 and 100
-      const validatedProgress = Math.min(100, Math.max(0, currentProgress));
-      const newProgress = { ...progress, [selectedName]: validatedProgress };
-      setProgress(newProgress);
-      
-      setSelectedName(null);
+      setCurrentNote('');
+
+      toast({
+        title: 'تم الحذف',
+        description: 'تم حذف الملاحظة بنجاح'
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل حذف الملاحظة',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -156,7 +260,7 @@ export default function Divinity() {
       {/* Notes Sheet */}
       <Sheet open={!!selectedName} onOpenChange={(open) => {
         if (!open) {
-          handleSave();
+          setSelectedName(null);
         }
       }}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 overflow-hidden">
@@ -179,7 +283,7 @@ export default function Divinity() {
             </div>
             <Slider
               value={[currentProgress]}
-              onValueChange={(value) => setCurrentProgress(value[0])}
+              onValueChange={handleProgressChange}
               max={100}
               min={0}
               step={1}
@@ -194,46 +298,25 @@ export default function Divinity() {
             />
           </div>
           
-          <div className="px-6 py-6 h-[calc(100%-180px)] overflow-y-auto">
+          <div className="px-6 py-6 h-[calc(100%-240px)] overflow-y-auto">
             <Textarea
               value={currentNote}
-              onChange={(e) => setCurrentNote(e.target.value)}
+              onChange={(e) => handleNoteChange(e.target.value)}
               placeholder="اكتب ملاحظاتك هنا..."
               className="h-full min-h-[200px] text-right text-base resize-none"
               dir="rtl"
             />
           </div>
           
-          <SheetFooter className="flex flex-row justify-between sm:justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCurrentNote('');
-                const newNotes = { ...notes };
-                delete newNotes[selectedName!];
-                setNotes(newNotes);
-              }}
-              disabled={!notes[selectedName!]}
-              className="px-6 py-6 text-base"
+          <div className="px-6 py-4 border-t border-border/10 flex justify-center">
+            <button
+              onClick={handleDeleteNote}
+              disabled={!notes[selectedName!] && !currentNote}
+              className="text-destructive hover:text-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              حذف الملاحظة
-            </Button>
-            <Button
-              onClick={() => {
-                if (currentNote.trim()) {
-                  setNotes({ ...notes, [selectedName!]: currentNote });
-                } else {
-                  const newNotes = { ...notes };
-                  delete newNotes[selectedName!];
-                  setNotes(newNotes);
-                }
-                setSelectedName(null);
-              }}
-              className="px-8 py-6 text-base"
-            >
-              حفظ
-            </Button>
-          </SheetFooter>
+              حذف الملاحظة والتقدم
+            </button>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
