@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Behavioral from "./pages/Behavioral";
+import Divinity from "./pages/Divinity";
 import NotFound from "./pages/NotFound";
 import BottomNavBar from "./components/BottomNavBar";
 
@@ -21,6 +22,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/behavioral" element={<Behavioral />} />
+        <Route path="/divinity" element={<Divinity />} />
         <Route path="/auth" element={<Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

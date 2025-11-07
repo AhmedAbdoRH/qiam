@@ -157,16 +157,12 @@ const Index = () => {
 
   const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
 
-  // Sort values with "الألوهية" always first
+  // Sort values by balance percentage
   const sortedValues = VALUES.map((valueName, index) => ({
     index,
     valueName,
     valueData: getValueData(index.toString()),
   })).sort((a, b) => {
-    // "الألوهية" is always first (index 0)
-    if (a.index === 0) return -1;
-    if (b.index === 0) return 1;
-    // Sort the rest by balance percentage
     return a.valueData.balancePercentage - b.valueData.balancePercentage;
   });
 

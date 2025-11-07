@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
+import { TaskList } from "./TaskList";
 
 interface ValueSheetProps {
   isOpen: boolean;
@@ -113,12 +114,17 @@ export const ValueSheet = ({
                   className="flex flex-row items-center gap-3 p-3 rounded-lg bg-secondary/50"
                 >
                   <div className="flex items-center gap-3">
-                    <Checkbox
-                      id={feeling}
-                      checked={localSelectedFeelings.includes(feeling)}
-                      onCheckedChange={() => handleFeelingToggle(feeling)}
-                      className="border-2 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
-                    />
+                    <div className="relative">
+                      <Checkbox
+                        id={feeling}
+                        checked={localSelectedFeelings.includes(feeling)}
+                        onCheckedChange={() => handleFeelingToggle(feeling)}
+                        className="h-5 w-5 rounded-full border-2 border-muted-foreground/40 data-[state=checked]:border-destructive data-[state=checked]:bg-destructive/10"
+                      />
+                      {localSelectedFeelings.includes(feeling) && (
+                        <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-destructive" />
+                      )}
+                    </div>
                     <Label
                       htmlFor={feeling}
                       className="text-base text-foreground cursor-pointer flex-1"
@@ -126,12 +132,12 @@ export const ValueSheet = ({
                       {feeling}
                     </Label>
                   </div>
-                  <Textarea
-                    value={localFeelingNotes[feeling] || ""}
-                    onChange={(e) => handleFeelingNoteChange(feeling, e.target.value)}
-                    placeholder={`ملاحظات عن ${feeling}...`}
-                    className="min-h-[60px] text-sm bg-background/50 border-border text-foreground placeholder:text-muted-foreground resize-none flex-1"
-                  />
+                  <div className="flex-1">
+                    <TaskList
+                      value={localFeelingNotes[feeling] || ""}
+                      onChange={(value) => handleFeelingNoteChange(feeling, value)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

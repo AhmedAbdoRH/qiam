@@ -136,13 +136,36 @@ export const ValueCard = ({ name, balancePercentage, onClick }: ValueCardProps) 
         boxShadow: `0 20px 60px rgba(0, 0, 0, 0.25)`,
       }}
     >
-      {/* Dynamic, smooth accent glow inside the card */}
+      {/* Enhanced dynamic glow effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Main glow layer */}
         <div
-          className="absolute -bottom-20 -right-16 w-[300px] h-[200px] opacity-55 group-hover:opacity-75 glow-anim"
+          className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-60 group-hover:opacity-80 glow-anim"
           style={{
-            background: `radial-gradient(closest-side, ${withAlpha(accentColor, 0.22)} 0%, transparent 60%)`,
-            willChange: "transform",
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.25)} 0%, transparent 75%)`,
+            willChange: "transform, opacity",
+            transition: 'opacity 0.4s ease-in-out',
+          }}
+        />
+        
+        {/* Secondary subtle glow */}
+        <div
+          className="absolute -top-8 -left-8 w-[200px] h-[200px] opacity-30 group-hover:opacity-50 glow-anim"
+          style={{
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.15)} 0%, transparent 80%)`,
+            animationDelay: '2s',
+            animationDuration: '15s',
+            willChange: "transform, opacity",
+            transition: 'opacity 0.4s ease-in-out',
+          }}
+        />
+        
+        {/* Edge glow */}
+        <div 
+          className="absolute inset-0 border border-transparent rounded-2xl"
+          style={{
+            boxShadow: `inset 0 0 18px ${withAlpha(accentColor, 0.2)}`,
+            transition: 'box-shadow 0.4s ease-in-out',
           }}
         />
       </div>

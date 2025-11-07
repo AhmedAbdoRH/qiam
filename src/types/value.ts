@@ -18,7 +18,6 @@ export const FEELINGS = [
 ] as const;
 
 export const VALUES = [
-  "الألوهية",
   "القوة",
   "المتانة",
   "الحكمة",

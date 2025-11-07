@@ -1,20 +1,25 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Heart, Brain } from "lucide-react";
+import { Heart, Target, Sparkles } from "lucide-react";
 
 const BottomNavBar = () => {
   const location = useLocation();
 
   const navItems = [
     {
-      name: "شعوريا",
+      name: "الشعور",
       path: "/",
       icon: Heart,
     },
     {
-      name: "سلوكيا",
+      name: "الفعل",
       path: "/behavioral",
-      icon: Brain,
+      icon: Target,
+    },
+    {
+      name: "الايمان",
+      path: "/divinity",
+      icon: Sparkles,
     },
   ];
 
