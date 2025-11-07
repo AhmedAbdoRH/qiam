@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import { getBalanceColor } from '@/utils/balanceCalculator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +12,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
 } from '@/components/ui/sheet';
 
 // Convert an HSL color string to HSLA with given alpha
@@ -40,6 +42,7 @@ export default function Divinity() {
   const [currentNote, setCurrentNote] = useState('');
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [currentProgress, setCurrentProgress] = useState(50);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   // Fetch data from database
@@ -74,51 +77,24 @@ export default function Divinity() {
     fetchData();
   }, []);
   
-  const handleOpenNote = (name: string) => {
+  const handleOpenNote = useCallback((name: string) => {
     setSelectedName(name);
     setCurrentNote(notes[name] || '');
     setCurrentProgress(progress[name] ?? 50);
-  };
+  }, [notes, progress]);
 
-  // Auto-save notes
-  const handleNoteChange = async (value: string) => {
+  const handleNoteChange = useCallback((value: string) => {
     setCurrentNote(value);
-    
+  }, []);
+
+  const handleProgressChange = useCallback((value: number[]) => {
+    setCurrentProgress(value[0]);
+  }, []);
+
+  const handleSave = useCallback(async () => {
     if (!selectedName) return;
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase
-        .from('divine_names')
-        .upsert({
-          user_id: user.id,
-          divine_name: selectedName,
-          notes: value,
-          progress: currentProgress
-        }, {
-          onConflict: 'user_id,divine_name'
-        });
-
-      setNotes({ ...notes, [selectedName]: value });
-    } catch (error) {
-      console.error('Error saving note:', error);
-      toast({
-        title: 'خطأ',
-        description: 'فشل حفظ الملاحظة',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Auto-save progress
-  const handleProgressChange = async (value: number[]) => {
-    const newProgress = value[0];
-    setCurrentProgress(newProgress);
-    
-    if (!selectedName) return;
-
+    setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -129,23 +105,31 @@ export default function Divinity() {
           user_id: user.id,
           divine_name: selectedName,
           notes: currentNote,
-          progress: newProgress
+          progress: currentProgress
         }, {
           onConflict: 'user_id,divine_name'
         });
 
-      setProgress({ ...progress, [selectedName]: newProgress });
+      setNotes(prev => ({ ...prev, [selectedName]: currentNote }));
+      setProgress(prev => ({ ...prev, [selectedName]: currentProgress }));
+
+      toast({
+        title: 'تم الحفظ',
+        description: 'تم حفظ التغييرات بنجاح'
+      });
     } catch (error) {
-      console.error('Error saving progress:', error);
+      console.error('Error saving:', error);
       toast({
         title: 'خطأ',
-        description: 'فشل حفظ التقدم',
+        description: 'فشل حفظ التغييرات',
         variant: 'destructive'
       });
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [selectedName, currentNote, currentProgress, toast]);
 
-  const handleDeleteNote = async () => {
+  const handleDeleteNote = useCallback(async () => {
     if (!selectedName) return;
 
     try {
@@ -158,10 +142,19 @@ export default function Divinity() {
         .eq('user_id', user.id)
         .eq('divine_name', selectedName);
 
-      const newNotes = { ...notes };
-      delete newNotes[selectedName];
-      setNotes(newNotes);
+      setNotes(prev => {
+        const newNotes = { ...prev };
+        delete newNotes[selectedName];
+        return newNotes;
+      });
+      setProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[selectedName];
+        return newProgress;
+      });
       setCurrentNote('');
+      setCurrentProgress(50);
+      setSelectedName(null);
 
       toast({
         title: 'تم الحذف',
@@ -175,19 +168,17 @@ export default function Divinity() {
         variant: 'destructive'
       });
     }
-  };
+  }, [selectedName, toast]);
 
   // Sort divine names based on their progress (lowest to highest, top to bottom)
-  const sortedDivineNames = [...divineNames].sort((a, b) => {
-    // Default to 50% if not set
-    const progressA = progress[a] ?? 50;
-    const progressB = progress[b] ?? 50;
-    // Sort from lowest to highest progress (top to bottom)
-    if (progressA < progressB) return -1;
-    if (progressA > progressB) return 1;
-    // If progress is equal, sort alphabetically (right to left)
-    return a.localeCompare(b);
-  });
+  const sortedDivineNames = useMemo(() => 
+    [...divineNames].sort((a, b) => {
+      const progressA = progress[a] ?? 50;
+      const progressB = progress[b] ?? 50;
+      if (progressA < progressB) return -1;
+      if (progressA > progressB) return 1;
+      return a.localeCompare(b);
+    }), [progress]);
 
   return (
     <div className="container mx-auto px-4 pb-24 pt-6">
@@ -298,7 +289,7 @@ export default function Divinity() {
             />
           </div>
           
-          <div className="px-6 py-6 h-[calc(100%-240px)] overflow-y-auto">
+          <div className="px-6 py-6 h-[calc(100%-280px)] overflow-y-auto">
             <Textarea
               value={currentNote}
               onChange={(e) => handleNoteChange(e.target.value)}
@@ -308,15 +299,23 @@ export default function Divinity() {
             />
           </div>
           
-          <div className="px-6 py-4 border-t border-border/10 flex justify-center">
-            <button
+          <SheetFooter className="px-6 py-4 border-t border-border/10 flex-row gap-2 justify-between">
+            <Button
               onClick={handleDeleteNote}
               disabled={!notes[selectedName!] && !currentNote}
-              className="text-destructive hover:text-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive/80"
             >
-              حذف الملاحظة والتقدم
-            </button>
-          </div>
+              حذف
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="min-w-[100px]"
+            >
+              {isSaving ? 'جاري الحفظ...' : 'حفظ'}
+            </Button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>
