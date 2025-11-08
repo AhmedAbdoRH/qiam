@@ -131,16 +131,16 @@ export default function Divinity() {
               {/* Optimized glow effect */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div
-                  className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                  className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-75 group-hover:opacity-90 transition-opacity duration-300"
                   style={{
-                    background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.25) 0%, transparent 75%)',
+                    background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.35) 0%, transparent 75%)',
                   }}
                 />
                 
                 <div 
                   className="absolute inset-0 border border-transparent rounded-2xl transition-shadow duration-300"
                   style={{
-                    boxShadow: 'inset 0 0 18px rgba(99, 102, 241, 0.2)',
+                    boxShadow: 'inset 0 0 18px rgba(99, 102, 241, 0.3)',
                   }}
                 />
                 
