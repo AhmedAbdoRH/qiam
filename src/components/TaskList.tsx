@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "./ui/input";
@@ -17,70 +17,27 @@ interface TaskListProps {
 export const TaskList = ({ value, onChange }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
-  const lastSerializedValue = useRef<string | null>(null);
-
-  const areTasksEqual = (a: Task[], b: Task[]) => {
-    if (a.length !== b.length) return false;
-    return a.every((task, index) => {
-      const other = b[index];
-      return (
-        !!other &&
-        task.id === other.id &&
-        task.text === other.text &&
-        task.completed === other.completed
-      );
-    });
-  };
 
   // Parse tasks from the value string on initial load
   useEffect(() => {
-    if (value === lastSerializedValue.current) {
-      return;
-    }
-
-    lastSerializedValue.current = value;
-
-    if (!value) {
-      if (tasks.length) {
-        setTasks([]);
-      }
-      return;
-    }
-
-    try {
-      const parsedTasks = JSON.parse(value);
-      if (Array.isArray(parsedTasks)) {
-        if (!areTasksEqual(parsedTasks, tasks)) {
-          setTasks(parsedTasks as Task[]);
+    if (value) {
+      try {
+        const parsedTasks = JSON.parse(value);
+        if (Array.isArray(parsedTasks)) {
+          setTasks(parsedTasks);
         }
-        return;
-      }
-    } catch (e) {
-      // If parsing fails, treat the entire value as a single task
-      if (value.trim() !== "") {
-        const fallbackTask: Task[] = [{ id: Date.now().toString(), text: value, completed: false }];
-        if (!areTasksEqual(fallbackTask, tasks)) {
-          setTasks(fallbackTask);
+      } catch (e) {
+        // If parsing fails, treat the entire value as a single task
+        if (value.trim() !== "") {
+          setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
         }
       }
-      return;
     }
-
-    // If value is not valid JSON array and empty, ensure tasks cleared
-    if (tasks.length) {
-      setTasks([]);
-    }
-  }, [value, tasks]);
+  }, [value]);
 
   // Update the parent's value when tasks change
   useEffect(() => {
-    const serialized = JSON.stringify(tasks);
-    if (serialized === lastSerializedValue.current) {
-      return;
-    }
-
-    lastSerializedValue.current = serialized;
-    onChange(serialized);
+    onChange(JSON.stringify(tasks));
   }, [tasks, onChange]);
 
   const addTask = (e: React.FormEvent) => {
@@ -155,4 +112,3 @@ export const TaskList = ({ value, onChange }: TaskListProps) => {
     </div>
   );
 };
-

@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -124,7 +123,7 @@ interface ValueCardProps {
   onClick: () => void;
 }
 
-const ValueCardComponent = ({ name, balancePercentage, onClick }: ValueCardProps) => {
+export const ValueCard = ({ name, balancePercentage, onClick }: ValueCardProps) => {
   const accentColor = getBalanceColor(balancePercentage);
   const Icon = getValueIcon(name);
 
@@ -195,6 +194,3 @@ const ValueCardComponent = ({ name, balancePercentage, onClick }: ValueCardProps
     </button>
   );
 };
-
-export const ValueCard = memo(ValueCardComponent);
-ValueCard.displayName = "ValueCard";

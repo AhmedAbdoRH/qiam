@@ -56,36 +56,6 @@ export type Database = {
         }
         Relationships: []
       }
-      divine_names: {
-        Row: {
-          created_at: string | null
-          divine_name: string
-          id: string
-          notes: string | null
-          progress: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          divine_name: string
-          id?: string
-          notes?: string | null
-          progress?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          divine_name?: string
-          id?: string
-          notes?: string | null
-          progress?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       spiritual_values: {
         Row: {
           balance_percentage: number | null

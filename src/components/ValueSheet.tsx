@@ -53,32 +53,24 @@ export const ValueSheet = ({
       : [...localSelectedFeelings, feeling];
     
     setLocalSelectedFeelings(newSelectedFeelings);
+    onUpdate(newSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage);
   };
 
   const handleFeelingNoteChange = (feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
     setLocalFeelingNotes(newFeelingNotes);
+    onUpdate(localSelectedFeelings, newFeelingNotes, localNotes, localBalancePercentage);
   };
 
   const handleNotesChange = (value: string) => {
     setLocalNotes(value);
+    onUpdate(localSelectedFeelings, localFeelingNotes, value, localBalancePercentage);
   };
 
   const handleBalanceChange = (value: number[]) => {
     const newBalance = value[0];
     setLocalBalancePercentage(newBalance);
-  };
-
-  const handleSheetOpenChange = (open: boolean) => {
-    if (!open) {
-      onUpdate(
-        localSelectedFeelings,
-        localFeelingNotes,
-        localNotes,
-        localBalancePercentage
-      );
-      onClose();
-    }
+    onUpdate(localSelectedFeelings, localFeelingNotes, localNotes, newBalance);
   };
 
   const balanceColor = getBalanceColor(localBalancePercentage);
@@ -91,7 +83,7 @@ export const ValueSheet = ({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
+    <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
         className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto p-0"
