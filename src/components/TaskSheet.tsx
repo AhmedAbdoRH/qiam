@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -67,24 +67,24 @@ export const TaskSheet = ({
     setLocalOverallBalance(overallBalancePercentage);
   }, [overallBalancePercentage]);
 
-  const handleProgressChange = (behaviorId: string, newProgress: number[]) => {
+  const handleProgressChange = useCallback((behaviorId: string, newProgress: number[]) => {
     const updatedBehaviors = localBehaviors.map((behavior) =>
       behavior.id === behaviorId ? { ...behavior, progress: newProgress[0] } : behavior
     );
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
-  };
+  }, [localBehaviors, onUpdateBehaviors]);
 
-  const handleOverallBalanceChange = (newPercentage: number[]) => {
+  const handleOverallBalanceChange = useCallback((newPercentage: number[]) => {
     setLocalOverallBalance(newPercentage[0]);
     onUpdateOverallBalancePercentage(newPercentage[0]);
-  };
+  }, [onUpdateOverallBalancePercentage]);
 
-const handleAddBehavior = () => {
-    if (newBehaviorName.trim() === "") return; // Prevent adding empty behaviors
+  const handleAddBehavior = useCallback(() => {
+    if (newBehaviorName.trim() === "") return;
 
     const newBehavior: Behavior = {
-      id: Math.random().toString(36).substring(2, 9), // Simple unique ID
+      id: Math.random().toString(36).substring(2, 9),
       name: newBehaviorName,
       progress: 0,
     };
@@ -92,16 +92,16 @@ const handleAddBehavior = () => {
     const updatedBehaviors = [...localBehaviors, newBehavior];
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
-    setNewBehaviorName(""); // Clear input field
-  };
+    setNewBehaviorName("");
+  }, [newBehaviorName, localBehaviors, onUpdateBehaviors]);
 
-  const handleDeleteBehavior = (behaviorId: string) => {
+  const handleDeleteBehavior = useCallback((behaviorId: string) => {
     const updatedBehaviors = localBehaviors.filter(behavior => behavior.id !== behaviorId);
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
-  };
+  }, [localBehaviors, onUpdateBehaviors]);
 
-  const toggleBehaviorExpand = (behaviorId: string) => {
+  const toggleBehaviorExpand = useCallback((behaviorId: string) => {
     const newExpanded = new Set(expandedBehaviors);
     if (newExpanded.has(behaviorId)) {
       newExpanded.delete(behaviorId);
@@ -109,9 +109,9 @@ const handleAddBehavior = () => {
       newExpanded.add(behaviorId);
     }
     setExpandedBehaviors(newExpanded);
-  };
+  }, [expandedBehaviors]);
 
-  const handleAddSubTask = (behaviorId: string) => {
+  const handleAddSubTask = useCallback((behaviorId: string) => {
     const subTaskName = newSubTaskNames[behaviorId]?.trim();
     if (!subTaskName) return;
 
@@ -129,9 +129,9 @@ const handleAddBehavior = () => {
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
     setNewSubTaskNames({ ...newSubTaskNames, [behaviorId]: "" });
-  };
+  }, [newSubTaskNames, localBehaviors, onUpdateBehaviors]);
 
-  const handleSubTaskProgressChange = (behaviorId: string, subTaskId: string, newProgress: number[]) => {
+  const handleSubTaskProgressChange = useCallback((behaviorId: string, subTaskId: string, newProgress: number[]) => {
     const updatedBehaviors = localBehaviors.map((behavior) =>
       behavior.id === behaviorId
         ? {
@@ -144,9 +144,9 @@ const handleAddBehavior = () => {
     );
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
-  };
+  }, [localBehaviors, onUpdateBehaviors]);
 
-  const handleDeleteSubTask = (behaviorId: string, subTaskId: string) => {
+  const handleDeleteSubTask = useCallback((behaviorId: string, subTaskId: string) => {
     const updatedBehaviors = localBehaviors.map((behavior) =>
       behavior.id === behaviorId
         ? {
@@ -157,7 +157,7 @@ const handleAddBehavior = () => {
     );
     setLocalBehaviors(updatedBehaviors);
     onUpdateBehaviors(updatedBehaviors);
-  };
+  }, [localBehaviors, onUpdateBehaviors]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>

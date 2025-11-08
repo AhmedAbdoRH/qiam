@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -47,31 +47,31 @@ export const ValueSheet = ({
     setLocalBalancePercentage(balancePercentage);
   }, [selectedFeelings, feelingNotes, notes, balancePercentage, valueName]);
 
-  const handleFeelingToggle = (feeling: string) => {
+  const handleFeelingToggle = useCallback((feeling: string) => {
     const newSelectedFeelings = localSelectedFeelings.includes(feeling)
       ? localSelectedFeelings.filter((f) => f !== feeling)
       : [...localSelectedFeelings, feeling];
     
     setLocalSelectedFeelings(newSelectedFeelings);
     onUpdate(newSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage);
-  };
+  }, [localSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
 
-  const handleFeelingNoteChange = (feeling: string, note: string) => {
+  const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
     setLocalFeelingNotes(newFeelingNotes);
     onUpdate(localSelectedFeelings, newFeelingNotes, localNotes, localBalancePercentage);
-  };
+  }, [localSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
 
-  const handleNotesChange = (value: string) => {
+  const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
     onUpdate(localSelectedFeelings, localFeelingNotes, value, localBalancePercentage);
-  };
+  }, [localSelectedFeelings, localFeelingNotes, localBalancePercentage, onUpdate]);
 
-  const handleBalanceChange = (value: number[]) => {
+  const handleBalanceChange = useCallback((value: number[]) => {
     const newBalance = value[0];
     setLocalBalancePercentage(newBalance);
     onUpdate(localSelectedFeelings, localFeelingNotes, localNotes, newBalance);
-  };
+  }, [localSelectedFeelings, localFeelingNotes, localNotes, onUpdate]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 

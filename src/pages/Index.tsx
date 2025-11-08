@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
@@ -23,13 +23,7 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   // Load values from database
-  useEffect(() => {
-    if (user) {
-      loadValuesData();
-    }
-  }, [user]);
-
-  const loadValuesData = async () => {
+  const loadValuesData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -37,7 +31,6 @@ const Index = () => {
         .from("spiritual_values")
         .select("*")
         .eq("user_id", user.id);
-      console.log('Supabase data:', data, 'Supabase error:', error);
 
       if (error) throw error;
 
@@ -45,15 +38,12 @@ const Index = () => {
         const formattedData: Record<string, ValueData> = {};
         data.forEach((item) => {
           if (!item.value_id || typeof item.value_id !== 'string' || item.value_id.trim() === '') {
-            console.warn('Skipping item due to invalid or empty value_id:', item);
             return;
           }
-          // Parse selected_feelings safely
           const selectedFeelings = Array.isArray(item.selected_feelings)
             ? (item.selected_feelings as string[])
             : [];
           
-          // Parse feeling_notes safely
           const feelingNotes = 
             item.feeling_notes && 
             typeof item.feeling_notes === "object" && 
@@ -79,9 +69,15 @@ const Index = () => {
     } finally {
       setDataLoading(false);
     }
-  };
+  }, [user]);
 
-  const getValueData = (valueId: string): ValueData => {
+  useEffect(() => {
+    if (user) {
+      loadValuesData();
+    }
+  }, [user, loadValuesData]);
+
+  const getValueData = useCallback((valueId: string): ValueData => {
     if (valuesData[valueId]) {
       return valuesData[valueId];
     }
@@ -99,9 +95,9 @@ const Index = () => {
       notes: "",
       balancePercentage: 100,
     };
-  };
+  }, [valuesData]);
 
-  const handleValueUpdate = async (
+  const handleValueUpdate = useCallback(async (
     valueId: string,
     selectedFeelings: string[],
     feelingNotes: Record<string, string>,
@@ -120,20 +116,16 @@ const Index = () => {
     };
 
     // Update local state
-    setValuesData({
-      ...valuesData,
+    setValuesData(prev => ({
+      ...prev,
       [valueId]: newValueData,
-    });
+    }));
 
     // Update database
-    if (!user) {
-      console.error("Attempted to save value without a logged-in user.");
-      return;
-    }
+    if (!user) return;
     
     try {
-      console.log("Attempting to upsert data for user:", user.id, "with valueId:", valueId);
-      const { error } = await supabase
+      await supabase
         .from("spiritual_values")
         .upsert({
           user_id: user.id,
@@ -144,27 +136,25 @@ const Index = () => {
           notes: notes,
           balance_percentage: balancePercentage,
         }, { onConflict: 'user_id,value_id' });
-
-      if (error) {
-        console.error("Error saving value to Supabase:", error);
-      } else {
-        console.log("Value saved successfully for user:", user.id, "valueId:", valueId);
-      }
     } catch (error) {
       console.error("Unexpected error during Supabase upsert:", error);
     }
-  };
+  }, [user]);
 
-  const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
+  const selectedValueData = useMemo(
+    () => selectedValue ? getValueData(selectedValue) : null,
+    [selectedValue, getValueData]
+  );
 
   // Sort values by balance percentage
-  const sortedValues = VALUES.map((valueName, index) => ({
-    index,
-    valueName,
-    valueData: getValueData(index.toString()),
-  })).sort((a, b) => {
-    return a.valueData.balancePercentage - b.valueData.balancePercentage;
-  });
+  const sortedValues = useMemo(() => 
+    VALUES.map((valueName, index) => ({
+      index,
+      valueName,
+      valueData: getValueData(index.toString()),
+    })).sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage),
+    [getValueData]
+  );
 
   if (loading || dataLoading) {
     return (

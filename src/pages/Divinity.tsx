@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,13 +48,13 @@ export default function Divinity() {
   
   const [currentProgress, setCurrentProgress] = useState(50);
   
-  const handleOpenNote = (name: string) => {
+  const handleOpenNote = useCallback((name: string) => {
     setSelectedName(name);
     setCurrentNote(notes[name] || '');
     setCurrentProgress(progress[name] ?? 50);
-  };
+  }, [notes, progress]);
   
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (selectedName) {
       const newNotes = { ...notes };
       if (currentNote.trim()) {
@@ -64,26 +64,24 @@ export default function Divinity() {
       }
       setNotes(newNotes);
       
-      // Ensure progress is always a number between 0 and 100
       const validatedProgress = Math.min(100, Math.max(0, currentProgress));
       const newProgress = { ...progress, [selectedName]: validatedProgress };
       setProgress(newProgress);
       
       setSelectedName(null);
     }
-  };
+  }, [selectedName, currentNote, currentProgress, notes, progress, setNotes, setProgress]);
 
   // Sort divine names based on their progress (lowest to highest, top to bottom)
-  const sortedDivineNames = [...divineNames].sort((a, b) => {
-    // Default to 50% if not set
-    const progressA = progress[a] ?? 50;
-    const progressB = progress[b] ?? 50;
-    // Sort from lowest to highest progress (top to bottom)
-    if (progressA < progressB) return -1;
-    if (progressA > progressB) return 1;
-    // If progress is equal, sort alphabetically (right to left)
-    return a.localeCompare(b);
-  });
+  const sortedDivineNames = useMemo(() => 
+    [...divineNames].sort((a, b) => {
+      const progressA = progress[a] ?? 50;
+      const progressB = progress[b] ?? 50;
+      if (progressA < progressB) return -1;
+      if (progressA > progressB) return 1;
+      return a.localeCompare(b);
+    }), [progress]
+  );
 
   return (
     <div className="container mx-auto px-4 pb-24 pt-6">
@@ -98,46 +96,28 @@ export default function Divinity() {
             <button 
               key={index}
               onClick={() => handleOpenNote(name)}
-              className="group relative overflow-hidden rounded-2xl p-5 min-h-[140px] transition-all duration-500 hover:scale-[1.03] active:scale-95 w-full text-right"
+              className="group relative overflow-hidden rounded-2xl p-5 min-h-[140px] transition-all duration-300 hover:scale-[1.03] active:scale-95 w-full text-right"
               style={{
                 background: 'var(--gradient-card)',
                 boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
               }}
             >
-              {/* Glow effect */}
+              {/* Optimized glow effect */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {/* Main glow layer */}
                 <div
-                  className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-60 group-hover:opacity-80 glow-anim"
+                  className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-60 group-hover:opacity-80 transition-opacity duration-300"
                   style={{
                     background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.25) 0%, transparent 75%)',
-                    willChange: "transform, opacity",
-                    transition: 'opacity 0.4s ease-in-out',
                   }}
                 />
                 
-                {/* Secondary subtle glow */}
-                <div
-                  className="absolute -top-8 -left-8 w-[200px] h-[200px] opacity-30 group-hover:opacity-50 glow-anim"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, transparent 80%)',
-                    animationDelay: '2s',
-                    animationDuration: '15s',
-                    willChange: "transform, opacity",
-                    transition: 'opacity 0.4s ease-in-out',
-                  }}
-                />
-                
-                {/* Edge glow */}
                 <div 
-                  className="absolute inset-0 border border-transparent rounded-2xl"
+                  className="absolute inset-0 border border-transparent rounded-2xl transition-shadow duration-300"
                   style={{
                     boxShadow: 'inset 0 0 18px rgba(99, 102, 241, 0.2)',
-                    transition: 'box-shadow 0.4s ease-in-out',
                   }}
                 />
                 
-                {/* Note indicator dot */}
                 {notes[name] && (
                   <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-white" />
                 )}

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
-import { TaskSheet } from "@/components/TaskSheet"; // New import
+import { TaskSheet } from "@/components/TaskSheet";
 import { VALUES, ValueData } from "@/types/value";
 import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,14 +37,7 @@ const Behavioral = () => {
     }
   }, [user, loading, navigate]);
 
-  // Load values from database
-  useEffect(() => {
-    if (user) {
-      loadValuesData();
-    }
-  }, [user]);
-
-  const loadValuesData = async () => {
+  const loadValuesData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -60,12 +53,10 @@ const Behavioral = () => {
         const formattedBehaviors: Record<string, Behavior[]> = {};
         
         data.forEach((item) => {
-          // Parse selected_feelings safely
           const selectedFeelings = Array.isArray(item.selected_feelings)
             ? (item.selected_feelings as string[])
             : [];
           
-          // Parse feeling_notes safely
           const feelingNotes = 
             item.feeling_notes && 
             typeof item.feeling_notes === "object" && 
@@ -73,7 +64,6 @@ const Behavioral = () => {
               ? (item.feeling_notes as Record<string, string>)
               : {};
 
-          // Parse behaviors safely
           const behaviors = Array.isArray(item.behaviors)
             ? (item.behaviors as unknown as Behavior[])
             : [];
@@ -97,9 +87,15 @@ const Behavioral = () => {
     } finally {
       setDataLoading(false);
     }
-  };
+  }, [user]);
 
-  const getValueData = (valueId: string): ValueData => {
+  useEffect(() => {
+    if (user) {
+      loadValuesData();
+    }
+  }, [user, loadValuesData]);
+
+  const getValueData = useCallback((valueId: string): ValueData => {
     if (valuesData[valueId]) {
       return valuesData[valueId];
     }
@@ -117,9 +113,9 @@ const Behavioral = () => {
       notes: "",
       balancePercentage: 100,
     };
-  };
+  }, [valuesData]);
 
-  const handleValueUpdate = async (
+  const handleValueUpdate = useCallback(async (
     valueId: string,
     selectedFeelings: string[],
     feelingNotes: Record<string, string>,
@@ -135,21 +131,15 @@ const Behavioral = () => {
       balancePercentage,
     };
 
-    // Update local state
-    setValuesData({
-      ...valuesData,
+    setValuesData(prev => ({
+      ...prev,
       [valueId]: newValueData,
-    });
+    }));
 
-    // Update database
-    if (!user) {
-      console.error("Attempted to save value without a logged-in user.");
-      return;
-    }
+    if (!user) return;
     
     try {
-      console.log("Attempting to upsert data for user:", user.id, "with valueId:", valueId);
-      const { error } = await supabase
+      await supabase
         .from("behavioral_values")
         .upsert({
           user_id: user.id,
@@ -160,18 +150,12 @@ const Behavioral = () => {
           notes: notes,
           balance_percentage: balancePercentage,
         }, { onConflict: 'user_id,value_id' });
-
-      if (error) {
-        console.error("Error saving value to Supabase:", error);
-      } else {
-        console.log("Value saved successfully for user:", user.id, "valueId:", valueId);
-      }
     } catch (error) {
       console.error("Unexpected error during Supabase upsert:", error);
     }
-  };
+  }, [user]);
 
-  const handleUpdateBehaviors = async (updatedBehaviors: Behavior[]) => {
+  const handleUpdateBehaviors = useCallback(async (updatedBehaviors: Behavior[]) => {
     if (!selectedBehavioralValueForTasks || !user) return;
     
     const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
@@ -179,15 +163,13 @@ const Behavioral = () => {
     
     const valueId = valueIndex.toString();
     
-    // Update local state
-    setBehaviorsByValue({
-      ...behaviorsByValue,
+    setBehaviorsByValue(prev => ({
+      ...prev,
       [valueId]: updatedBehaviors,
-    });
+    }));
     
-    // Save to database
     try {
-      const { error } = await supabase
+      await supabase
         .from("behavioral_values")
         .upsert(
           {
@@ -198,16 +180,12 @@ const Behavioral = () => {
           },
           { onConflict: 'user_id,value_id' }
         );
-
-      if (error) {
-        console.error("Error saving behaviors:", error);
-      }
     } catch (error) {
       console.error("Unexpected error saving behaviors:", error);
     }
-  };
+  }, [selectedBehavioralValueForTasks, user]);
 
-  const handleUpdateOverallBalancePercentage = (newPercentage: number) => {
+  const handleUpdateOverallBalancePercentage = useCallback((newPercentage: number) => {
     if (selectedBehavioralValueForTasks) {
       const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
       if (valueIndex !== -1) {
@@ -222,25 +200,24 @@ const Behavioral = () => {
         );
       }
     }
-  };
+  }, [selectedBehavioralValueForTasks, getValueData, handleValueUpdate]);
 
-  const currentOverallBalancePercentage = selectedBehavioralValueForTasks
-    ? (() => {
-        const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
-        if (valueIndex === -1) return 100;
-        const valueId = valueIndex.toString();
-        return getValueData(valueId).balancePercentage;
-      })()
-    : 100;
+  const currentOverallBalancePercentage = useMemo(() => {
+    if (!selectedBehavioralValueForTasks) return 100;
+    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
+    if (valueIndex === -1) return 100;
+    const valueId = valueIndex.toString();
+    return getValueData(valueId).balancePercentage;
+  }, [selectedBehavioralValueForTasks, getValueData]);
 
-  // Sort values by balance percentage
-  const sortedValues = BEHAVIORAL_VALUES.map((valueName, index) => ({
-    index,
-    valueName,
-    valueData: getValueData(index.toString()),
-  })).sort((a, b) => {
-    return a.valueData.balancePercentage - b.valueData.balancePercentage;
-  });
+  const sortedValues = useMemo(() => 
+    BEHAVIORAL_VALUES.map((valueName, index) => ({
+      index,
+      valueName,
+      valueData: getValueData(index.toString()),
+    })).sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage),
+    [getValueData]
+  );
 
   if (loading || dataLoading) {
     return (
