@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pin, PinOff } from "lucide-react";
 
 interface SubTask {
   id: string;
@@ -32,6 +32,8 @@ interface TaskSheetProps {
   onUpdateBehaviors: (updatedBehaviors: Behavior[]) => void;
   overallBalancePercentage: number; // New prop for overall balance
   onUpdateOverallBalancePercentage: (newPercentage: number) => void; // New prop for updating overall balance
+  isPinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 const getProgressBarColorClass = (percentage: number) => {
@@ -52,6 +54,8 @@ export const TaskSheet = ({
   onUpdateBehaviors,
   overallBalancePercentage,
   onUpdateOverallBalancePercentage,
+  isPinned = false,
+  onTogglePin,
 }: TaskSheetProps) => {
   const [localBehaviors, setLocalBehaviors] = useState<Behavior[]>(behaviors);
   const [localOverallBalance, setLocalOverallBalance] = useState(overallBalancePercentage);
@@ -165,6 +169,21 @@ export const TaskSheet = ({
         side="bottom"
         className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto p-0"
       >
+        {onTogglePin && (
+          <div className="absolute top-4 left-4 z-50">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onTogglePin}
+            >
+              {isPinned ? (
+                <Pin className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              ) : (
+                <PinOff className="w-5 h-5 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
+        )}
                   {/* Overall Balance Percentage Slider */}
           <div className="space-y-2 border-b pb-4 mb-4">
             <Label htmlFor="overall-balance" className="text-lg font-semibold text-white">

@@ -36,6 +36,7 @@ import {
   Mic,
   Moon,
   Palette,
+  Pin,
   RotateCcw,
   Search,
   Shield,
@@ -122,9 +123,10 @@ interface ValueCardProps {
   name: string;
   balancePercentage: number;
   onClick: () => void;
+  isPinned?: boolean;
 }
 
-export const ValueCard = React.memo(({ name, balancePercentage, onClick }: ValueCardProps) => {
+export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinned = false }: ValueCardProps) => {
   const accentColor = getBalanceColor(balancePercentage);
   const Icon = getValueIcon(name);
 
@@ -151,6 +153,11 @@ export const ValueCard = React.memo(({ name, balancePercentage, onClick }: Value
             boxShadow: `inset 0 0 18px ${withAlpha(accentColor, 0.2)}`,
           }}
         />
+        {isPinned && (
+          <div className="absolute top-3 right-3 z-20">
+            <Pin className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+          </div>
+        )}
       </div>
       
       <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -14,6 +15,26 @@ const Index = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Pinned values state
+  const [pinnedValuesArray, setPinnedValuesArray] = useLocalStorage<string[]>(
+    'spiritualValuesPinned',
+    []
+  );
+  const pinnedValues = useMemo(() => new Set(pinnedValuesArray), [pinnedValuesArray]);
+  
+  const togglePin = useCallback((valueId: string) => {
+    setPinnedValuesArray(prev => {
+      const newArray = [...prev];
+      const index = newArray.indexOf(valueId);
+      if (index > -1) {
+        newArray.splice(index, 1);
+      } else {
+        newArray.push(valueId);
+      }
+      return newArray;
+    });
+  }, [setPinnedValuesArray]);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -146,15 +167,22 @@ const Index = () => {
     [selectedValue, getValueData]
   );
 
-  // Sort values by balance percentage
-  const sortedValues = useMemo(() => 
-    VALUES.map((valueName, index) => ({
+  // Sort values: pinned first, then by balance percentage
+  const sortedValues = useMemo(() => {
+    const allValues = VALUES.map((valueName, index) => ({
       index,
       valueName,
       valueData: getValueData(index.toString()),
-    })).sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage),
-    [getValueData]
-  );
+    }));
+    
+    const pinned = allValues.filter(v => pinnedValues.has(v.index.toString()));
+    const unpinned = allValues.filter(v => !pinnedValues.has(v.index.toString()));
+    
+    const sortByProgress = (arr: typeof allValues) => 
+      [...arr].sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage);
+    
+    return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
+  }, [getValueData, pinnedValues]);
 
   if (loading || dataLoading) {
     return (
@@ -180,6 +208,7 @@ const Index = () => {
               name={valueName}
               balancePercentage={valueData.balancePercentage}
               onClick={() => setSelectedValue(index.toString())}
+              isPinned={pinnedValues.has(index.toString())}
             />
           ))}
         </div>
@@ -218,6 +247,9 @@ const Index = () => {
               balancePercentage
             )
           }
+          valueId={selectedValueData.id}
+          isPinned={pinnedValues.has(selectedValueData.id)}
+          onTogglePin={() => togglePin(selectedValueData.id)}
         />
       )}
     </div>

@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { Pin, PinOff } from "lucide-react";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import { TaskList } from "./TaskList";
@@ -23,6 +25,9 @@ interface ValueSheetProps {
   notes: string;
   balancePercentage: number;
   onUpdate: (selectedFeelings: string[], feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
+  valueId?: string;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 export const ValueSheet = ({
@@ -34,6 +39,9 @@ export const ValueSheet = ({
   notes,
   balancePercentage,
   onUpdate,
+  valueId,
+  isPinned = false,
+  onTogglePin,
 }: ValueSheetProps) => {
   const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
   const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
@@ -88,6 +96,21 @@ export const ValueSheet = ({
         side="bottom" 
         className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto p-0"
       >
+        {valueId && onTogglePin && (
+          <div className="absolute top-4 left-4 z-50">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onTogglePin}
+            >
+              {isPinned ? (
+                <Pin className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              ) : (
+                <PinOff className="w-5 h-5 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
+        )}
         {/* Balance percentage slider */}
           <Slider
             value={[localBalancePercentage]}

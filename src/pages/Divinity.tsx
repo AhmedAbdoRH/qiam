@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Pin, PinOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
@@ -46,6 +46,26 @@ export default function Divinity() {
     divineNames.reduce((acc, name) => ({ ...acc, [name]: 50 }), {})
   );
   
+  // Pinned names state (stored as array in localStorage, converted to Set for use)
+  const [pinnedNamesArray, setPinnedNamesArray] = useLocalStorage<string[]>(
+    'divinityPinnedNames',
+    []
+  );
+  const pinnedNames = useMemo(() => new Set(pinnedNamesArray), [pinnedNamesArray]);
+  
+  const togglePin = useCallback((name: string) => {
+    setPinnedNamesArray(prev => {
+      const newArray = [...prev];
+      const index = newArray.indexOf(name);
+      if (index > -1) {
+        newArray.splice(index, 1);
+      } else {
+        newArray.push(name);
+      }
+      return newArray;
+    });
+  }, [setPinnedNamesArray]);
+  
   const [currentProgress, setCurrentProgress] = useState(50);
   
   const handleOpenNote = useCallback((name: string) => {
@@ -72,16 +92,22 @@ export default function Divinity() {
     }
   }, [selectedName, currentNote, currentProgress, notes, progress, setNotes, setProgress]);
 
-  // Sort divine names based on their progress (lowest to highest, top to bottom)
-  const sortedDivineNames = useMemo(() => 
-    [...divineNames].sort((a, b) => {
-      const progressA = progress[a] ?? 50;
-      const progressB = progress[b] ?? 50;
-      if (progressA < progressB) return -1;
-      if (progressA > progressB) return 1;
-      return a.localeCompare(b);
-    }), [progress]
-  );
+  // Sort divine names: pinned first, then by progress (lowest to highest)
+  const sortedDivineNames = useMemo(() => {
+    const pinned = [...divineNames].filter(name => pinnedNames.has(name));
+    const unpinned = [...divineNames].filter(name => !pinnedNames.has(name));
+    
+    const sortByProgress = (arr: readonly string[]) => 
+      [...arr].sort((a, b) => {
+        const progressA = progress[a] ?? 50;
+        const progressB = progress[b] ?? 50;
+        if (progressA < progressB) return -1;
+        if (progressA > progressB) return 1;
+        return a.localeCompare(b);
+      });
+    
+    return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
+  }, [progress, pinnedNames]);
 
   return (
     <div className="container mx-auto px-4 pb-24 pt-6">
@@ -121,6 +147,11 @@ export default function Divinity() {
                 {notes[name] && (
                   <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-white" />
                 )}
+                {pinnedNames.has(name) && (
+                  <div className="absolute top-3 right-3 z-20">
+                    <Pin className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  </div>
+                )}
               </div>
               
               <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
@@ -141,7 +172,21 @@ export default function Divinity() {
       }}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 overflow-hidden">
           <SheetHeader className="text-right px-6 pt-6 pb-4 border-b border-border/20">
-            <SheetTitle className="text-2xl font-bold">{selectedName}</SheetTitle>
+            <div className="flex items-center justify-between gap-4" dir="rtl">
+              <SheetTitle className="text-2xl font-bold flex-1 text-right">{selectedName}</SheetTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => selectedName && togglePin(selectedName)}
+                className="shrink-0"
+              >
+                {selectedName && pinnedNames.has(selectedName) ? (
+                  <Pin className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                ) : (
+                  <PinOff className="w-5 h-5 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </SheetHeader>
           
           <div className="px-6 py-4 bg-gradient-to-r from-background/50 to-background border-b border-border/10">
@@ -174,7 +219,7 @@ export default function Divinity() {
             />
           </div>
           
-          <div className="px-6 py-6 h-[calc(100%-180px)] overflow-y-auto">
+          <div className="px-6 py-6 h-[calc(100%-220px)] overflow-y-auto">
             <Textarea
               value={currentNote}
               onChange={(e) => setCurrentNote(e.target.value)}
@@ -184,7 +229,26 @@ export default function Divinity() {
             />
           </div>
           
-          <SheetFooter className="flex flex-row justify-between sm:justify-between">
+          <div className="px-6 pt-4 pb-2 flex justify-center">
+            <Button
+              onClick={() => {
+                if (currentNote.trim()) {
+                  setNotes({ ...notes, [selectedName!]: currentNote });
+                } else {
+                  const newNotes = { ...notes };
+                  delete newNotes[selectedName!];
+                  setNotes(newNotes);
+                }
+                setSelectedName(null);
+              }}
+              className="px-8 py-6 text-base text-white hover:opacity-90"
+              style={{ backgroundColor: '#8B4513' }}
+            >
+              حفظ
+            </Button>
+          </div>
+          
+          <SheetFooter className="flex justify-start px-6 pb-6">
             <Button
               variant="outline"
               onClick={() => {
@@ -197,21 +261,6 @@ export default function Divinity() {
               className="px-6 py-6 text-base"
             >
               حذف الملاحظة
-            </Button>
-            <Button
-              onClick={() => {
-                if (currentNote.trim()) {
-                  setNotes({ ...notes, [selectedName!]: currentNote });
-                } else {
-                  const newNotes = { ...notes };
-                  delete newNotes[selectedName!];
-                  setNotes(newNotes);
-                }
-                setSelectedName(null);
-              }}
-              className="px-8 py-6 text-base"
-            >
-              حفظ
             </Button>
           </SheetFooter>
         </SheetContent>
