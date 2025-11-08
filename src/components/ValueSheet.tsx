@@ -21,10 +21,11 @@ interface ValueSheetProps {
   onClose: () => void;
   valueName: string;
   selectedFeelings: string[];
+  positiveFeelings?: string[];
   feelingNotes: Record<string, string>;
   notes: string;
   balancePercentage: number;
-  onUpdate: (selectedFeelings: string[], feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
+  onUpdate: (selectedFeelings: string[], positiveFeelings: string[], feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
   valueId?: string;
   isPinned?: boolean;
   onTogglePin?: () => void;
@@ -35,6 +36,7 @@ export const ValueSheet = ({
   onClose,
   valueName,
   selectedFeelings,
+  positiveFeelings = [],
   feelingNotes,
   notes,
   balancePercentage,
@@ -44,42 +46,66 @@ export const ValueSheet = ({
   onTogglePin,
 }: ValueSheetProps) => {
   const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
+  const [localPositiveFeelings, setLocalPositiveFeelings] = useState<string[]>(positiveFeelings);
   const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
 
   useEffect(() => {
     setLocalSelectedFeelings(selectedFeelings);
+    setLocalPositiveFeelings(positiveFeelings || []);
     setLocalFeelingNotes(feelingNotes);
     setLocalNotes(notes);
     setLocalBalancePercentage(balancePercentage);
-  }, [selectedFeelings, feelingNotes, notes, balancePercentage, valueName]);
+  }, [selectedFeelings, positiveFeelings, feelingNotes, notes, balancePercentage, valueName]);
+
+  // Get feeling state: null (unselected), 'negative' (red), 'positive' (green)
+  const getFeelingState = useCallback((feeling: string): 'negative' | 'positive' | null => {
+    if (localSelectedFeelings.includes(feeling)) return 'negative';
+    if (localPositiveFeelings.includes(feeling)) return 'positive';
+    return null;
+  }, [localSelectedFeelings, localPositiveFeelings]);
 
   const handleFeelingToggle = useCallback((feeling: string) => {
-    const newSelectedFeelings = localSelectedFeelings.includes(feeling)
-      ? localSelectedFeelings.filter((f) => f !== feeling)
-      : [...localSelectedFeelings, feeling];
+    const currentState = getFeelingState(feeling);
+    
+    let newSelectedFeelings = [...localSelectedFeelings];
+    let newPositiveFeelings = [...localPositiveFeelings];
+    
+    if (currentState === null) {
+      // First click: set to negative (red)
+      newSelectedFeelings = [...newSelectedFeelings, feeling];
+    } else if (currentState === 'negative') {
+      // Second click: change from negative to positive (green)
+      newSelectedFeelings = newSelectedFeelings.filter((f) => f !== feeling);
+      newPositiveFeelings = [...newPositiveFeelings, feeling];
+    } else {
+      // Third click: remove selection
+      newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
+    }
     
     setLocalSelectedFeelings(newSelectedFeelings);
-    onUpdate(newSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage);
-  }, [localSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
+    setLocalPositiveFeelings(newPositiveFeelings);
+    // Save to database via onUpdate
+    onUpdate(newSelectedFeelings, newPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate, getFeelingState]);
 
   const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
     setLocalFeelingNotes(newFeelingNotes);
-    onUpdate(localSelectedFeelings, newFeelingNotes, localNotes, localBalancePercentage);
-  }, [localSelectedFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, newFeelingNotes, localNotes, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
 
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
-    onUpdate(localSelectedFeelings, localFeelingNotes, value, localBalancePercentage);
-  }, [localSelectedFeelings, localFeelingNotes, localBalancePercentage, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localFeelingNotes, value, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localBalancePercentage, onUpdate]);
 
   const handleBalanceChange = useCallback((value: number[]) => {
     const newBalance = value[0];
     setLocalBalancePercentage(newBalance);
-    onUpdate(localSelectedFeelings, localFeelingNotes, localNotes, newBalance);
-  }, [localSelectedFeelings, localFeelingNotes, localNotes, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, newBalance);
+  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, onUpdate]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
@@ -138,15 +164,35 @@ export const ValueSheet = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <Checkbox
-                        id={feeling}
-                        checked={localSelectedFeelings.includes(feeling)}
-                        onCheckedChange={() => handleFeelingToggle(feeling)}
-                        className="h-5 w-5 rounded-full border-2 border-muted-foreground/40 data-[state=checked]:border-destructive data-[state=checked]:bg-destructive/10"
-                      />
-                      {localSelectedFeelings.includes(feeling) && (
-                        <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-destructive" />
-                      )}
+                      {(() => {
+                        const feelingState = getFeelingState(feeling);
+                        const isChecked = feelingState !== null;
+                        const isPositive = feelingState === 'positive';
+                        const isNegative = feelingState === 'negative';
+                        
+                        return (
+                          <>
+                            <Checkbox
+                              id={feeling}
+                              checked={isChecked}
+                              onCheckedChange={() => handleFeelingToggle(feeling)}
+                              className={`h-5 w-5 rounded-full border-2 ${
+                                isNegative
+                                  ? 'border-destructive data-[state=checked]:border-destructive data-[state=checked]:bg-destructive/10'
+                                  : isPositive
+                                  ? 'border-green-500 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500/10'
+                                  : 'border-muted-foreground/40'
+                              }`}
+                            />
+                            {isNegative && (
+                              <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-destructive" />
+                            )}
+                            {isPositive && (
+                              <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-green-500" />
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <Label
                       htmlFor={feeling}

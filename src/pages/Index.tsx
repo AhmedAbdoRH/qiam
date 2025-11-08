@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -16,25 +15,59 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   
-  // Pinned values state
-  const [pinnedValuesArray, setPinnedValuesArray] = useLocalStorage<string[]>(
-    'spiritualValuesPinned',
-    []
-  );
-  const pinnedValues = useMemo(() => new Set(pinnedValuesArray), [pinnedValuesArray]);
-  
-  const togglePin = useCallback((valueId: string) => {
-    setPinnedValuesArray(prev => {
-      const newArray = [...prev];
-      const index = newArray.indexOf(valueId);
-      if (index > -1) {
-        newArray.splice(index, 1);
-      } else {
-        newArray.push(valueId);
+  // Pinned values - loaded from database
+  const pinnedValues = useMemo(() => {
+    const pinned = new Set<string>();
+    Object.values(valuesData).forEach(value => {
+      if (value.isPinned) {
+        pinned.add(value.id);
       }
-      return newArray;
     });
-  }, [setPinnedValuesArray]);
+    return pinned;
+  }, [valuesData]);
+  
+  const togglePin = useCallback(async (valueId: string) => {
+    if (!user) return;
+    
+    const currentValue = getValueData(valueId);
+    const newPinnedState = !currentValue.isPinned;
+    
+    // Update local state immediately
+    setValuesData(prev => ({
+      ...prev,
+      [valueId]: {
+        ...prev[valueId],
+        isPinned: newPinnedState,
+      },
+    }));
+    
+    // Update database
+    try {
+      await supabase
+        .from("spiritual_values")
+        .upsert({
+          user_id: user.id,
+          value_id: valueId,
+          value_name: currentValue.name,
+          selected_feelings: currentValue.selectedFeelings,
+          positive_feelings: currentValue.positiveFeelings || [],
+          feeling_notes: currentValue.feelingNotes,
+          notes: currentValue.notes,
+          balance_percentage: currentValue.balancePercentage,
+          is_pinned: newPinnedState,
+        }, { onConflict: 'user_id,value_id' });
+    } catch (error) {
+      console.error("Error updating pin status:", error);
+      // Revert on error
+      setValuesData(prev => ({
+        ...prev,
+        [valueId]: {
+          ...prev[valueId],
+          isPinned: !newPinnedState,
+        },
+      }));
+    }
+  }, [user, getValueData]);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -72,15 +105,21 @@ const Index = () => {
               ? (item.feeling_notes as Record<string, string>)
               : {};
 
+          const positiveFeelings = Array.isArray(item.positive_feelings)
+            ? (item.positive_feelings as string[])
+            : [];
+
           const valueIndex = parseInt(item.value_id);
           const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
           formattedData[item.value_id] = {
             id: item.value_id,
             name: valueName,
             selectedFeelings,
+            positiveFeelings,
             feelingNotes,
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 100,
+            isPinned: item.is_pinned || false,
           };
         });
         setValuesData(formattedData);
@@ -113,27 +152,33 @@ const Index = () => {
       name: valueName,
       selectedFeelings: [],
       feelingNotes: {},
+      positiveFeelings: [],
       notes: "",
       balancePercentage: 100,
+      isPinned: false,
     };
   }, [valuesData]);
 
   const handleValueUpdate = useCallback(async (
     valueId: string,
     selectedFeelings: string[],
+    positiveFeelings: string[],
     feelingNotes: Record<string, string>,
     notes: string,
     balancePercentage: number
   ) => {
     const valueIndex = parseInt(valueId);
     const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
+    const currentValue = getValueData(valueId);
     const newValueData = {
       id: valueId,
       name: valueName,
       selectedFeelings,
+      positiveFeelings,
       feelingNotes,
       notes,
       balancePercentage,
+      isPinned: currentValue.isPinned || false,
     };
 
     // Update local state
@@ -153,14 +198,16 @@ const Index = () => {
           value_id: valueId,
           value_name: valueName,
           selected_feelings: selectedFeelings,
+          positive_feelings: positiveFeelings || [],
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
+          is_pinned: currentValue.isPinned || false,
         }, { onConflict: 'user_id,value_id' });
     } catch (error) {
       console.error("Unexpected error during Supabase upsert:", error);
     }
-  }, [user]);
+  }, [user, getValueData]);
 
   const selectedValueData = useMemo(
     () => selectedValue ? getValueData(selectedValue) : null,
@@ -234,14 +281,16 @@ const Index = () => {
           isOpen={!!selectedValueData}
           valueName={selectedValueData.name}
           selectedFeelings={selectedValueData.selectedFeelings}
+          positiveFeelings={selectedValueData.positiveFeelings}
           feelingNotes={selectedValueData.feelingNotes}
           notes={selectedValueData.notes}
           balancePercentage={selectedValueData.balancePercentage}
           onClose={() => setSelectedValue(null)}
-          onUpdate={(selectedFeelings, feelingNotes, notes, balancePercentage) =>
+          onUpdate={(selectedFeelings, positiveFeelings, feelingNotes, notes, balancePercentage) =>
             handleValueUpdate(
               selectedValueData.id,
               selectedFeelings,
+              positiveFeelings,
               feelingNotes,
               notes,
               balancePercentage

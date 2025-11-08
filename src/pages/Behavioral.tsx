@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface SubTask {
   id: string;
@@ -31,25 +30,63 @@ const Behavioral = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   
-  // Pinned values state
-  const [pinnedValuesArray, setPinnedValuesArray] = useLocalStorage<string[]>(
-    'behavioralValuesPinned',
-    []
-  );
-  const pinnedValues = useMemo(() => new Set(pinnedValuesArray), [pinnedValuesArray]);
-  
-  const togglePin = useCallback((valueName: string) => {
-    setPinnedValuesArray(prev => {
-      const newArray = [...prev];
-      const index = newArray.indexOf(valueName);
-      if (index > -1) {
-        newArray.splice(index, 1);
-      } else {
-        newArray.push(valueName);
+  // Pinned values - loaded from database
+  const pinnedValues = useMemo(() => {
+    const pinned = new Set<string>();
+    Object.values(valuesData).forEach(value => {
+      if (value.isPinned) {
+        pinned.add(value.name);
       }
-      return newArray;
     });
-  }, [setPinnedValuesArray]);
+    return pinned;
+  }, [valuesData]);
+  
+  const togglePin = useCallback(async (valueName: string) => {
+    if (!user) return;
+    
+    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === valueName);
+    if (valueIndex === -1) return;
+    
+    const valueId = valueIndex.toString();
+    const currentValue = getValueData(valueId);
+    const newPinnedState = !currentValue.isPinned;
+    
+    // Update local state immediately
+    setValuesData(prev => ({
+      ...prev,
+      [valueId]: {
+        ...prev[valueId],
+        isPinned: newPinnedState,
+      },
+    }));
+    
+    // Update database
+    try {
+      await supabase
+        .from("behavioral_values")
+        .upsert({
+          user_id: user.id,
+          value_id: valueId,
+          value_name: valueName,
+          selected_feelings: currentValue.selectedFeelings,
+          positive_feelings: currentValue.positiveFeelings || [],
+          feeling_notes: currentValue.feelingNotes,
+          notes: currentValue.notes,
+          balance_percentage: currentValue.balancePercentage,
+          is_pinned: newPinnedState,
+        }, { onConflict: 'user_id,value_id' });
+    } catch (error) {
+      console.error("Error updating pin status:", error);
+      // Revert on error
+      setValuesData(prev => ({
+        ...prev,
+        [valueId]: {
+          ...prev[valueId],
+          isPinned: !newPinnedState,
+        },
+      }));
+    }
+  }, [user, getValueData]);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -85,6 +122,10 @@ const Behavioral = () => {
               ? (item.feeling_notes as Record<string, string>)
               : {};
 
+          const positiveFeelings = Array.isArray(item.positive_feelings)
+            ? (item.positive_feelings as string[])
+            : [];
+
           const behaviors = Array.isArray(item.behaviors)
             ? (item.behaviors as unknown as Behavior[])
             : [];
@@ -93,9 +134,11 @@ const Behavioral = () => {
             id: item.value_id,
             name: BEHAVIORAL_VALUES[parseInt(item.value_id)],
             selectedFeelings,
+            positiveFeelings,
             feelingNotes,
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 100,
+            isPinned: item.is_pinned || false,
           };
           
           formattedBehaviors[item.value_id] = behaviors;
@@ -130,26 +173,32 @@ const Behavioral = () => {
       id: valueId,
       name: valueName,
       selectedFeelings: [],
+      positiveFeelings: [],
       feelingNotes: {},
       notes: "",
       balancePercentage: 100,
+      isPinned: false,
     };
   }, [valuesData]);
 
   const handleValueUpdate = useCallback(async (
     valueId: string,
     selectedFeelings: string[],
+    positiveFeelings: string[],
     feelingNotes: Record<string, string>,
     notes: string,
     balancePercentage: number
   ) => {
+    const currentValue = getValueData(valueId);
     const newValueData = {
       id: valueId,
       name: BEHAVIORAL_VALUES[parseInt(valueId)],
       selectedFeelings,
+      positiveFeelings,
       feelingNotes,
       notes,
       balancePercentage,
+      isPinned: currentValue.isPinned || false,
     };
 
     setValuesData(prev => ({
@@ -167,14 +216,16 @@ const Behavioral = () => {
           value_id: valueId,
           value_name: BEHAVIORAL_VALUES[parseInt(valueId)],
           selected_feelings: selectedFeelings,
+          positive_feelings: positiveFeelings || [],
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
+          is_pinned: currentValue.isPinned || false,
         }, { onConflict: 'user_id,value_id' });
     } catch (error) {
       console.error("Unexpected error during Supabase upsert:", error);
     }
-  }, [user]);
+  }, [user, getValueData]);
 
   const handleUpdateBehaviors = useCallback(async (updatedBehaviors: Behavior[]) => {
     if (!selectedBehavioralValueForTasks || !user) return;
@@ -215,6 +266,7 @@ const Behavioral = () => {
         handleValueUpdate(
           valueId,
           currentData.selectedFeelings,
+          currentData.positiveFeelings || [],
           currentData.feelingNotes,
           currentData.notes,
           newPercentage

@@ -2,9 +2,11 @@ export interface ValueData {
   id: string;
   name: string;
   selectedFeelings: string[];
+  positiveFeelings?: string[]; // المشاعر الإيجابية (الأخضر)
   feelingNotes: Record<string, string>; // ملاحظات لكل شعور
   notes: string;
   balancePercentage: number;
+  isPinned?: boolean; // حالة التثبيت
 }
 
 export const FEELINGS = [
