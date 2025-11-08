@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Heart, Target, Sparkles } from "lucide-react";
+import { Target, HandFist, Sparkles } from "lucide-react";
 
 const BottomNavBar = () => {
   const location = useLocation();
@@ -9,12 +9,12 @@ const BottomNavBar = () => {
     {
       name: "الشعور",
       path: "/",
-      icon: Heart,
+      icon: Target,
     },
     {
-      name: "الفعل",
+      name: "العمل",
       path: "/behavioral",
-      icon: Target,
+      icon: HandFist,
     },
     {
       name: "الايمان",
