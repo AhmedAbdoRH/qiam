@@ -29,6 +29,28 @@ const Behavioral = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const getValueData = useCallback((valueId: string): ValueData => {
+    if (valuesData[valueId]) {
+      return valuesData[valueId];
+    }
+    
+    const valueIndex = parseInt(valueId);
+    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < BEHAVIORAL_VALUES.length 
+      ? BEHAVIORAL_VALUES[valueIndex] 
+      : "Unknown Value";
+    
+    return {
+      id: valueId,
+      name: valueName,
+      selectedFeelings: [],
+      positiveFeelings: [],
+      feelingNotes: {},
+      notes: "",
+      balancePercentage: 100,
+      isPinned: false,
+    };
+  }, [valuesData]);
   
   // Pinned values - loaded from database
   const pinnedValues = useMemo(() => {
@@ -158,28 +180,6 @@ const Behavioral = () => {
       loadValuesData();
     }
   }, [user, loadValuesData]);
-
-  const getValueData = useCallback((valueId: string): ValueData => {
-    if (valuesData[valueId]) {
-      return valuesData[valueId];
-    }
-    
-    const valueIndex = parseInt(valueId);
-    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < BEHAVIORAL_VALUES.length 
-      ? BEHAVIORAL_VALUES[valueIndex] 
-      : "Unknown Value";
-    
-    return {
-      id: valueId,
-      name: valueName,
-      selectedFeelings: [],
-      positiveFeelings: [],
-      feelingNotes: {},
-      notes: "",
-      balancePercentage: 100,
-      isPinned: false,
-    };
-  }, [valuesData]);
 
   const handleValueUpdate = useCallback(async (
     valueId: string,

@@ -21,7 +21,9 @@ export type Database = {
           created_at: string | null
           feeling_notes: Json | null
           id: string
+          is_pinned: boolean | null
           notes: string | null
+          positive_feelings: Json | null
           selected_feelings: Json | null
           updated_at: string | null
           user_id: string
@@ -34,7 +36,9 @@ export type Database = {
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
+          is_pinned?: boolean | null
           notes?: string | null
+          positive_feelings?: Json | null
           selected_feelings?: Json | null
           updated_at?: string | null
           user_id: string
@@ -47,12 +51,44 @@ export type Database = {
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
+          is_pinned?: boolean | null
           notes?: string | null
+          positive_feelings?: Json | null
           selected_feelings?: Json | null
           updated_at?: string | null
           user_id?: string
           value_id?: string
           value_name?: string
+        }
+        Relationships: []
+      }
+      divine_names: {
+        Row: {
+          created_at: string | null
+          divine_name: string
+          id: string
+          notes: string | null
+          progress: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          divine_name: string
+          id?: string
+          notes?: string | null
+          progress?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          divine_name?: string
+          id?: string
+          notes?: string | null
+          progress?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -62,7 +98,9 @@ export type Database = {
           created_at: string | null
           feeling_notes: Json | null
           id: string
+          is_pinned: boolean | null
           notes: string | null
+          positive_feelings: Json | null
           selected_feelings: Json | null
           session_id: string | null
           updated_at: string | null
@@ -75,7 +113,9 @@ export type Database = {
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
+          is_pinned?: boolean | null
           notes?: string | null
+          positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null
           updated_at?: string | null
@@ -88,7 +128,9 @@ export type Database = {
           created_at?: string | null
           feeling_notes?: Json | null
           id?: string
+          is_pinned?: boolean | null
           notes?: string | null
+          positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null
           updated_at?: string | null
