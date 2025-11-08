@@ -163,40 +163,43 @@ export const ValueSheet = ({
                   className="flex flex-row items-center gap-3 p-3 rounded-lg bg-secondary/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => handleFeelingToggle(feeling)}
+                      className="relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-card"
+                    >
                       {(() => {
                         const feelingState = getFeelingState(feeling);
-                        const isChecked = feelingState !== null;
-                        const isPositive = feelingState === 'positive';
                         const isNegative = feelingState === 'negative';
+                        const isPositive = feelingState === 'positive';
+                        
+                        if (isNegative) {
+                          return (
+                            <>
+                              <div className="absolute inset-0 rounded-full border-2 border-destructive bg-destructive/10 shadow-lg shadow-destructive/20" />
+                              <div className="relative w-3.5 h-3.5 rounded-full bg-destructive shadow-md" />
+                            </>
+                          );
+                        }
+                        
+                        if (isPositive) {
+                          return (
+                            <>
+                              <div className="absolute inset-0 rounded-full border-2 border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20" />
+                              <div className="relative w-3.5 h-3.5 rounded-full bg-green-500 shadow-md" />
+                            </>
+                          );
+                        }
                         
                         return (
-                          <>
-                            <Checkbox
-                              id={feeling}
-                              checked={isChecked}
-                              onCheckedChange={() => handleFeelingToggle(feeling)}
-                              className={`h-5 w-5 rounded-full border-2 ${
-                                isNegative
-                                  ? 'border-destructive data-[state=checked]:border-destructive data-[state=checked]:bg-destructive/10'
-                                  : isPositive
-                                  ? 'border-green-500 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500/10'
-                                  : 'border-muted-foreground/40'
-                              }`}
-                            />
-                            {isNegative && (
-                              <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-destructive" />
-                            )}
-                            {isPositive && (
-                              <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-green-500" />
-                            )}
-                          </>
+                          <div className="absolute inset-0 rounded-full border-2 border-muted-foreground/30 bg-muted/20 hover:border-muted-foreground/50 hover:bg-muted/30" />
                         );
                       })()}
-                    </div>
+                    </button>
                     <Label
                       htmlFor={feeling}
                       className="text-base text-foreground cursor-pointer flex-1"
+                      onClick={() => handleFeelingToggle(feeling)}
                     >
                       {feeling}
                     </Label>
