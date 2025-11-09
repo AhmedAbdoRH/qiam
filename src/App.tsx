@@ -1,15 +1,16 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import Index from "./pages/Index";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { Toaster } from './components/ui/toaster';
+import { TooltipProvider } from './components/ui/tooltip';
+import { Toaster as Sonner } from './components/ui/sonner';
 import Auth from "./pages/Auth";
 import Behavioral from "./pages/Behavioral";
 import Divinity from "./pages/Divinity";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BottomNavBar from "./components/BottomNavBar";
+import { ChatWidget } from './components/ChatWidget';
+import { AuthProvider } from './hooks/useAuth';
 
 const queryClient = new QueryClient();
 
@@ -21,10 +22,9 @@ const AppContent = () => {
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="/behavioral" element={<Behavioral />} />
         <Route path="/divinity" element={<Divinity />} />
-        <Route path="/auth" element={<Auth />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showBottomNavBar && <BottomNavBar />}
@@ -40,6 +40,7 @@ const App = () => (
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
+      <ChatWidget />
     </TooltipProvider>
   </QueryClientProvider>
 );
