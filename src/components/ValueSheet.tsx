@@ -94,12 +94,13 @@ export const ValueSheet = ({
     // Calculate new balance percentage
     const positiveCount = newPositiveFeelings.length;
     const negativeCount = newSelectedFeelings.length;
-    const totalFeelings = 7;
-    const balanceChangePerFeeling = 50 / totalFeelings;
+    const totalFeelings = FEELINGS.length; // 7 feelings
 
     let newBalancePercentage = 50; // Default to 50%
-    
-    newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
+    if (totalFeelings > 0) {
+      const balanceChangePerFeeling = 100 / totalFeelings; // ~14.3%
+      newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
+    }
     
     // Ensure balance percentage is within 0-100
     newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));

@@ -202,6 +202,8 @@ const Index = () => {
     // Update database
     if (!user) return;
     
+    console.log("positiveFeelingDates being sent to Supabase:", positiveFeelingDates);
+
     try {
       await supabase
         .from("spiritual_values")
