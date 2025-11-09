@@ -94,13 +94,12 @@ export const ValueSheet = ({
     // Calculate new balance percentage
     const positiveCount = newPositiveFeelings.length;
     const negativeCount = newSelectedFeelings.length;
-    const totalFeelings = FEELINGS.length; // 7 feelings
+    const totalFeelings = 7;
+    const balanceChangePerFeeling = 50 / totalFeelings;
 
     let newBalancePercentage = 50; // Default to 50%
-    if (totalFeelings > 0) {
-      const balanceChangePerFeeling = 100 / totalFeelings; // ~14.3%
-      newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
-    }
+    
+    newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
     
     // Ensure balance percentage is within 0-100
     newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
@@ -236,11 +235,10 @@ export const ValueSheet = ({
                         </Label>
                         {localPositiveFeelingDates[feeling] && (
                           <span className="text-xs text-muted-foreground mt-0.5">
-                            {new Date(localPositiveFeelingDates[feeling]).toLocaleDateString('ar-SA', {
+                            {new Date(localPositiveFeelingDates[feeling]).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'numeric',
                               day: 'numeric',
-                              calendar: 'gregory'
                             })}
                           </span>
                         )}
@@ -282,3 +280,4 @@ export const ValueSheet = ({
     </Sheet>
   );
 };
+
