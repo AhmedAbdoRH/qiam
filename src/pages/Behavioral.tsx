@@ -45,9 +45,10 @@ const Behavioral = () => {
       name: valueName,
       selectedFeelings: [],
       positiveFeelings: [],
+      positiveFeelingDates: {},
       feelingNotes: {},
       notes: "",
-      balancePercentage: 100,
+      balancePercentage: 50,
       isPinned: false,
     };
   }, [valuesData]);
@@ -92,6 +93,7 @@ const Behavioral = () => {
           value_name: valueName,
           selected_feelings: currentValue.selectedFeelings,
           positive_feelings: currentValue.positiveFeelings || [],
+          positive_feeling_dates: currentValue.positiveFeelingDates || {},
           feeling_notes: currentValue.feelingNotes,
           notes: currentValue.notes,
           balance_percentage: currentValue.balancePercentage,
@@ -148,6 +150,13 @@ const Behavioral = () => {
             ? (item.positive_feelings as string[])
             : [];
 
+          const positiveFeelingDates = 
+            item.positive_feeling_dates && 
+            typeof item.positive_feeling_dates === "object" && 
+            !Array.isArray(item.positive_feeling_dates)
+              ? (item.positive_feeling_dates as Record<string, string>)
+              : {};
+
           const behaviors = Array.isArray(item.behaviors)
             ? (item.behaviors as unknown as Behavior[])
             : [];
@@ -157,9 +166,10 @@ const Behavioral = () => {
             name: BEHAVIORAL_VALUES[parseInt(item.value_id)],
             selectedFeelings,
             positiveFeelings,
+            positiveFeelingDates,
             feelingNotes,
             notes: item.notes || "",
-            balancePercentage: item.balance_percentage || 100,
+            balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
           
@@ -185,6 +195,7 @@ const Behavioral = () => {
     valueId: string,
     selectedFeelings: string[],
     positiveFeelings: string[],
+    positiveFeelingDates: Record<string, string>,
     feelingNotes: Record<string, string>,
     notes: string,
     balancePercentage: number
@@ -195,6 +206,7 @@ const Behavioral = () => {
       name: BEHAVIORAL_VALUES[parseInt(valueId)],
       selectedFeelings,
       positiveFeelings,
+      positiveFeelingDates,
       feelingNotes,
       notes,
       balancePercentage,
@@ -217,6 +229,7 @@ const Behavioral = () => {
           value_name: BEHAVIORAL_VALUES[parseInt(valueId)],
           selected_feelings: selectedFeelings,
           positive_feelings: positiveFeelings || [],
+          positive_feeling_dates: positiveFeelingDates || {},
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
@@ -267,6 +280,7 @@ const Behavioral = () => {
           valueId,
           currentData.selectedFeelings,
           currentData.positiveFeelings || [],
+          currentData.positiveFeelingDates || {},
           currentData.feelingNotes,
           currentData.notes,
           newPercentage

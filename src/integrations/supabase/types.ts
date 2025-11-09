@@ -23,6 +23,7 @@ export type Database = {
           id: string
           is_pinned: boolean | null
           notes: string | null
+          positive_feeling_dates: Json | null
           positive_feelings: Json | null
           selected_feelings: Json | null
           updated_at: string | null
@@ -38,6 +39,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
+          positive_feeling_dates?: Json | null
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           updated_at?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
+          positive_feeling_dates?: Json | null
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           updated_at?: string | null
@@ -100,6 +103,7 @@ export type Database = {
           id: string
           is_pinned: boolean | null
           notes: string | null
+          positive_feeling_dates: Json | null
           positive_feelings: Json | null
           selected_feelings: Json | null
           session_id: string | null
@@ -115,6 +119,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
+          positive_feeling_dates?: Json | null
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null
@@ -130,6 +135,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
+          positive_feeling_dates?: Json | null
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null

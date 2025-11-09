@@ -22,10 +22,11 @@ interface ValueSheetProps {
   valueName: string;
   selectedFeelings: string[];
   positiveFeelings?: string[];
+  positiveFeelingDates?: Record<string, string>;
   feelingNotes: Record<string, string>;
   notes: string;
   balancePercentage: number;
-  onUpdate: (selectedFeelings: string[], positiveFeelings: string[], feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
+  onUpdate: (selectedFeelings: string[], positiveFeelings: string[], positiveFeelingDates: Record<string, string>, feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
   valueId?: string;
   isPinned?: boolean;
   onTogglePin?: () => void;
@@ -37,6 +38,7 @@ export const ValueSheet = ({
   valueName,
   selectedFeelings,
   positiveFeelings = [],
+  positiveFeelingDates = {},
   feelingNotes,
   notes,
   balancePercentage,
@@ -47,6 +49,7 @@ export const ValueSheet = ({
 }: ValueSheetProps) => {
   const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
   const [localPositiveFeelings, setLocalPositiveFeelings] = useState<string[]>(positiveFeelings);
+  const [localPositiveFeelingDates, setLocalPositiveFeelingDates] = useState<Record<string, string>>(positiveFeelingDates);
   const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
@@ -54,10 +57,11 @@ export const ValueSheet = ({
   useEffect(() => {
     setLocalSelectedFeelings(selectedFeelings);
     setLocalPositiveFeelings(positiveFeelings || []);
+    setLocalPositiveFeelingDates(positiveFeelingDates || {});
     setLocalFeelingNotes(feelingNotes);
     setLocalNotes(notes);
     setLocalBalancePercentage(balancePercentage);
-  }, [selectedFeelings, positiveFeelings, feelingNotes, notes, balancePercentage, valueName]);
+  }, [selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, valueName]);
 
   // Get feeling state: null (unselected), 'negative' (red), 'positive' (green)
   const getFeelingState = useCallback((feeling: string): 'negative' | 'positive' | null => {
@@ -71,56 +75,60 @@ export const ValueSheet = ({
     
     let newSelectedFeelings = [...localSelectedFeelings];
     let newPositiveFeelings = [...localPositiveFeelings];
+    let newPositiveFeelingDates = { ...localPositiveFeelingDates };
     
     if (currentState === null) {
       // First click: set to negative (red)
       newSelectedFeelings = [...newSelectedFeelings, feeling];
     } else if (currentState === 'negative') {
-      // Second click: change from negative to positive (green)
+      // Second click: change from negative to positive (green) and add timestamp
       newSelectedFeelings = newSelectedFeelings.filter((f) => f !== feeling);
       newPositiveFeelings = [...newPositiveFeelings, feeling];
+      newPositiveFeelingDates[feeling] = new Date().toISOString();
     } else {
-      // Third click: remove selection
+      // Third click: remove selection and timestamp
       newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
+      delete newPositiveFeelingDates[feeling];
     }
     
     // Calculate new balance percentage
     const positiveCount = newPositiveFeelings.length;
     const negativeCount = newSelectedFeelings.length;
-    const totalFeelings = FEELINGS.length; // Assuming FEELINGS array has all 7 feelings
+    const totalFeelings = FEELINGS.length; // 7 feelings
 
     let newBalancePercentage = 50; // Default to 50%
     if (totalFeelings > 0) {
-      const balanceChangePerFeeling = 100 / totalFeelings;
+      const balanceChangePerFeeling = 100 / totalFeelings; // ~14.3%
       newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
     }
     
     // Ensure balance percentage is within 0-100
-    newBalancePercentage = Math.max(0, Math.min(100, newBalancePercentage));
+    newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
 
     setLocalSelectedFeelings(newSelectedFeelings);
     setLocalPositiveFeelings(newPositiveFeelings);
-    setLocalBalancePercentage(newBalancePercentage); // Update local state
+    setLocalPositiveFeelingDates(newPositiveFeelingDates);
+    setLocalBalancePercentage(newBalancePercentage);
     // Save to database via onUpdate
-    onUpdate(newSelectedFeelings, newPositiveFeelings, localFeelingNotes, localNotes, newBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, onUpdate, getFeelingState]);
+    onUpdate(newSelectedFeelings, newPositiveFeelings, newPositiveFeelingDates, localFeelingNotes, localNotes, newBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate, getFeelingState]);
 
   const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
     setLocalFeelingNotes(newFeelingNotes);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, newFeelingNotes, localNotes, localBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, newFeelingNotes, localNotes, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
 
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, localFeelingNotes, value, localBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localBalancePercentage, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, value, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localBalancePercentage, onUpdate]);
 
   const handleBalanceChange = useCallback((value: number[]) => {
     const newBalance = value[0];
     setLocalBalancePercentage(newBalance);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, newBalance);
-  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, onUpdate]);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, newBalance);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
@@ -183,47 +191,62 @@ export const ValueSheet = ({
                   key={feeling}
                   className="flex flex-row items-center gap-3 p-3 rounded-lg bg-secondary/50"
                 >
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleFeelingToggle(feeling)}
-                      className="relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-card"
-                    >
-                      {(() => {
-                        const feelingState = getFeelingState(feeling);
-                        const isNegative = feelingState === 'negative';
-                        const isPositive = feelingState === 'positive';
-                        
-                        if (isNegative) {
+                  <div className="flex items-center gap-3 flex-col items-start">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleFeelingToggle(feeling)}
+                        className="relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-card"
+                      >
+                        {(() => {
+                          const feelingState = getFeelingState(feeling);
+                          const isNegative = feelingState === 'negative';
+                          const isPositive = feelingState === 'positive';
+                          
+                          if (isNegative) {
+                            return (
+                              <>
+                                <div className="absolute inset-0 rounded-full border-2 border-destructive bg-destructive/10 shadow-lg shadow-destructive/20" />
+                                <div className="relative w-3.5 h-3.5 rounded-full bg-destructive shadow-md" />
+                              </>
+                            );
+                          }
+                          
+                          if (isPositive) {
+                            return (
+                              <>
+                                <div className="absolute inset-0 rounded-full border-2 border-success bg-success/5 shadow-lg shadow-success/20" />
+                                <div className="relative w-3.5 h-3.5 rounded-full bg-success shadow-md" />
+                              </>
+                            );
+                          }
+                          
                           return (
-                            <>
-                              <div className="absolute inset-0 rounded-full border-2 border-destructive bg-destructive/10 shadow-lg shadow-destructive/20" />
-                              <div className="relative w-3.5 h-3.5 rounded-full bg-destructive shadow-md" />
-                            </>
+                            <div className="absolute inset-0 rounded-full border-2 border-muted-foreground/30 bg-muted/20 hover:border-muted-foreground/50 hover:bg-muted/30" />
                           );
-                        }
-                        
-                        if (isPositive) {
-                          return (
-                            <>
-                              <div className="absolute inset-0 rounded-full border-2 border-success bg-success/5 shadow-lg shadow-success/20" />
-                              <div className="relative w-3.5 h-3.5 rounded-full bg-success shadow-md" />
-                            </>
-                          );
-                        }
-                        
-                        return (
-                          <div className="absolute inset-0 rounded-full border-2 border-muted-foreground/30 bg-muted/20 hover:border-muted-foreground/50 hover:bg-muted/30" />
-                        );
-                      })()}
-                    </button>
-                    <Label
-                      htmlFor={feeling}
-                      className="text-base text-foreground cursor-pointer flex-1"
-                      onClick={() => handleFeelingToggle(feeling)}
-                    >
-                      {feeling}
-                    </Label>
+                        })()}
+                      </button>
+                      <div className="flex flex-col">
+                        <Label
+                          htmlFor={feeling}
+                          className="text-base text-foreground cursor-pointer"
+                          onClick={() => handleFeelingToggle(feeling)}
+                        >
+                          {feeling}
+                        </Label>
+                        {localPositiveFeelingDates[feeling] && (
+                          <span className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(localPositiveFeelingDates[feeling]).toLocaleDateString('ar-SA', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex-1">
                     <TaskList
