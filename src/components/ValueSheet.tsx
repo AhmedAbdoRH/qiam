@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff } from "lucide-react";
+import { Pin, PinOff, ArrowRight } from "lucide-react";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import { TaskList } from "./TaskList";
@@ -84,11 +84,26 @@ export const ValueSheet = ({
       newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
     }
     
+    // Calculate new balance percentage
+    const positiveCount = newPositiveFeelings.length;
+    const negativeCount = newSelectedFeelings.length;
+    const totalFeelings = FEELINGS.length; // Assuming FEELINGS array has all 7 feelings
+
+    let newBalancePercentage = 50; // Default to 50%
+    if (totalFeelings > 0) {
+      const balanceChangePerFeeling = 100 / totalFeelings;
+      newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
+    }
+    
+    // Ensure balance percentage is within 0-100
+    newBalancePercentage = Math.max(0, Math.min(100, newBalancePercentage));
+
     setLocalSelectedFeelings(newSelectedFeelings);
     setLocalPositiveFeelings(newPositiveFeelings);
+    setLocalBalancePercentage(newBalancePercentage); // Update local state
     // Save to database via onUpdate
-    onUpdate(newSelectedFeelings, newPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, localBalancePercentage, onUpdate, getFeelingState]);
+    onUpdate(newSelectedFeelings, newPositiveFeelings, localFeelingNotes, localNotes, newBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localFeelingNotes, localNotes, onUpdate, getFeelingState]);
 
   const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
     const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
@@ -118,26 +133,33 @@ export const ValueSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent 
-        side="bottom" 
-        className="h-[75vh] rounded-t-3xl bg-card border-t border-border overflow-y-auto p-0"
-      >
+      <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-3xl font-bold text-primary text-center mb-4">
+            {valueName}
+          </SheetTitle>
+          <SheetDescription className="text-center text-muted-foreground">
+            {/* Description content */}
+          </SheetDescription>
+        </SheetHeader>
         {valueId && onTogglePin && (
           <div className="absolute top-4 left-4 z-50">
             <Button
               variant="ghost"
               size="icon"
               onClick={onTogglePin}
+              className="rounded-full bg-background/60 backdrop-blur-lg hover:bg-background/80"
             >
               {isPinned ? (
-                <Pin className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                <PinOff className="h-5 w-5 text-primary" />
               ) : (
-                <PinOff className="w-5 h-5 text-muted-foreground" />
+                <Pin className="h-5 w-5 text-muted-foreground" />
               )}
             </Button>
           </div>
         )}
-        {/* Balance percentage slider */}
+        <div className="p-4 space-y-6">
+          {/* Balance percentage slider */}
           <Slider
             value={[localBalancePercentage]}
             onValueChange={handleBalanceChange}
@@ -153,8 +175,7 @@ export const ValueSheet = ({
             } as React.CSSProperties}
           />
 
-        <div className="pt-6">
-          <div className="space-y-2">
+          <div className="space-y-3">
             {/* <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3> */}
             <div className="space-y-2">
               {FEELINGS.map((feeling) => (
@@ -185,8 +206,8 @@ export const ValueSheet = ({
                         if (isPositive) {
                           return (
                             <>
-                              <div className="absolute inset-0 rounded-full border-2 border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20" />
-                              <div className="relative w-3.5 h-3.5 rounded-full bg-green-500 shadow-md" />
+                              <div className="absolute inset-0 rounded-full border-2 border-success bg-success/5 shadow-lg shadow-success/20" />
+                              <div className="relative w-3.5 h-3.5 rounded-full bg-success shadow-md" />
                             </>
                           );
                         }
@@ -228,6 +249,13 @@ export const ValueSheet = ({
             />
           </div>
         </div>
+        <Button
+          variant="ghost"
+          onClick={onClose}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground rounded-full bg-background/30 backdrop-blur-lg"
+        >
+          <ArrowRight className="h-5 w-5" />
+        </Button>
       </SheetContent>
     </Sheet>
   );
