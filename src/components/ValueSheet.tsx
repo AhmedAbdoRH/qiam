@@ -26,14 +26,7 @@ interface ValueSheetProps {
   feelingNotes: Record<string, string>;
   notes: string;
   balancePercentage: number;
-  onUpdate: (
-    selectedFeelings: string[],
-    positiveFeelings: string[],
-    positiveFeelingDates: Record<string, string>,
-    feelingNotes: Record<string, string>,
-    notes: string,
-    balancePercentage: number
-  ) => void;
+  onUpdate: (selectedFeelings: string[], positiveFeelings: string[], positiveFeelingDates: Record<string, string>, feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
   valueId?: string;
   isPinned?: boolean;
   onTogglePin?: () => void;
@@ -70,110 +63,76 @@ export const ValueSheet = ({
     setLocalBalancePercentage(balancePercentage);
   }, [selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, valueName]);
 
-  const getFeelingState = useCallback(
-    (feeling: string): 'negative' | 'positive' | null => {
-      if (localSelectedFeelings.includes(feeling)) return 'negative';
-      if (localPositiveFeelings.includes(feeling)) return 'positive';
-      return null;
-    },
-    [localSelectedFeelings, localPositiveFeelings]
-  );
+  // Get feeling state: null (unselected), 'negative' (red), 'positive' (green)
+  const getFeelingState = useCallback((feeling: string): 'negative' | 'positive' | null => {
+    if (localSelectedFeelings.includes(feeling)) return 'negative';
+    if (localPositiveFeelings.includes(feeling)) return 'positive';
+    return null;
+  }, [localSelectedFeelings, localPositiveFeelings]);
 
-  const handleFeelingToggle = useCallback(
-    (feeling: string) => {
-      const currentState = getFeelingState(feeling);
-      let newSelectedFeelings = [...localSelectedFeelings];
-      let newPositiveFeelings = [...localPositiveFeelings];
-      let newPositiveFeelingDates = { ...localPositiveFeelingDates };
+  const handleFeelingToggle = useCallback((feeling: string) => {
+    const currentState = getFeelingState(feeling);
+    
+    let newSelectedFeelings = [...localSelectedFeelings];
+    let newPositiveFeelings = [...localPositiveFeelings];
+    let newPositiveFeelingDates = { ...localPositiveFeelingDates };
+    
+    if (currentState === null) {
+      // First click: set to negative (red)
+      newSelectedFeelings = [...newSelectedFeelings, feeling];
+    } else if (currentState === 'negative') {
+      // Second click: change from negative to positive (green) and add timestamp
+      newSelectedFeelings = newSelectedFeelings.filter((f) => f !== feeling);
+      newPositiveFeelings = [...newPositiveFeelings, feeling];
+      newPositiveFeelingDates[feeling] = new Date().toISOString();
+    } else {
+      // Third click: remove selection and timestamp
+      newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
+      delete newPositiveFeelingDates[feeling];
+    }
+    
+    // Calculate new balance percentage
+    const positiveCount = newPositiveFeelings.length;
+    const negativeCount = newSelectedFeelings.length;
+    const totalFeelings = FEELINGS.length; // 7 feelings
 
-      if (currentState === null) {
-        newSelectedFeelings = [...newSelectedFeelings, feeling];
-      } else if (currentState === 'negative') {
-        newSelectedFeelings = newSelectedFeelings.filter((f) => f !== feeling);
-        newPositiveFeelings = [...newPositiveFeelings, feeling];
-        newPositiveFeelingDates[feeling] = new Date().toISOString();
-      } else {
-        newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
-        delete newPositiveFeelingDates[feeling];
-      }
+    let newBalancePercentage = 50; // Default to 50%
+    if (totalFeelings > 0) {
+      const balanceChangePerFeeling = 100 / totalFeelings; // ~14.3%
+      newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
+    }
+    
+    // Ensure balance percentage is within 0-100
+    newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
 
-      // ✅ التصحيح الجديد لحساب نسبة التوازن الواقعية
-      const positiveCount = newPositiveFeelings.length;
-      const negativeCount = newSelectedFeelings.length;
-      const totalActive = positiveCount + negativeCount;
+    setLocalSelectedFeelings(newSelectedFeelings);
+    setLocalPositiveFeelings(newPositiveFeelings);
+    setLocalPositiveFeelingDates(newPositiveFeelingDates);
+    setLocalBalancePercentage(newBalancePercentage);
+    // Save to database via onUpdate
+    onUpdate(newSelectedFeelings, newPositiveFeelings, newPositiveFeelingDates, localFeelingNotes, localNotes, newBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate, getFeelingState]);
 
-      let newBalancePercentage = 50;
-      if (totalActive > 0) {
-        newBalancePercentage = (positiveCount / totalActive) * 100;
-      }
+  const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
+    const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
+    setLocalFeelingNotes(newFeelingNotes);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, newFeelingNotes, localNotes, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
 
-      newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
+  const handleNotesChange = useCallback((value: string) => {
+    setLocalNotes(value);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, value, localBalancePercentage);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localBalancePercentage, onUpdate]);
 
-      setLocalSelectedFeelings(newSelectedFeelings);
-      setLocalPositiveFeelings(newPositiveFeelings);
-      setLocalPositiveFeelingDates(newPositiveFeelingDates);
-      setLocalBalancePercentage(newBalancePercentage);
-      onUpdate(
-        newSelectedFeelings,
-        newPositiveFeelings,
-        newPositiveFeelingDates,
-        localFeelingNotes,
-        localNotes,
-        newBalancePercentage
-      );
-    },
-    [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate, getFeelingState]
-  );
-
-  const handleFeelingNoteChange = useCallback(
-    (feeling: string, note: string) => {
-      const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
-      setLocalFeelingNotes(newFeelingNotes);
-      onUpdate(
-        localSelectedFeelings,
-        localPositiveFeelings,
-        localPositiveFeelingDates,
-        newFeelingNotes,
-        localNotes,
-        localBalancePercentage
-      );
-    },
-    [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]
-  );
-
-  const handleNotesChange = useCallback(
-    (value: string) => {
-      setLocalNotes(value);
-      onUpdate(
-        localSelectedFeelings,
-        localPositiveFeelings,
-        localPositiveFeelingDates,
-        localFeelingNotes,
-        value,
-        localBalancePercentage
-      );
-    },
-    [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localBalancePercentage, onUpdate]
-  );
-
-  const handleBalanceChange = useCallback(
-    (value: number[]) => {
-      const newBalance = value[0];
-      setLocalBalancePercentage(newBalance);
-      onUpdate(
-        localSelectedFeelings,
-        localPositiveFeelings,
-        localPositiveFeelingDates,
-        localFeelingNotes,
-        localNotes,
-        newBalance
-      );
-    },
-    [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate]
-  );
+  const handleBalanceChange = useCallback((value: number[]) => {
+    const newBalance = value[0];
+    setLocalBalancePercentage(newBalance);
+    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, newBalance);
+  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
+  // Convert an HSL color string like "hsl(h, s%, l%)" to HSLA with given alpha
   const withAlpha = (hsl: string, alpha: number): string => {
     return hsl.startsWith("hsl(")
       ? hsl.replace("hsl(", "hsla(").replace(")", `, ${alpha})`)
@@ -187,7 +146,9 @@ export const ValueSheet = ({
           <SheetTitle className="text-3xl font-bold text-primary text-center mb-4">
             {valueName}
           </SheetTitle>
-          <SheetDescription className="text-center text-muted-foreground"></SheetDescription>
+          <SheetDescription className="text-center text-muted-foreground">
+            {/* Description content */}
+          </SheetDescription>
         </SheetHeader>
         {valueId && onTogglePin && (
           <div className="absolute top-4 left-4 z-50">
@@ -205,8 +166,8 @@ export const ValueSheet = ({
             </Button>
           </div>
         )}
-
         <div className="p-4 space-y-6">
+          {/* Balance percentage slider */}
           <Slider
             value={[localBalancePercentage]}
             onValueChange={handleBalanceChange}
@@ -215,21 +176,15 @@ export const ValueSheet = ({
             step={1}
             className="w-full"
             rangeClassName="bg-[--slider-color]"
-            style={
-              {
-                '--slider-color': balanceColor,
-                background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(
-                  balanceColor,
-                  0.6
-                )} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(
-                  balanceColor,
-                  0.05
-                )} 100%)`,
-              } as React.CSSProperties
-            }
+            style={{
+              // @ts-ignore
+              '--slider-color': balanceColor,
+              background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(balanceColor, 0.6)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.05)} 100%)`,
+            } as React.CSSProperties}
           />
 
           <div className="space-y-3">
+            {/* <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3> */}
             <div className="space-y-2">
               {FEELINGS.map((feeling) => (
                 <div
@@ -247,7 +202,7 @@ export const ValueSheet = ({
                           const feelingState = getFeelingState(feeling);
                           const isNegative = feelingState === 'negative';
                           const isPositive = feelingState === 'positive';
-
+                          
                           if (isNegative) {
                             return (
                               <>
@@ -256,7 +211,7 @@ export const ValueSheet = ({
                               </>
                             );
                           }
-
+                          
                           if (isPositive) {
                             return (
                               <>
@@ -265,7 +220,7 @@ export const ValueSheet = ({
                               </>
                             );
                           }
-
+                          
                           return (
                             <div className="absolute inset-0 rounded-full border-2 border-muted-foreground/30 bg-muted/20 hover:border-muted-foreground/50 hover:bg-muted/30" />
                           );
@@ -286,7 +241,7 @@ export const ValueSheet = ({
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
-                              minute: '2-digit',
+                              minute: '2-digit'
                             })}
                           </span>
                         )}
