@@ -94,14 +94,6 @@ export const ValueSheet = ({
     // Calculate new balance percentage
     const positiveCount = newPositiveFeelings.length;
     const negativeCount = newSelectedFeelings.length;
-<<<<<<< HEAD
-    const totalFeelings = 7;
-    const balanceChangePerFeeling = 50 / totalFeelings;
-
-    let newBalancePercentage = 50; // Default to 50%
-    
-    newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
-=======
     const totalFeelings = FEELINGS.length; // 7 feelings
 
     let newBalancePercentage = 50; // Default to 50%
@@ -109,7 +101,6 @@ export const ValueSheet = ({
       const balanceChangePerFeeling = 100 / totalFeelings; // ~14.3%
       newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
     }
->>>>>>> 60554846d5ab9b1af0d4e2606fb52cbd78867668
     
     // Ensure balance percentage is within 0-100
     newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
@@ -249,12 +240,7 @@ export const ValueSheet = ({
                               year: 'numeric',
                               month: 'numeric',
                               day: 'numeric',
-<<<<<<< HEAD
                               calendar: 'gregory'
-=======
-                              hour: '2-digit',
-                              minute: '2-digit'
->>>>>>> 60554846d5ab9b1af0d4e2606fb52cbd78867668
                             })}
                           </span>
                         )}
