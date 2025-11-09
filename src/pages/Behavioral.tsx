@@ -47,7 +47,7 @@ const Behavioral = () => {
       positiveFeelings: [],
       feelingNotes: {},
       notes: "",
-      balancePercentage: 100,
+      balancePercentage: 50,
       isPinned: false,
     };
   }, [valuesData]);
@@ -159,7 +159,7 @@ const Behavioral = () => {
             positiveFeelings,
             feelingNotes,
             notes: item.notes || "",
-            balancePercentage: item.balance_percentage || 100,
+            balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
           
