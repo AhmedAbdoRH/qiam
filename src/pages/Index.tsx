@@ -31,8 +31,9 @@ const Index = () => {
       selectedFeelings: [],
       feelingNotes: {},
       positiveFeelings: [],
+      positiveFeelingDates: {},
       notes: "",
-      balancePercentage: 100,
+      balancePercentage: 50,
       isPinned: false,
     };
   }, [valuesData]);
@@ -65,7 +66,7 @@ const Index = () => {
     
     // Update database
     try {
-      await supabase
+        await supabase
         .from("spiritual_values")
         .upsert({
           user_id: user.id,
@@ -73,6 +74,7 @@ const Index = () => {
           value_name: currentValue.name,
           selected_feelings: currentValue.selectedFeelings,
           positive_feelings: currentValue.positiveFeelings || [],
+          positive_feeling_dates: currentValue.positiveFeelingDates || {},
           feeling_notes: currentValue.feelingNotes,
           notes: currentValue.notes,
           balance_percentage: currentValue.balancePercentage,
@@ -131,6 +133,13 @@ const Index = () => {
             ? (item.positive_feelings as string[])
             : [];
 
+          const positiveFeelingDates = 
+            item.positive_feeling_dates && 
+            typeof item.positive_feeling_dates === "object" && 
+            !Array.isArray(item.positive_feeling_dates)
+              ? (item.positive_feeling_dates as Record<string, string>)
+              : {};
+
           const valueIndex = parseInt(item.value_id);
           const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
           formattedData[item.value_id] = {
@@ -138,9 +147,10 @@ const Index = () => {
             name: valueName,
             selectedFeelings,
             positiveFeelings,
+            positiveFeelingDates,
             feelingNotes,
             notes: item.notes || "",
-            balancePercentage: item.balance_percentage || 100,
+            balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
         });
@@ -163,6 +173,7 @@ const Index = () => {
     valueId: string,
     selectedFeelings: string[],
     positiveFeelings: string[],
+    positiveFeelingDates: Record<string, string>,
     feelingNotes: Record<string, string>,
     notes: string,
     balancePercentage: number
@@ -175,6 +186,7 @@ const Index = () => {
       name: valueName,
       selectedFeelings,
       positiveFeelings,
+      positiveFeelingDates,
       feelingNotes,
       notes,
       balancePercentage,
@@ -199,6 +211,7 @@ const Index = () => {
           value_name: valueName,
           selected_feelings: selectedFeelings,
           positive_feelings: positiveFeelings || [],
+          positive_feeling_dates: positiveFeelingDates || {},
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
@@ -282,20 +295,22 @@ const Index = () => {
           valueName={selectedValueData.name}
           selectedFeelings={selectedValueData.selectedFeelings}
           positiveFeelings={selectedValueData.positiveFeelings}
+          positiveFeelingDates={selectedValueData.positiveFeelingDates}
           feelingNotes={selectedValueData.feelingNotes}
           notes={selectedValueData.notes}
           balancePercentage={selectedValueData.balancePercentage}
           onClose={() => setSelectedValue(null)}
-          onUpdate={(selectedFeelings, positiveFeelings, feelingNotes, notes, balancePercentage) =>
+          onUpdate={(selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage) => {
             handleValueUpdate(
               selectedValueData.id,
               selectedFeelings,
               positiveFeelings,
+              positiveFeelingDates,
               feelingNotes,
               notes,
               balancePercentage
-            )
-          }
+            );
+          }}
           valueId={selectedValueData.id}
           isPinned={pinnedValues.has(selectedValueData.id)}
           onTogglePin={() => togglePin(selectedValueData.id)}

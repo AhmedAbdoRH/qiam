@@ -3,6 +3,7 @@ export interface ValueData {
   name: string;
   selectedFeelings: string[];
   positiveFeelings?: string[]; // المشاعر الإيجابية (الأخضر)
+  positiveFeelingDates?: Record<string, string>; // تواريخ المشاعر الإيجابية
   feelingNotes: Record<string, string>; // ملاحظات لكل شعور
   notes: string;
   balancePercentage: number;
