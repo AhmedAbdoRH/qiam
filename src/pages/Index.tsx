@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
+import { FeelingTaskList, FeelingTask } from "@/components/FeelingTaskList";
 import { VALUES, ValueData } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,7 @@ const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [feelingTasks, setFeelingTasks] = useState<FeelingTask[]>([]);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -114,10 +116,21 @@ const Index = () => {
 
       if (data) {
         const formattedData: Record<string, ValueData> = {};
+        let loadedTasks: FeelingTask[] = [];
+        
         data.forEach((item) => {
           if (!item.value_id || typeof item.value_id !== 'string' || item.value_id.trim() === '') {
             return;
           }
+          
+          // Load feeling tasks from first record found
+          if (loadedTasks.length === 0 && item.feeling_tasks) {
+            const tasks = item.feeling_tasks as unknown;
+            if (Array.isArray(tasks)) {
+              loadedTasks = tasks as FeelingTask[];
+            }
+          }
+          
           const selectedFeelings = Array.isArray(item.selected_feelings)
             ? (item.selected_feelings as string[])
             : [];
@@ -155,6 +168,7 @@ const Index = () => {
           };
         });
         setValuesData(formattedData);
+        setFeelingTasks(loadedTasks);
       }
     } catch (error) {
       console.error("Error loading values:", error);
@@ -258,10 +272,41 @@ const Index = () => {
     return null;
   }
 
+  const handleTasksChange = useCallback(async (newTasks: FeelingTask[]) => {
+    setFeelingTasks(newTasks);
+    
+    if (!user) return;
+    
+    // Save to first value record
+    try {
+      await supabase
+        .from("spiritual_values")
+        .upsert([{
+          user_id: user.id,
+          value_id: "0",
+          value_name: VALUES[0],
+          feeling_tasks: JSON.parse(JSON.stringify(newTasks)),
+          selected_feelings: valuesData["0"]?.selectedFeelings || [],
+          positive_feelings: valuesData["0"]?.positiveFeelings || [],
+          positive_feeling_dates: valuesData["0"]?.positiveFeelingDates || {},
+          feeling_notes: valuesData["0"]?.feelingNotes || {},
+          notes: valuesData["0"]?.notes || "",
+          balance_percentage: valuesData["0"]?.balancePercentage || 50,
+          is_pinned: valuesData["0"]?.isPinned || false,
+        }], { onConflict: 'user_id,value_id' });
+    } catch (error) {
+      console.error("Error saving feeling tasks:", error);
+    }
+  }, [user, valuesData]);
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-
+        
+        <FeelingTaskList 
+          tasks={feelingTasks} 
+          onTasksChange={handleTasksChange} 
+        />
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
           {sortedValues.map(({ index, valueName, valueData }) => (
