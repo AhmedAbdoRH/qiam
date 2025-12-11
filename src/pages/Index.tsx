@@ -238,6 +238,33 @@ const Index = () => {
     }
   }, [user, getValueData]);
 
+  const handleTasksChange = useCallback(async (newTasks: FeelingTask[]) => {
+    setFeelingTasks(newTasks);
+    
+    if (!user) return;
+    
+    // Save to first value record
+    try {
+      await supabase
+        .from("spiritual_values")
+        .upsert([{
+          user_id: user.id,
+          value_id: "0",
+          value_name: VALUES[0],
+          feeling_tasks: JSON.parse(JSON.stringify(newTasks)),
+          selected_feelings: valuesData["0"]?.selectedFeelings || [],
+          positive_feelings: valuesData["0"]?.positiveFeelings || [],
+          positive_feeling_dates: valuesData["0"]?.positiveFeelingDates || {},
+          feeling_notes: valuesData["0"]?.feelingNotes || {},
+          notes: valuesData["0"]?.notes || "",
+          balance_percentage: valuesData["0"]?.balancePercentage || 50,
+          is_pinned: valuesData["0"]?.isPinned || false,
+        }], { onConflict: 'user_id,value_id' });
+    } catch (error) {
+      console.error("Error saving feeling tasks:", error);
+    }
+  }, [user, valuesData]);
+
   const selectedValueData = useMemo(
     () => selectedValue ? getValueData(selectedValue) : null,
     [selectedValue, getValueData]
@@ -271,33 +298,6 @@ const Index = () => {
   if (!user) {
     return null;
   }
-
-  const handleTasksChange = useCallback(async (newTasks: FeelingTask[]) => {
-    setFeelingTasks(newTasks);
-    
-    if (!user) return;
-    
-    // Save to first value record
-    try {
-      await supabase
-        .from("spiritual_values")
-        .upsert([{
-          user_id: user.id,
-          value_id: "0",
-          value_name: VALUES[0],
-          feeling_tasks: JSON.parse(JSON.stringify(newTasks)),
-          selected_feelings: valuesData["0"]?.selectedFeelings || [],
-          positive_feelings: valuesData["0"]?.positiveFeelings || [],
-          positive_feeling_dates: valuesData["0"]?.positiveFeelingDates || {},
-          feeling_notes: valuesData["0"]?.feelingNotes || {},
-          notes: valuesData["0"]?.notes || "",
-          balance_percentage: valuesData["0"]?.balancePercentage || 50,
-          is_pinned: valuesData["0"]?.isPinned || false,
-        }], { onConflict: 'user_id,value_id' });
-    } catch (error) {
-      console.error("Error saving feeling tasks:", error);
-    }
-  }, [user, valuesData]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
