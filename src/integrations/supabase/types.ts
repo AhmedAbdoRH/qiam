@@ -100,6 +100,7 @@ export type Database = {
           balance_percentage: number | null
           created_at: string | null
           feeling_notes: Json | null
+          feeling_tasks: Json | null
           id: string
           is_pinned: boolean | null
           notes: string | null
@@ -116,6 +117,7 @@ export type Database = {
           balance_percentage?: number | null
           created_at?: string | null
           feeling_notes?: Json | null
+          feeling_tasks?: Json | null
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           balance_percentage?: number | null
           created_at?: string | null
           feeling_notes?: Json | null
+          feeling_tasks?: Json | null
           id?: string
           is_pinned?: boolean | null
           notes?: string | null
