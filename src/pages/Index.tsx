@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { FeelingTaskList, FeelingTask } from "@/components/FeelingTaskList";
+import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { VALUES, ValueData } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -363,6 +364,9 @@ const Index = () => {
           onTogglePin={() => togglePin(selectedValueData.id)}
         />
       )}
+
+      {/* Self Dialogue Chat */}
+      <SelfDialogueChat />
     </div>
   );
 };
