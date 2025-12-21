@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { getBalanceColor } from '@/utils/balanceCalculator';
+import { ChatWidget } from '@/components/ChatWidget';
 import {
   Sheet,
   SheetContent,
@@ -265,6 +266,9 @@ export default function Divinity() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Chat Widget - only on Divinity page */}
+      <ChatWidget />
     </div>
   );
 }

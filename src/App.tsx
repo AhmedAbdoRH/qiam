@@ -9,7 +9,6 @@ import Divinity from "./pages/Divinity";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BottomNavBar from "./components/BottomNavBar";
-import { ChatWidget } from './components/ChatWidget';
 import { AuthProvider } from './hooks/useAuth';
 
 const queryClient = new QueryClient();
@@ -40,7 +39,6 @@ const App = () => (
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
-      <ChatWidget />
     </TooltipProvider>
   </QueryClientProvider>
 );
