@@ -232,7 +232,7 @@ export function SelfDialogueChat() {
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
                     className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
                         isAutoSwitch 
-                        ? 'bg-green-700 text-white shadow-lg shadow-black/50 border border-green-600' // لون غامق وواضح
+                        ? 'bg-black-700 text-black shadow-lg shadow-black/50 border border-green-100' // لون غامق وواضح
                         : 'bg-white/5 text-white/20 hover:bg-white/10 border border-transparent'
                     }`}
                 >
