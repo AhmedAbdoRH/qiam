@@ -61,6 +61,13 @@ export function SelfDialogueChat() {
         message: msg.message,
         created_at: msg.created_at
       })));
+      
+      // Optional: Set the initial sender based on the last message
+      if (data && data.length > 0) {
+        const lastSender = data[data.length - 1].sender;
+        setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
+      }
+
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
@@ -71,9 +78,12 @@ export function SelfDialogueChat() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
 
+    // Capture the sender used for this message before switching
+    const senderForThisMessage = currentSender;
+
     const newMessage: DialogueMessage = {
       id: crypto.randomUUID(),
-      sender: currentSender,
+      sender: senderForThisMessage,
       message: inputValue.trim(),
       created_at: new Date().toISOString()
     };
@@ -81,20 +91,23 @@ export function SelfDialogueChat() {
     // Optimistically add to UI
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
+    
+    // ✨ التغيير هنا: التبديل التلقائي للمتحدث التالي
+    setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
 
     try {
       const { error } = await supabase
         .from('self_dialogue_messages')
         .insert({
           user_id: user.id,
-          sender: currentSender,
+          sender: senderForThisMessage,
           message: newMessage.message
         });
 
       if (error) throw error;
     } catch (error) {
       console.error('Error saving message:', error);
-      // Remove optimistic message on error
+      // Remove optimistic message on error and maybe revert sender switch (optional but safer)
       setMessages(prev => prev.filter(m => m.id !== newMessage.id));
     }
   };
@@ -129,7 +142,7 @@ export function SelfDialogueChat() {
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <MessageCircleHeart className="h-12 w-12 text-white/20 mb-3" />
                 <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
-                <p className="text-white/30 text-xs mt-1">اختر من تريد أن يتحدث ثم اكتب</p>
+                <p className="text-white/30 text-xs mt-1">سيتم تبديل الأدوار تلقائياً</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -167,7 +180,7 @@ export function SelfDialogueChat() {
           
           {/* Input Area with Sender Toggle */}
           <div className="p-4 border-t border-white/10 bg-black/20">
-            {/* Sender Toggle - Above input */}
+            {/* Sender Toggle - Still visible if user wants to override manually */}
             <div className="flex justify-center gap-2 mb-3">
               <Button
                 variant="ghost"
