@@ -3,9 +3,20 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Trash2 } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+
+// ✨ إضافة كلاسات الأنيميشن يدوياً لضمان النعومة
+const styles = `
+  @keyframes message-pop {
+    0% { opacity: 0; transform: translateY(15px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-message-pop {
+    animation: message-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+`;
 
 interface DialogueMessage {
   id: string;
@@ -42,7 +53,7 @@ export function SelfDialogueChat() {
           scrollContainer.scrollTop = scrollContainer.scrollHeight;
         }
       }
-    }, 50);
+    }, 100); // زيادة طفيفة للتأكد من ان الأنيميشن لا يعيق السكرول
   }, [messages]);
 
   const loadMessages = async () => {
@@ -158,6 +169,9 @@ export function SelfDialogueChat() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {/* Inject Styles */}
+      <style>{styles}</style>
+      
       <DialogTrigger asChild>
         <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/80 to-purple-600/80 backdrop-blur-lg border border-white/20 shadow-lg shadow-purple-500/30 transition-all hover:scale-110 hover:shadow-purple-500/50">
           <MessageCircleHeart className="h-7 w-7 text-white" />
@@ -186,7 +200,8 @@ export function SelfDialogueChat() {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}
+                    // ✨ إضافة كلاس الأنيميشن هنا (animate-message-pop)
+                    className={`flex animate-message-pop ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}
                   >
                     <div 
                         className={`max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}
@@ -227,37 +242,37 @@ export function SelfDialogueChat() {
             
             <div className="flex items-center justify-center gap-3 mb-4">
                 
-                {/* ✨ زر التبديل التلقائي: غامق وصلب جداً */}
+                {/* ✨ زر التبديل التلقائي: شفاف للغاية (Ghost) */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-500 ${
                         isAutoSwitch 
-                        ? 'bg-black-700 text-black shadow-lg shadow-black/50 border border-green-100' // لون غامق وواضح
-                        : 'bg-white/5 text-white/20 hover:bg-white/10 border border-transparent'
+                        ? 'text-green-400 bg-green-500/10 shadow-[0_0_15px_rgba(74,222,128,0.1)]' // وهج خفيف جداً عند التفعيل
+                        : 'text-white/5 bg-transparent hover:text-white/20' // شبه مخفي عند عدم التفعيل
                     }`}
+                    title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
                 >
-                    <Repeat className={`h-4 w-4 transition-transform duration-500 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                    <Repeat className={`h-4 w-4 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* ✨ Main Toggle Switch: Fixed Direction & Contrast ✨ */}
-                {/* dir="ltr" is crucial here to fix the "active is uncolored" bug caused by RTL mismatch */}
+                {/* ✨ Main Toggle Switch: Slow & Smooth Animation */}
                 <div dir="ltr" className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[160px] border border-white/5 select-none shadow-inner">
                 
-                  {/* الخلفية المتحركة */}
+                  {/* الخلفية المتحركة: duration-[1500ms] */}
                   <div 
-                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-1000 ease-in-out shadow-lg z-0 ${
+                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-[1500ms] ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg z-0 ${
                       currentSender === 'me'
-                          ? 'left-1 bg-blue-600' // أنا (يسار في LTR)
-                          : 'left-[calc(50%+4px)] bg-pink-600' // نفسي (يمين في LTR)
+                          ? 'left-1 bg-blue-600'
+                          : 'left-[calc(50%+4px)] bg-pink-600'
                       }`}
                   />
 
                   {/* زر "أنا" */}
                   <button
                       onClick={() => handleManualSwitch('me')}
-                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-[1500ms] ${
                           currentSender === 'me' 
-                          ? 'text-white font-bold drop-shadow-md' // ✨ نص واضح جداً
+                          ? 'text-white font-bold drop-shadow-md'
                           : 'text-gray-400 font-medium hover:text-gray-200'
                       }`}
                   >
@@ -268,9 +283,9 @@ export function SelfDialogueChat() {
                   {/* زر "نفسي" */}
                   <button
                       onClick={() => handleManualSwitch('myself')}
-                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-[1500ms] ${
                           currentSender === 'myself' 
-                          ? 'text-white font-bold drop-shadow-md' // ✨ نص واضح جداً
+                          ? 'text-white font-bold drop-shadow-md'
                           : 'text-gray-400 font-medium hover:text-gray-200'
                       }`}
                   >
@@ -279,7 +294,7 @@ export function SelfDialogueChat() {
                   </button>
                 </div>
                 
-                {/* Spacer for symmetry */}
+                {/* Spacer */}
                 <div className="w-8" />
             </div>
             
@@ -295,7 +310,7 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
-                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-700 ${
+                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-[1500ms] ${
                   currentSender === 'me' 
                     ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
                     : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
@@ -305,7 +320,7 @@ export function SelfDialogueChat() {
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                className={`rounded-xl h-[44px] px-4 transition-all duration-700 ${
+                className={`rounded-xl h-[44px] px-4 transition-all duration-[1500ms] ${
                   currentSender === 'me'
                     ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
                     : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
