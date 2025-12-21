@@ -196,22 +196,23 @@ export function SelfDialogueChat() {
                         onTouchStart={() => handleMouseDown(msg.id)}
                         onTouchEnd={handleMouseUp}
                     >
+                      {/* ✨ العودة للألوان الأصلية: أنا=أزرق، نفسي=وردي */}
                       <div
                         className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
                           msg.sender === 'me'
-                            ? 'bg-pink-500/30 text-pink-100 rounded-bl-sm border border-pink-400/30 hover:bg-pink-500/40'
-                            : 'bg-blue-500/30 text-blue-100 rounded-br-sm border border-blue-400/30 hover:bg-blue-500/40'
+                            ? 'bg-blue-500/30 text-blue-100 rounded-bl-sm border border-blue-400/30 hover:bg-blue-500/40'
+                            : 'bg-pink-500/30 text-pink-100 rounded-br-sm border border-pink-400/30 hover:bg-pink-500/40'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                       </div>
                       <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                         {msg.sender === 'me' ? (
-                          <User className="h-3 w-3 text-pink-400/60" />
+                          <User className="h-3 w-3 text-blue-400/60" />
                         ) : (
-                          <Heart className="h-3 w-3 text-blue-400/60" />
+                          <Heart className="h-3 w-3 text-pink-400/60" />
                         )}
-                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-pink-400/60' : 'text-blue-400/60'}`}>
+                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
                           {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
                         </span>
                       </div>
@@ -227,50 +228,50 @@ export function SelfDialogueChat() {
             
             <div className="flex items-center justify-center gap-3 mb-4">
                 
-                {/* زر التبديل التلقائي */}
+                {/* ✨ زر التبديل التلقائي: شفاف جداً وهادئ */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-500 ${
                         isAutoSwitch 
-                        ? 'text-white bg-green-600 shadow-lg shadow-green-900/20'
-                        : 'text-white/20 hover:text-white/40 hover:bg-white/5'
+                        ? 'text-green-400 bg-green-500/10' // شفاف للغاية عند التفعيل
+                        : 'text-white/10 hover:text-white/30' // شبه مخفي عند عدم التفعيل
                     }`}
                 >
-                    <Repeat className={`h-4 w-4 transition-transform duration-500 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                    <Repeat className={`h-4 w-4 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* ✨ Main Toggle Switch: Smaller & Black Text ✨ */}
-                <div className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[160px] border border-white/5 shadow-inner select-none">
+                {/* ✨ Main Toggle Switch: Basic Colors, Smooth Animation ✨ */}
+                <div className="relative flex items-center justify-center bg-white/5 rounded-full p-1 w-[160px] border border-white/5 select-none">
                 
-                {/* الخلفية المتحركة */}
+                {/* الخلفية المتحركة (Basic Colors + Slow Smooth Animation) */}
                 <div 
-                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg ${
+                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-1000 ease-in-out shadow-lg ${
                     currentSender === 'me'
-                        ? 'left-1 bg-gradient-to-r from-pink-600 to-pink-500 shadow-pink-500/25'
-                        : 'left-[calc(50%+4px)] bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/25'
+                        ? 'left-1 bg-blue-600' // لون أزرق أساسي
+                        : 'left-[calc(50%+4px)] bg-pink-600' // لون وردي أساسي
                     }`}
                 />
 
-                {/* زر "أنا" - أسود عند التفعيل */}
+                {/* زر "أنا" */}
                 <button
                     onClick={() => handleManualSwitch('me')}
-                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-1000 ${
                         currentSender === 'me' 
-                        ? 'text-black font-bold' // ✨ الكتابة سوداء
-                        : 'text-white/60 font-medium hover:text-white/90'
+                        ? 'text-white font-bold'
+                        : 'text-white/40 font-medium hover:text-white/70'
                     }`}
                 >
                     <User className="h-3 w-3" />
                     أنا
                 </button>
 
-                {/* زر "نفسي" - أسود عند التفعيل */}
+                {/* زر "نفسي" */}
                 <button
                     onClick={() => handleManualSwitch('myself')}
-                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-1000 ${
                         currentSender === 'myself' 
-                        ? 'text-black font-bold' // ✨ الكتابة سوداء
-                        : 'text-white/60 font-medium hover:text-white/90'
+                        ? 'text-white font-bold'
+                        : 'text-white/40 font-medium hover:text-white/70'
                     }`}
                 >
                     <Heart className="h-3 w-3" />
@@ -293,20 +294,20 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
-                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-500 ${
+                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-700 ${
                   currentSender === 'me' 
-                    ? 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20' 
-                    : 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20'
+                    ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
+                    : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
                 }`}
                 rows={1}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                className={`rounded-xl h-[44px] px-4 transition-all duration-500 ${
+                className={`rounded-xl h-[44px] px-4 transition-all duration-700 ${
                   currentSender === 'me'
-                    ? 'bg-pink-500/80 hover:bg-pink-500 disabled:bg-pink-500/30 text-white'
-                    : 'bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/30 text-white'
+                    ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white' // أزرق أساسي
+                    : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white' // وردي أساسي
                 }`}
               >
                 <Send className="h-5 w-5" />
