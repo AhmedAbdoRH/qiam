@@ -111,36 +111,6 @@ export function SelfDialogueChat() {
       <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2 border-b border-white/10">
           <DialogTitle className="text-white text-center text-lg">حوار مع النفس</DialogTitle>
-          
-          {/* Sender Toggle */}
-          <div className="flex justify-center gap-2 mt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentSender('me')}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
-                currentSender === 'me'
-                  ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10'
-              }`}
-            >
-              <User className="h-4 w-4" />
-              <span>أنا</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentSender('myself')}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
-                currentSender === 'myself'
-                  ? 'bg-pink-500/30 text-pink-300 border border-pink-400/50'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10'
-              }`}
-            >
-              <Heart className="h-4 w-4" />
-              <span>نفسي</span>
-            </Button>
-          </div>
         </DialogHeader>
         
         <div className="flex flex-col h-[60vh]">
@@ -190,8 +160,39 @@ export function SelfDialogueChat() {
             )}
           </ScrollArea>
           
-          {/* Input Area */}
+          {/* Input Area with Sender Toggle */}
           <div className="p-4 border-t border-white/10 bg-black/20">
+            {/* Sender Toggle - Above input */}
+            <div className="flex justify-center gap-2 mb-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentSender('me')}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
+                  currentSender === 'me'
+                    ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                <User className="h-4 w-4" />
+                <span>أنا</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentSender('myself')}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
+                  currentSender === 'myself'
+                    ? 'bg-pink-500/30 text-pink-300 border border-pink-400/50'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                <Heart className="h-4 w-4" />
+                <span>نفسي</span>
+              </Button>
+            </div>
+            
+            {/* Input field */}
             <div className="flex items-end gap-2">
               <Textarea
                 placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
