@@ -23,10 +23,9 @@ export function SelfDialogueChat() {
   const [isAutoSwitch, setIsAutoSwitch] = useState(true);
   const [loading, setLoading] = useState(false);
   
-  // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null); // Ref للتحكم في الضغط المطول
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -79,29 +78,24 @@ export function SelfDialogueChat() {
     }
   };
 
-  // ✨ دالة حذف الرسالة
   const handleDeleteMessage = async (messageId: string) => {
     if (window.confirm('هل تريد حذف هذه الرسالة نهائياً؟')) {
-        // الحذف من الواجهة فوراً
         setMessages(prev => prev.filter(m => m.id !== messageId));
-        
         try {
             const { error } = await supabase
                 .from('self_dialogue_messages')
                 .delete()
                 .eq('id', messageId);
-            
             if (error) throw error;
         } catch (error) {
             console.error('Error deleting message:', error);
-            loadMessages(); // إعادة التحميل في حال الفشل
+            loadMessages();
         }
     }
   };
 
-  // ✨ منطق الضغط المطول (للموبايل والماوس)
   const handleMouseDown = (id: string) => {
-    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600); // 600ms للضغط المطول
+    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
   };
 
   const handleMouseUp = () => {
@@ -196,7 +190,6 @@ export function SelfDialogueChat() {
                   >
                     <div 
                         className={`max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}
-                        // ✨ أحداث الضغط المطول
                         onMouseDown={() => handleMouseDown(msg.id)}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
@@ -206,19 +199,19 @@ export function SelfDialogueChat() {
                       <div
                         className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
                           msg.sender === 'me'
-                            ? 'bg-blue-500/30 text-blue-100 rounded-bl-sm border border-blue-400/30 hover:bg-blue-500/40'
-                            : 'bg-pink-500/30 text-pink-100 rounded-br-sm border border-pink-400/30 hover:bg-pink-500/40'
+                            ? 'bg-pink-500/30 text-pink-100 rounded-bl-sm border border-pink-400/30 hover:bg-pink-500/40'
+                            : 'bg-blue-500/30 text-blue-100 rounded-br-sm border border-blue-400/30 hover:bg-blue-500/40'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                       </div>
                       <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                         {msg.sender === 'me' ? (
-                          <User className="h-3 w-3 text-blue-400/60" />
+                          <User className="h-3 w-3 text-pink-400/60" />
                         ) : (
-                          <Heart className="h-3 w-3 text-pink-400/60" />
+                          <Heart className="h-3 w-3 text-blue-400/60" />
                         )}
-                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
+                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-pink-400/60' : 'text-blue-400/60'}`}>
                           {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
                         </span>
                       </div>
@@ -234,57 +227,54 @@ export function SelfDialogueChat() {
             
             <div className="flex items-center justify-center gap-3 mb-4">
                 
-                {/* Auto Switch Button */}
+                {/* زر التبديل التلقائي */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
                     className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
                         isAutoSwitch 
-                        ? 'text-green-400 bg-green-400/10' 
+                        ? 'text-white bg-green-600 shadow-lg shadow-green-900/20'
                         : 'text-white/20 hover:text-white/40 hover:bg-white/5'
                     }`}
                 >
                     <Repeat className={`h-4 w-4 transition-transform duration-500 ${isAutoSwitch ? 'rotate-180' : ''}`} />
-                    {isAutoSwitch && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
-                    )}
                 </button>
 
-                {/* Main Toggle Switch */}
-                <div className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[200px] border border-white/5 shadow-inner select-none">
+                {/* ✨ Main Toggle Switch: Smaller & Black Text ✨ */}
+                <div className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[160px] border border-white/5 shadow-inner select-none">
                 
-                {/* الخلفية المتحركة (تم عكس المنطق) */}
+                {/* الخلفية المتحركة */}
                 <div 
                     className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg ${
                     currentSender === 'me'
-                        ? 'left-[calc(50%+4px)] bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/25' // عكسنا المكان هنا
-                        : 'left-1 bg-gradient-to-r from-pink-600 to-pink-500 shadow-pink-500/25' // وهنا
+                        ? 'left-1 bg-gradient-to-r from-pink-600 to-pink-500 shadow-pink-500/25'
+                        : 'left-[calc(50%+4px)] bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/25'
                     }`}
                 />
 
-                {/* زر "أنا" - الآن هو الزر الأيمن بصرياً في الترتيب */}
+                {/* زر "أنا" - أسود عند التفعيل */}
                 <button
-                    onClick={() => handleManualSwitch('myself')} // تبديل لـ "نفسي"
-                    className={`relative z-10 w-1/2 py-2 text-sm flex items-center justify-center gap-2 transition-colors duration-500 ${
-                        currentSender === 'myself' 
-                        ? 'text-white font-bold drop-shadow-md' // ✨ تحسين وضوح النص
+                    onClick={() => handleManualSwitch('me')}
+                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                        currentSender === 'me' 
+                        ? 'text-black font-bold' // ✨ الكتابة سوداء
                         : 'text-white/60 font-medium hover:text-white/90'
                     }`}
                 >
-                    <Heart className="h-3.5 w-3.5" />
-                    نفسي
+                    <User className="h-3 w-3" />
+                    أنا
                 </button>
 
-                {/* زر "نفسي" */}
+                {/* زر "نفسي" - أسود عند التفعيل */}
                 <button
-                    onClick={() => handleManualSwitch('me')} // تبديل لـ "أنا"
-                    className={`relative z-10 w-1/2 py-2 text-sm flex items-center justify-center gap-2 transition-colors duration-500 ${
-                        currentSender === 'me' 
-                        ? 'text-white font-bold drop-shadow-md' // ✨ تحسين وضوح النص
+                    onClick={() => handleManualSwitch('myself')}
+                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                        currentSender === 'myself' 
+                        ? 'text-black font-bold' // ✨ الكتابة سوداء
                         : 'text-white/60 font-medium hover:text-white/90'
                     }`}
                 >
-                    <User className="h-3.5 w-3.5" />
-                    أنا
+                    <Heart className="h-3 w-3" />
+                    نفسي
                 </button>
                 </div>
                 
@@ -305,8 +295,8 @@ export function SelfDialogueChat() {
                 }}
                 className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-500 ${
                   currentSender === 'me' 
-                    ? 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20' 
-                    : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20'
+                    ? 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20' 
+                    : 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20'
                 }`}
                 rows={1}
               />
@@ -315,8 +305,8 @@ export function SelfDialogueChat() {
                 disabled={!inputValue.trim()}
                 className={`rounded-xl h-[44px] px-4 transition-all duration-500 ${
                   currentSender === 'me'
-                    ? 'bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/30 text-white'
-                    : 'bg-pink-500/80 hover:bg-pink-500 disabled:bg-pink-500/30 text-white'
+                    ? 'bg-pink-500/80 hover:bg-pink-500 disabled:bg-pink-500/30 text-white'
+                    : 'bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/30 text-white'
                 }`}
               >
                 <Send className="h-5 w-5" />
