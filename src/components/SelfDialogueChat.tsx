@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat } from 'lucide-react'; // ✨ أضفنا أيقونة Repeat
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,13 +20,18 @@ export function SelfDialogueChat() {
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('me');
+  const [isAutoSwitch, setIsAutoSwitch] = useState(true); // ✨ حالة التبديل التلقائي
   const [loading, setLoading] = useState(false);
+  
+  // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Load messages when dialog opens
   useEffect(() => {
     if (isOpen && user) {
       loadMessages();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, user]);
 
@@ -62,10 +67,14 @@ export function SelfDialogueChat() {
         created_at: msg.created_at
       })));
       
-      // Optional: Set the initial sender based on the last message
       if (data && data.length > 0) {
         const lastSender = data[data.length - 1].sender;
-        setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
+        // نطبق التبديل المبدئي فقط إذا كان التبديل التلقائي مفعلاً
+        if (isAutoSwitch) {
+            setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
+        } else {
+            setCurrentSender(lastSender);
+        }
       }
 
     } catch (error) {
@@ -75,10 +84,16 @@ export function SelfDialogueChat() {
     }
   };
 
+  const handleManualSwitch = (sender: 'me' | 'myself') => {
+    setCurrentSender(sender);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
 
-    // Capture the sender used for this message before switching
     const senderForThisMessage = currentSender;
 
     const newMessage: DialogueMessage = {
@@ -88,12 +103,17 @@ export function SelfDialogueChat() {
       created_at: new Date().toISOString()
     };
 
-    // Optimistically add to UI
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
     
-    // ✨ التغيير هنا: التبديل التلقائي للمتحدث التالي
-    setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
+    // ✨ التبديل التلقائي المشروط
+    if (isAutoSwitch) {
+        setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
+    }
+    
+    setTimeout(() => {
+        inputRef.current?.focus();
+    }, 0);
 
     try {
       const { error } = await supabase
@@ -107,7 +127,6 @@ export function SelfDialogueChat() {
       if (error) throw error;
     } catch (error) {
       console.error('Error saving message:', error);
-      // Remove optimistic message on error and maybe revert sender switch (optional but safer)
       setMessages(prev => prev.filter(m => m.id !== newMessage.id));
     }
   };
@@ -142,7 +161,7 @@ export function SelfDialogueChat() {
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <MessageCircleHeart className="h-12 w-12 text-white/20 mb-3" />
                 <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
-                <p className="text-white/30 text-xs mt-1">سيتم تبديل الأدوار تلقائياً</p>
+                <p className="text-white/30 text-xs mt-1">تحدث بحرية تامة</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -153,7 +172,7 @@ export function SelfDialogueChat() {
                   >
                     <div className={`max-w-[80%] ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}>
                       <div
-                        className={`inline-block p-3 rounded-2xl break-words ${
+                        className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
                           msg.sender === 'me'
                             ? 'bg-blue-500/30 text-blue-100 rounded-bl-sm border border-blue-400/30'
                             : 'bg-pink-500/30 text-pink-100 rounded-br-sm border border-pink-400/30'
@@ -178,41 +197,71 @@ export function SelfDialogueChat() {
             )}
           </ScrollArea>
           
-          {/* Input Area with Sender Toggle */}
+          {/* Input Area */}
           <div className="p-4 border-t border-white/10 bg-black/20">
-            {/* Sender Toggle - Still visible if user wants to override manually */}
-            <div className="flex justify-center gap-2 mb-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCurrentSender('me')}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
-                  currentSender === 'me'
-                    ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <User className="h-4 w-4" />
-                <span>أنا</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCurrentSender('myself')}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-all ${
-                  currentSender === 'myself'
-                    ? 'bg-pink-500/30 text-pink-300 border border-pink-400/50'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
-                }`}
-              >
-                <Heart className="h-4 w-4" />
-                <span>نفسي</span>
-              </Button>
+            
+            {/* Control Row: Auto-Switch Button + Toggle Switch */}
+            <div className="flex items-center justify-center gap-3 mb-4">
+                
+                {/* ✨ Auto Switch Toggle Button (Small & Transparent) ✨ */}
+                <button
+                    onClick={() => setIsAutoSwitch(!isAutoSwitch)}
+                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                        isAutoSwitch 
+                        ? 'text-green-400 bg-green-400/10' 
+                        : 'text-white/20 hover:text-white/40 hover:bg-white/5'
+                    }`}
+                    title={isAutoSwitch ? "التبديل التلقائي مفعل" : "التبديل التلقائي معطل"}
+                >
+                    <Repeat className={`h-4 w-4 transition-transform duration-500 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                    {/* Dot Indicator */}
+                    {isAutoSwitch && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
+                    )}
+                </button>
+
+                {/* Main Toggle Switch */}
+                <div className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[200px] border border-white/5 shadow-inner">
+                {/* الخلفية المتحركة */}
+                <div 
+                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg ${
+                    currentSender === 'me'
+                        ? 'left-1 bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/25'
+                        : 'left-[calc(50%+4px)] bg-gradient-to-r from-pink-600 to-pink-500 shadow-pink-500/25'
+                    }`}
+                />
+
+                {/* زر "أنا" */}
+                <button
+                    onClick={() => handleManualSwitch('me')}
+                    className={`relative z-10 w-1/2 py-2 text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-500 ${
+                    currentSender === 'me' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <User className="h-3.5 w-3.5" />
+                    أنا
+                </button>
+
+                {/* زر "نفسي" */}
+                <button
+                    onClick={() => handleManualSwitch('myself')}
+                    className={`relative z-10 w-1/2 py-2 text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-500 ${
+                    currentSender === 'myself' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <Heart className="h-3.5 w-3.5" />
+                    نفسي
+                </button>
+                </div>
+                
+                {/* Spacer to balance the layout visually (optional) */}
+                <div className="w-8" />
             </div>
             
             {/* Input field */}
             <div className="flex items-end gap-2">
               <Textarea
+                ref={inputRef}
                 placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -222,18 +271,20 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
-                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none ${
-                  currentSender === 'me' ? 'focus:border-blue-400/50' : 'focus:border-pink-400/50'
+                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-500 ${
+                  currentSender === 'me' 
+                    ? 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20' 
+                    : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20'
                 }`}
                 rows={1}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                className={`rounded-xl h-[44px] px-4 transition-all ${
+                className={`rounded-xl h-[44px] px-4 transition-all duration-500 ${
                   currentSender === 'me'
-                    ? 'bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/30'
-                    : 'bg-pink-500/80 hover:bg-pink-500 disabled:bg-pink-500/30'
+                    ? 'bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/30 text-white'
+                    : 'bg-pink-500/80 hover:bg-pink-500 disabled:bg-pink-500/30 text-white'
                 }`}
               >
                 <Send className="h-5 w-5" />
