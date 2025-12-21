@@ -196,23 +196,23 @@ export function SelfDialogueChat() {
                         onTouchStart={() => handleMouseDown(msg.id)}
                         onTouchEnd={handleMouseUp}
                     >
-                      {/* ✨ العودة للألوان الأصلية: أنا=أزرق، نفسي=وردي */}
+                      {/* ✨ تم تبديل الألوان: أنا = وردي | نفسي = أزرق */}
                       <div
                         className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
                           msg.sender === 'me'
-                            ? 'bg-blue-500/30 text-blue-100 rounded-bl-sm border border-blue-400/30 hover:bg-blue-500/40'
-                            : 'bg-pink-500/30 text-pink-100 rounded-br-sm border border-pink-400/30 hover:bg-pink-500/40'
+                            ? 'bg-pink-500/30 text-pink-100 rounded-bl-sm border border-pink-400/30 hover:bg-pink-500/40'
+                            : 'bg-blue-500/30 text-blue-100 rounded-br-sm border border-blue-400/30 hover:bg-blue-500/40'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                       </div>
                       <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                         {msg.sender === 'me' ? (
-                          <User className="h-3 w-3 text-blue-400/60" />
+                          <User className="h-3 w-3 text-pink-400/60" />
                         ) : (
-                          <Heart className="h-3 w-3 text-pink-400/60" />
+                          <Heart className="h-3 w-3 text-blue-400/60" />
                         )}
-                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
+                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-pink-400/60' : 'text-blue-400/60'}`}>
                           {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
                         </span>
                       </div>
@@ -228,27 +228,27 @@ export function SelfDialogueChat() {
             
             <div className="flex items-center justify-center gap-3 mb-4">
                 
-                {/* ✨ زر التبديل التلقائي: شفاف جداً وهادئ */}
+                {/* ✨ زر التبديل التلقائي: غامق جداً وواضح */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-500 ${
+                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 shadow-md ${
                         isAutoSwitch 
-                        ? 'text-green-400 bg-green-500/10' // شفاف للغاية عند التفعيل
-                        : 'text-white/10 hover:text-white/30' // شبه مخفي عند عدم التفعيل
+                        ? 'bg-green-700 text-white shadow-green-900/50 hover:bg-green-600' // غامق جداً
+                        : 'text-white/20 bg-white/5 hover:text-white/50'
                     }`}
                 >
                     <Repeat className={`h-4 w-4 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* ✨ Main Toggle Switch: Basic Colors, Smooth Animation ✨ */}
+                {/* Main Toggle Switch */}
                 <div className="relative flex items-center justify-center bg-white/5 rounded-full p-1 w-[160px] border border-white/5 select-none">
                 
-                {/* الخلفية المتحركة (Basic Colors + Slow Smooth Animation) */}
+                {/* الخلفية المتحركة (تم عكس الألوان) */}
                 <div 
                     className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-1000 ease-in-out shadow-lg ${
                     currentSender === 'me'
-                        ? 'left-1 bg-blue-600' // لون أزرق أساسي
-                        : 'left-[calc(50%+4px)] bg-pink-600' // لون وردي أساسي
+                        ? 'left-1 bg-pink-600' // أنا = وردي
+                        : 'left-[calc(50%+4px)] bg-blue-600' // نفسي = أزرق
                     }`}
                 />
 
@@ -294,20 +294,22 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
+                // ✨ تحديث ألوان الحدود عند التركيز
                 className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-700 ${
                   currentSender === 'me' 
-                    ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
-                    : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
+                    ? 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20' 
+                    : 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20'
                 }`}
                 rows={1}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
+                // ✨ تحديث ألوان زر الإرسال
                 className={`rounded-xl h-[44px] px-4 transition-all duration-700 ${
                   currentSender === 'me'
-                    ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white' // أزرق أساسي
-                    : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white' // وردي أساسي
+                    ? 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
                 }`}
               >
                 <Send className="h-5 w-5" />
