@@ -196,23 +196,22 @@ export function SelfDialogueChat() {
                         onTouchStart={() => handleMouseDown(msg.id)}
                         onTouchEnd={handleMouseUp}
                     >
-                      {/* ✨ تم تبديل الألوان: أنا = وردي | نفسي = أزرق */}
                       <div
                         className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
                           msg.sender === 'me'
-                            ? 'bg-pink-500/30 text-pink-100 rounded-bl-sm border border-pink-400/30 hover:bg-pink-500/40'
-                            : 'bg-blue-500/30 text-blue-100 rounded-br-sm border border-blue-400/30 hover:bg-blue-500/40'
+                            ? 'bg-blue-600/40 text-blue-50 rounded-bl-sm border border-blue-400/30'
+                            : 'bg-pink-600/40 text-pink-50 rounded-br-sm border border-pink-400/30'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                       </div>
                       <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                         {msg.sender === 'me' ? (
-                          <User className="h-3 w-3 text-pink-400/60" />
+                          <User className="h-3 w-3 text-blue-400/60" />
                         ) : (
-                          <Heart className="h-3 w-3 text-blue-400/60" />
+                          <Heart className="h-3 w-3 text-pink-400/60" />
                         )}
-                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-pink-400/60' : 'text-blue-400/60'}`}>
+                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
                           {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
                         </span>
                       </div>
@@ -228,57 +227,59 @@ export function SelfDialogueChat() {
             
             <div className="flex items-center justify-center gap-3 mb-4">
                 
-                {/* ✨ زر التبديل التلقائي: غامق جداً وواضح */}
+                {/* ✨ زر التبديل التلقائي: غامق وصلب جداً */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 shadow-md ${
+                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
                         isAutoSwitch 
-                        ? 'bg-green-700 text-white shadow-green-900/50 hover:bg-green-600' // غامق جداً
-                        : 'text-white/20 bg-white/5 hover:text-white/50'
+                        ? 'bg-green-700 text-white shadow-lg shadow-black/50 border border-green-600' // لون غامق وواضح
+                        : 'bg-white/5 text-white/20 hover:bg-white/10 border border-transparent'
                     }`}
                 >
-                    <Repeat className={`h-4 w-4 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                    <Repeat className={`h-4 w-4 transition-transform duration-500 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Main Toggle Switch */}
-                <div className="relative flex items-center justify-center bg-white/5 rounded-full p-1 w-[160px] border border-white/5 select-none">
+                {/* ✨ Main Toggle Switch: Fixed Direction & Contrast ✨ */}
+                {/* dir="ltr" is crucial here to fix the "active is uncolored" bug caused by RTL mismatch */}
+                <div dir="ltr" className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[160px] border border-white/5 select-none shadow-inner">
                 
-                {/* الخلفية المتحركة (تم عكس الألوان) */}
-                <div 
-                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-1000 ease-in-out shadow-lg ${
-                    currentSender === 'me'
-                        ? 'left-1 bg-pink-600' // أنا = وردي
-                        : 'left-[calc(50%+4px)] bg-blue-600' // نفسي = أزرق
-                    }`}
-                />
+                  {/* الخلفية المتحركة */}
+                  <div 
+                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-1000 ease-in-out shadow-lg z-0 ${
+                      currentSender === 'me'
+                          ? 'left-1 bg-blue-600' // أنا (يسار في LTR)
+                          : 'left-[calc(50%+4px)] bg-pink-600' // نفسي (يمين في LTR)
+                      }`}
+                  />
 
-                {/* زر "أنا" */}
-                <button
-                    onClick={() => handleManualSwitch('me')}
-                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-1000 ${
-                        currentSender === 'me' 
-                        ? 'text-white font-bold'
-                        : 'text-white/40 font-medium hover:text-white/70'
-                    }`}
-                >
-                    <User className="h-3 w-3" />
-                    أنا
-                </button>
+                  {/* زر "أنا" */}
+                  <button
+                      onClick={() => handleManualSwitch('me')}
+                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                          currentSender === 'me' 
+                          ? 'text-white font-bold drop-shadow-md' // ✨ نص واضح جداً
+                          : 'text-gray-400 font-medium hover:text-gray-200'
+                      }`}
+                  >
+                      <User className="h-3.5 w-3.5" />
+                      أنا
+                  </button>
 
-                {/* زر "نفسي" */}
-                <button
-                    onClick={() => handleManualSwitch('myself')}
-                    className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-1000 ${
-                        currentSender === 'myself' 
-                        ? 'text-white font-bold'
-                        : 'text-white/40 font-medium hover:text-white/70'
-                    }`}
-                >
-                    <Heart className="h-3 w-3" />
-                    نفسي
-                </button>
+                  {/* زر "نفسي" */}
+                  <button
+                      onClick={() => handleManualSwitch('myself')}
+                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-500 ${
+                          currentSender === 'myself' 
+                          ? 'text-white font-bold drop-shadow-md' // ✨ نص واضح جداً
+                          : 'text-gray-400 font-medium hover:text-gray-200'
+                      }`}
+                  >
+                      <Heart className="h-3.5 w-3.5" />
+                      نفسي
+                  </button>
                 </div>
                 
+                {/* Spacer for symmetry */}
                 <div className="w-8" />
             </div>
             
@@ -294,22 +295,20 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
-                // ✨ تحديث ألوان الحدود عند التركيز
                 className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-700 ${
                   currentSender === 'me' 
-                    ? 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20' 
-                    : 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20'
+                    ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
+                    : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
                 }`}
                 rows={1}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                // ✨ تحديث ألوان زر الإرسال
                 className={`rounded-xl h-[44px] px-4 transition-all duration-700 ${
                   currentSender === 'me'
-                    ? 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
+                    ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
+                    : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
                 }`}
               >
                 <Send className="h-5 w-5" />
