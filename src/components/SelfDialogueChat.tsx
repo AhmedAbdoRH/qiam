@@ -142,13 +142,27 @@ export function SelfDialogueChat() {
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (!scrollContainer) return;
     
-    // Simple, direct scroll without complex timing
-    const scrollTimeout = setTimeout(() => {
+    // Immediate scroll to bottom
+    const scrollToBottom = () => {
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    }, 50);
+    };
+    
+    // Scroll immediately
+    scrollToBottom();
+    
+    // Also scroll after a short delay to ensure it's at the bottom
+    const scrollTimeout = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    
+    // And one more time after messages are rendered
+    const finalScrollTimeout = setTimeout(() => {
+      scrollToBottom();
+    }, 300);
     
     return () => {
       clearTimeout(scrollTimeout);
+      clearTimeout(finalScrollTimeout);
     };
   }, [messages, isOpen]);
 
@@ -210,6 +224,19 @@ export function SelfDialogueChat() {
     }, 0);
   };
 
+  const handleSendButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!inputValue.trim()) {
+      // If no text, toggle between 'me' and 'myself'
+      const newSender = currentSender === 'me' ? 'myself' : 'me';
+      handleManualSwitch(newSender);
+    } else {
+      // If there's text, send the message
+      handleSendMessage();
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
 
@@ -269,7 +296,7 @@ export function SelfDialogueChat() {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-[600px] max-h-[100vh] h-[100vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden flex flex-col">
           <DialogHeader className="p-1 border-b border-white/5 flex-shrink-0">
             <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
             <DialogDescription className="sr-only">
@@ -379,10 +406,14 @@ export function SelfDialogueChat() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSendMessage();
+                      handleSendButtonClick(e as any);
                     }
                   }}
-                  className={`w-full min-h-[40px] max-h-[100px] rounded-xl bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-1000 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] ${
+                  className={`w-full min-h-[40px] max-h-[100px] rounded-xl resize-none transition-all duration-1000 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] ${
+                    inputValue.trim()
+                      ? 'bg-black text-white border-white/20'
+                      : 'bg-white/5 text-white border-white/10'
+                  } ${
                     currentSender === 'me' 
                       ? 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20 focus:shadow-[inset_0_2px_12px_rgba(59,130,246,0.15)]' 
                       : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20 focus:shadow-[inset_0_2px_12px_rgba(236,72,153,0.15)]'
@@ -390,16 +421,12 @@ export function SelfDialogueChat() {
                   rows={1}
                 />
                 <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
+                  onClick={handleSendButtonClick}
                   onMouseDown={(e) => e.preventDefault()}
-                  disabled={!inputValue.trim()}
                   className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${
                     currentSender === 'me'
-                      ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] disabled:bg-blue-600/10 disabled:border-blue-400/10 text-white'
-                      : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] disabled:bg-pink-600/10 disabled:border-pink-400/10 text-white'
+                      ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
+                      : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white'
                   }`}
                 >
                   <Send className="h-5 w-5 ml-2" />
