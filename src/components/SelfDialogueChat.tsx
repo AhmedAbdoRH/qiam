@@ -3,22 +3,23 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { Send, User, Heart, Repeat } from 'lucide-react';
+import { Send, User, Heart, Repeat, X } from 'lucide-react';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+/* ================== Styles ================== */
 const styles = `
 @keyframes message-pop {
-  0% { opacity: 0; transform: translateY(15px) scale(0.98); }
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .animate-message-pop {
-  animation: message-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: message-pop 0.4s ease-out forwards;
 }
 [data-radix-scroll-area-viewport] {
   scrollbar-gutter: stable;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 `;
 
@@ -31,7 +32,9 @@ interface DialogueMessage {
 
 export function SelfDialogueChat() {
   const { user } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('me');
@@ -40,58 +43,98 @@ export function SelfDialogueChat() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  /* تحميل الرسائل مرة واحدة فقط */
   useEffect(() => {
-    if (isOpen && user) {
+    if (isOpen && user && !loadedOnce) {
       loadMessages();
+      setLoadedOnce(true);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, loadedOnce]);
 
+  /* تثبيت السكرول */
   useEffect(() => {
-    const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
-    }
+    const el = scrollRef.current?.querySelector(
+      '[data-radix-scroll-area-viewport]'
+    ) as HTMLDivElement | null;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const loadMessages = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('self_dialogue_messages')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('self_dialogue_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
 
-    setMessages(data || []);
-    setLoading(false);
+      if (error) throw error;
+
+      const mapped = (data || []).map(m => ({
+        id: m.id,
+        sender: m.sender,
+        message: m.message,
+        created_at: m.created_at
+      }));
+
+      setMessages(mapped);
+
+      if (mapped.length && isAutoSwitch) {
+        setCurrentSender(mapped[mapped.length - 1].sender === 'me' ? 'myself' : 'me');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
 
-    const msg: DialogueMessage = {
+    const sender = currentSender;
+    const tempMessage: DialogueMessage = {
       id: crypto.randomUUID(),
-      sender: currentSender,
-      message: inputValue,
+      sender,
+      message: inputValue.trim(),
       created_at: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, msg]);
+    setMessages(p => [...p, tempMessage]);
     setInputValue('');
 
     if (isAutoSwitch) {
       setCurrentSender(p => (p === 'me' ? 'myself' : 'me'));
     }
 
-    await supabase.from('self_dialogue_messages').insert({
-      user_id: user.id,
-      sender: msg.sender,
-      message: msg.message
-    });
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender,
+        message: tempMessage.message
+      });
+    } catch {
+      setMessages(p => p.filter(m => m.id !== tempMessage.id));
+    }
+  };
 
-    setTimeout(() => inputRef.current?.focus(), 0);
+  const handleDeleteMessage = async (id: string) => {
+    if (!confirm('حذف الرسالة؟')) return;
+    setMessages(p => p.filter(m => m.id !== id));
+    await supabase.from('self_dialogue_messages').delete().eq('id', id);
+  };
+
+  const handleLongPress = (id: string) => {
+    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   };
 
   return (
@@ -101,19 +144,26 @@ export function SelfDialogueChat() {
       {/* Floating Button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-32 left-4 z-50 h-14 w-14 rounded-full shadow-xl"
+        className="fixed bottom-32 left-4 z-50 h-14 w-14 rounded-full bg-zinc-800 hover:bg-zinc-700 shadow-xl"
       >
-        <SelfDialogueIconNew className="h-7 w-7" />
+        <SelfDialogueIconNew className="h-7 w-7 text-white" />
       </Button>
 
-      {/* ✅ Dialog ثابت بدون رعشة */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black rounded-2xl p-0 text-white">
-          <DialogHeader className="sr-only">
+      {/* Dialog ثابت */}
+      <Dialog open={isOpen}>
+        <DialogContent
+          onInteractOutside={e => e.preventDefault()}
+          onEscapeKeyDown={e => e.preventDefault()}
+          className="sm:max-w-[450px] h-[70vh] bg-black text-white p-0 rounded-2xl overflow-hidden"
+        >
+          <DialogHeader className="flex flex-row items-center justify-between px-4 py-2 border-b border-white/10">
             <DialogTitle>حوار مع النفس</DialogTitle>
+            <button onClick={() => setIsOpen(false)}>
+              <X className="h-4 w-4 text-white/60 hover:text-red-400" />
+            </button>
           </DialogHeader>
 
-          <div className="flex flex-col h-[60vh]">
+          <div className="flex flex-col h-full">
             <ScrollArea ref={scrollRef} className="flex-1 p-4">
               {loading ? (
                 <p className="text-center text-white/40">جاري التحميل...</p>
@@ -125,9 +175,18 @@ export function SelfDialogueChat() {
                       className={`animate-message-pop flex ${
                         msg.sender === 'me' ? 'justify-start' : 'justify-end'
                       }`}
+                      onMouseDown={() => handleLongPress(msg.id)}
+                      onMouseUp={clearLongPress}
+                      onMouseLeave={clearLongPress}
                     >
-                      <div className="max-w-[80%] p-3 rounded-xl bg-white/10">
-                        <p className="text-sm">{msg.message}</p>
+                      <div
+                        className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                          msg.sender === 'me'
+                            ? 'bg-blue-500/20 text-blue-50'
+                            : 'bg-pink-500/20 text-pink-50'
+                        }`}
+                      >
+                        {msg.message}
                       </div>
                     </div>
                   ))}
@@ -148,20 +207,14 @@ export function SelfDialogueChat() {
                   }
                 }}
                 placeholder="اكتب رسالتك..."
-                className="mb-2 resize-none bg-white/5"
+                className="mb-2 bg-white/5 text-white"
               />
 
-              {/* ✅ زر إرسال بلون رصاص غامق */}
+              {/* زر إرسال رصاصي غامق ثابت */}
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                className="
-                  w-full h-9 rounded-xl
-                  bg-zinc-700
-                  hover:bg-zinc-600
-                  disabled:bg-zinc-800
-                  text-white
-                "
+                className="w-full h-9 bg-zinc-700 hover:bg-zinc-800 text-white"
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -172,3 +225,4 @@ export function SelfDialogueChat() {
     </>
   );
 }
+
