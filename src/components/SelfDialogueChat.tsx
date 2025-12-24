@@ -29,15 +29,29 @@ const styles = `
   .wave-gradient-bg {
     background: linear-gradient(
       45deg,
-      rgba(139, 0, 0, 0.3),    /* dark red - more transparent */
-      rgba(184, 134, 11, 0.3),  /* dark yellow - more transparent */
-      rgba(255, 140, 0, 0.3),   /* dark orange - more transparent */
-      rgba(85, 107, 47, 0.3),   /* dark green - more transparent */
-      rgba(139, 0, 0, 0.3),    /* dark red - more transparent */
-      rgba(184, 134, 11, 0.3)   /* dark yellow - more transparent */
+      rgba(139, 0, 0, 0.3),
+      rgba(184, 134, 11, 0.3),
+      rgba(255, 140, 0, 0.3),
+      rgba(85, 107, 47, 0.3),
+      rgba(139, 0, 0, 0.3),
+      rgba(184, 134, 11, 0.3)
     );
     background-size: 300% 300%;
     animation: wave-gradient 15s ease-in-out infinite;
+  }
+  
+  .subtle-wave-bg {
+    background: linear-gradient(
+      45deg,
+      rgba(139, 0, 0, 0.06),
+      rgba(184, 134, 11, 0.06),
+      rgba(255, 140, 0, 0.06),
+      rgba(85, 107, 47, 0.06),
+      rgba(139, 0, 0, 0.06),
+      rgba(184, 134, 11, 0.06)
+    );
+    background-size: 400% 400%;
+    animation: wave-gradient 25s ease-in-out infinite;
   }
 `;
 
@@ -200,9 +214,9 @@ export function SelfDialogueChat() {
           <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-2 border-b border-white/10">
-          <DialogTitle className="text-white text-center text-lg">حوار مع النفس</DialogTitle>
+      <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
+        <DialogHeader className="p-1 border-b border-white/5">
+          <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
         </DialogHeader>
         
         <div className="flex flex-col h-[60vh]">
@@ -261,67 +275,67 @@ export function SelfDialogueChat() {
           </ScrollArea>
           
           {/* Input Area */}
-          <div className="p-4 border-t border-white/10 bg-black/20">
+          <div className="p-3 pt-2 border-t border-white/5 bg-black/30">
             
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-2">
                 
-                {/* ✨ زر التبديل التلقائي: شفاف للغاية (Ghost) */}
+                {/* ✨ زر التبديل التلقائي */}
                 <button
                     onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-500 ${
+                    className={`group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 ${
                         isAutoSwitch 
-                        ? 'text-green-400 bg-green-500/10 shadow-[0_0_15px_rgba(74,222,128,0.1)]' // وهج خفيف جداً عند التفعيل
-                        : 'text-white/5 bg-transparent hover:text-white/20' // شبه مخفي عند عدم التفعيل
+                        ? 'text-green-400 bg-green-500/10'
+                        : 'text-white/5 bg-transparent hover:text-white/20'
                     }`}
                     title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
                 >
-                    <Repeat className={`h-4 w-4 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                    <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* ✨ Main Toggle Switch: Slow & Smooth Animation */}
-                <div dir="ltr" className="relative flex items-center justify-center bg-black/40 rounded-full p-1 w-[160px] border border-white/5 select-none shadow-inner">
+                {/* ✨ Main Toggle Switch: نفسي على اليسار، أنا على اليمين */}
+                <div dir="ltr" className="relative flex items-center justify-center bg-black/40 rounded-full p-0.5 w-[140px] border border-white/5 select-none shadow-inner">
                 
-                  {/* الخلفية المتحركة: duration-[1500ms] */}
+                  {/* الخلفية المتحركة */}
                   <div 
-                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-[1500ms] ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg z-0 ${
-                      currentSender === 'me'
-                          ? 'left-1 bg-blue-600'
-                          : 'left-[calc(50%+4px)] bg-pink-600'
+                      className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg z-0 ${
+                      currentSender === 'myself'
+                          ? 'left-0.5 bg-pink-600'
+                          : 'left-[calc(50%+2px)] bg-blue-600'
                       }`}
                   />
 
-                  {/* زر "أنا" */}
-                  <button
-                      onClick={() => handleManualSwitch('me')}
-                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-[1500ms] ${
-                          currentSender === 'me' 
-                          ? 'text-white font-bold drop-shadow-md'
-                          : 'text-gray-400 font-medium hover:text-gray-200'
-                      }`}
-                  >
-                      <User className="h-3.5 w-3.5" />
-                      أنا
-                  </button>
-
-                  {/* زر "نفسي" */}
+                  {/* زر "نفسي" - على اليسار */}
                   <button
                       onClick={() => handleManualSwitch('myself')}
-                      className={`relative z-10 w-1/2 py-1.5 text-xs flex items-center justify-center gap-2 transition-colors duration-[1500ms] ${
+                      className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
                           currentSender === 'myself' 
                           ? 'text-white font-bold drop-shadow-md'
                           : 'text-gray-400 font-medium hover:text-gray-200'
                       }`}
                   >
-                      <Heart className="h-3.5 w-3.5" />
+                      <Heart className="h-3 w-3" />
                       نفسي
+                  </button>
+
+                  {/* زر "أنا" - على اليمين */}
+                  <button
+                      onClick={() => handleManualSwitch('me')}
+                      className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
+                          currentSender === 'me' 
+                          ? 'text-white font-bold drop-shadow-md'
+                          : 'text-gray-400 font-medium hover:text-gray-200'
+                      }`}
+                  >
+                      <User className="h-3 w-3" />
+                      أنا
                   </button>
                 </div>
                 
                 {/* Spacer */}
-                <div className="w-8" />
+                <div className="w-6" />
             </div>
             
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-2">
               <Textarea
                 ref={inputRef}
                 placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
@@ -333,7 +347,7 @@ export function SelfDialogueChat() {
                     handleSendMessage();
                   }
                 }}
-                className={`flex-grow min-h-[44px] max-h-[120px] rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-[1500ms] ${
+                className={`w-full min-h-[40px] max-h-[100px] rounded-lg bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-1000 ${
                   currentSender === 'me' 
                     ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
                     : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
@@ -343,13 +357,13 @@ export function SelfDialogueChat() {
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
-                className={`rounded-xl h-[44px] px-4 transition-all duration-[1500ms] ${
+                className={`w-full rounded-lg h-8 transition-all duration-1000 ${
                   currentSender === 'me'
                     ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
                     : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
                 }`}
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
