@@ -8,7 +8,7 @@ import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-// ✨ تحسينات الستايل والأنيميشن
+// ✨ تحسينات الستايل: تغميق الخلفية وجعلها أكثر هدوءاً
 const styles = `
   @keyframes message-pop {
     0% { opacity: 0; transform: translateY(10px) scale(0.95); }
@@ -22,7 +22,7 @@ const styles = `
     scrollbar-gutter: stable;
   }
 
-  /* تمويه الخلفية المتحركة */
+  /* تمويه الخلفية المتحركة - جعلناها داكنة جداً */
   @keyframes wave-gradient {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -41,11 +41,12 @@ const styles = `
     animation: wave-gradient 10s ease-in-out infinite;
   }
 
+  /* تعديل: خلفية سوداء شبه معتمة مع تموج خفيف جداً */
   .subtle-wave-bg {
     background: linear-gradient(
-      135deg,
-      rgba(20, 20, 20, 0.95),
-      rgba(40, 40, 40, 0.95)
+      180deg,
+      rgba(5, 5, 5, 0.98) 0%,
+      rgba(15, 15, 15, 0.99) 100%
     );
   }
 `;
@@ -70,14 +71,12 @@ export function SelfDialogueChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // تحميل الرسائل عند فتح النافذة فقط
   useEffect(() => {
     if (isOpen && user) {
       loadMessages();
     }
   }, [isOpen, user]);
 
-  // التمرير لأسفل عند وصول رسالة جديدة
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -137,7 +136,7 @@ export function SelfDialogueChat() {
             if (error) throw error;
         } catch (error) {
             console.error('Error deleting message:', error);
-            loadMessages(); // Revert on error
+            loadMessages();
         }
     }
   };
@@ -172,12 +171,10 @@ export function SelfDialogueChat() {
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
     
-    // التبديل التلقائي
     if (isAutoSwitch) {
         setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
     }
     
-    // إعادة التركيز بشكل آمن
     requestAnimationFrame(() => {
         inputRef.current?.focus();
     });
@@ -208,10 +205,6 @@ export function SelfDialogueChat() {
     <>
       <style>{styles}</style>
       
-      {/* التغيير الجذري هنا:
-        نستخدم DialogTrigger لإحتواء الزر بدلاً من فصله.
-        هذا يمنع التعارض بين فتح النافذة وإغلاقها عند الضغط.
-      */}
       <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
         <DialogTrigger asChild>
           <Button 
@@ -221,18 +214,12 @@ export function SelfDialogueChat() {
           </Button>
         </DialogTrigger>
 
-        {/* onOpenAutoFocus: نمنع التركيز التلقائي الافتراضي ونوجهه للـ Input يدوياً وبشكل فوري 
-            لمنع القفزات البصرية.
-        */}
         <DialogContent 
-            className="sm:max-w-[450px] bg-black/90 subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden shadow-2xl"
+            // تعديل: خلفية سوداء تماماً تقريباً
+            className="sm:max-w-[450px] bg-[#050505] subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/5 text-white p-0 overflow-hidden shadow-2xl"
             onOpenAutoFocus={(e) => {
                 e.preventDefault();
                 inputRef.current?.focus();
-            }}
-            // نمنع إغلاق النافذة عند التفاعل خارجها إذا كنت تريدها تبقى مفتوحة أثناء العمل
-            onInteractOutside={(e) => {
-                // e.preventDefault(); // قم بإلغاء التعليق إذا أردت منع الإغلاق عند النقر خارجاً
             }}
         >
           <DialogHeader className="p-1 border-b border-white/5 h-0 opacity-0">
@@ -240,20 +227,20 @@ export function SelfDialogueChat() {
           </DialogHeader>
           
           <div className="flex flex-col h-[60vh] w-full">
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4 w-full" ref={scrollRef}>
+            {/* Messages Area - Darker background */}
+            <ScrollArea className="flex-1 p-4 w-full bg-black/20" ref={scrollRef}>
               {loading ? (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-white/50 text-sm animate-pulse">جاري استرجاع الذكريات...</p>
+                  <p className="text-white/30 text-sm animate-pulse">جاري استرجاع الذكريات...</p>
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-70">
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
                   <div className="p-4 rounded-full bg-white/5">
-                    <SelfDialogueIconNew className="h-10 w-10 text-white/40" />
+                    <SelfDialogueIconNew className="h-10 w-10 text-white/30" />
                   </div>
                   <div>
-                    <p className="text-white/60 text-sm font-medium">مساحة هادئة للحديث مع ذاتك</p>
-                    <p className="text-white/30 text-xs mt-2">ابدأ بكتابة أول رسالة</p>
+                    <p className="text-white/50 text-sm font-medium">مساحة هادئة للحديث مع ذاتك</p>
+                    <p className="text-white/20 text-xs mt-2">ابدأ بكتابة أول رسالة</p>
                   </div>
                 </div>
               ) : (
@@ -274,14 +261,14 @@ export function SelfDialogueChat() {
                         <div
                           className={`relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                             msg.sender === 'me'
-                              ? 'bg-blue-600/20 text-blue-100 rounded-bl-none border border-blue-500/20'
-                              : 'bg-pink-600/20 text-pink-100 rounded-br-none border border-pink-500/20'
+                              ? 'bg-blue-900/10 text-blue-100/90 rounded-bl-none border border-blue-500/10' // Darker bubble
+                              : 'bg-pink-900/10 text-pink-100/90 rounded-br-none border border-pink-500/10' // Darker bubble
                           }`}
                         >
                           {msg.message}
                         </div>
                         
-                        <div className={`flex items-center gap-1.5 mt-1.5 px-1 opacity-60 text-[10px] ${msg.sender === 'me' ? 'justify-start flex-row' : 'justify-end flex-row-reverse'}`}>
+                        <div className={`flex items-center gap-1.5 mt-1.5 px-1 opacity-40 text-[10px] ${msg.sender === 'me' ? 'justify-start flex-row' : 'justify-end flex-row-reverse'}`}>
                           {msg.sender === 'me' ? (
                             <User className="h-3 w-3" />
                           ) : (
@@ -297,7 +284,7 @@ export function SelfDialogueChat() {
             </ScrollArea>
             
             {/* Input Area */}
-            <div className="p-3 bg-black/40 backdrop-blur-md border-t border-white/10">
+            <div className="p-3 bg-black/60 backdrop-blur-md border-t border-white/5">
               
               {/* Controls */}
               <div className="flex items-center justify-center gap-3 mb-3">
@@ -306,8 +293,8 @@ export function SelfDialogueChat() {
                       onClick={() => setIsAutoSwitch(!isAutoSwitch)}
                       className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
                           isAutoSwitch 
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                          : 'bg-white/5 text-white/40 hover:bg-white/10'
+                          ? 'bg-green-900/20 text-green-400/80 border border-green-500/20' 
+                          : 'bg-white/5 text-white/20 hover:bg-white/10'
                       }`}
                       title="تبديل تلقائي للأدوار"
                   >
@@ -315,26 +302,26 @@ export function SelfDialogueChat() {
                   </button>
 
                   {/* Role Switcher */}
-                  <div className="relative flex bg-white/5 rounded-full p-1 w-32 border border-white/10">
+                  <div className="relative flex bg-white/5 rounded-full p-1 w-32 border border-white/5">
                     <div 
                         className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-300 shadow-sm ${
                         currentSender === 'myself'
-                            ? 'left-1 bg-pink-500/30 border border-pink-500/30'
-                            : 'left-[calc(50%)] bg-blue-500/30 border border-blue-500/30'
+                            ? 'left-1 bg-pink-900/40 border border-pink-500/20'
+                            : 'left-[calc(50%)] bg-blue-900/40 border border-blue-500/20'
                         }`}
                     />
                     
-                    <button onClick={() => handleManualSwitch('myself')} className="relative z-10 w-1/2 text-[10px] py-1 font-medium text-center text-white/80 hover:text-white transition-colors">
+                    <button onClick={() => handleManualSwitch('myself')} className="relative z-10 w-1/2 text-[10px] py-1 font-medium text-center text-white/70 hover:text-white transition-colors">
                         نفسي
                     </button>
-                    <button onClick={() => handleManualSwitch('me')} className="relative z-10 w-1/2 text-[10px] py-1 font-medium text-center text-white/80 hover:text-white transition-colors">
+                    <button onClick={() => handleManualSwitch('me')} className="relative z-10 w-1/2 text-[10px] py-1 font-medium text-center text-white/70 hover:text-white transition-colors">
                         أنا
                     </button>
                   </div>
               </div>
               
-              {/* Input Field */}
-              <div className="flex gap-2 items-end">
+              {/* Input & Send Button Layout Modification */}
+              <div className="flex flex-col gap-2 w-full">
                 <Textarea
                   ref={inputRef}
                   placeholder={currentSender === 'me' ? 'تحدث بصوتك...' : 'تحدث بصوت قلبك...'}
@@ -346,23 +333,26 @@ export function SelfDialogueChat() {
                       handleSendMessage();
                     }
                   }}
-                  className={`min-h-[44px] max-h-[120px] bg-white/5 border-white/10 focus:border-white/20 text-white placeholder:text-white/20 rounded-xl resize-none py-3 px-4 shadow-inner transition-colors ${
+                  className={`min-h-[44px] max-h-[120px] bg-white/5 border-white/5 focus:border-white/10 text-white placeholder:text-white/20 rounded-xl resize-none py-3 px-4 shadow-inner transition-colors ${
                     currentSender === 'me' 
-                    ? 'focus:ring-1 focus:ring-blue-500/30' 
-                    : 'focus:ring-1 focus:ring-pink-500/30'
+                    ? 'focus:ring-1 focus:ring-blue-500/20' 
+                    : 'focus:ring-1 focus:ring-pink-500/20'
                   }`}
                   rows={1}
                 />
+                
+                {/* تعديل: الزر أسفل النص ورفيع جداً */}
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim()}
-                  className={`h-[44px] w-[44px] rounded-xl flex-shrink-0 transition-all duration-300 ${
+                  className={`w-full h-7 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
                     currentSender === 'me'
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'
-                      : 'bg-pink-600 hover:bg-pink-500 text-white shadow-pink-900/20'
-                  } disabled:opacity-50 disabled:grayscale`}
+                      ? 'bg-blue-900/30 hover:bg-blue-800/40 text-blue-100 border border-blue-500/20'
+                      : 'bg-pink-900/30 hover:bg-pink-800/40 text-pink-100 border border-pink-500/20'
+                  } disabled:opacity-30 disabled:grayscale disabled:border-transparent`}
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3 w-3" />
+                  {/* يمكن إضافة نص هنا إذا أردت، لكن تركته أيقونة فقط للحفاظ على البساطة */}
                 </Button>
               </div>
             </div>
