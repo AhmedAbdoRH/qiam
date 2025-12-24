@@ -75,7 +75,7 @@ export function SelfDialogueChat() {
       })));
       
       if (data && data.length > 0) {
-        const lastSender = data[data.length - 1].sender;
+        const lastSender = data[data.length - 1].sender as 'me' | 'myself';
         if (isAutoSwitch) {
             setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
         } else {
