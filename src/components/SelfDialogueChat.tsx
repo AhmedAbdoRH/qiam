@@ -224,7 +224,7 @@ export function SelfDialogueChat() {
         <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
           <DialogHeader className="p-1 border-b border-white/5">
             <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
