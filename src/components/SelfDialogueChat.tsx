@@ -205,170 +205,174 @@ export function SelfDialogueChat() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <>
       {/* Inject Styles */}
       <style>{styles}</style>
       
-      <DialogTrigger asChild>
-        <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60">
-          <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
-        <DialogHeader className="p-1 border-b border-white/5">
-          <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex flex-col h-[60vh]">
-          {/* Messages Area */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-white/50">جاري التحميل...</p>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <SelfDialogueIconNew className="h-12 w-12 text-white/20 mb-3" />
-                <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
-                <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    // ✨ إضافة كلاس الأنيميشن هنا (animate-message-pop)
-                    className={`flex animate-message-pop ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div 
-                        className={`max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}
-                        onMouseDown={() => handleMouseDown(msg.id)}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                        onTouchStart={() => handleMouseDown(msg.id)}
-                        onTouchEnd={handleMouseUp}
+      {/* Floating Button - منفصل عن Dialog */}
+      <Button 
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60"
+      >
+        <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
+          <DialogHeader className="p-1 border-b border-white/5">
+            <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col h-[60vh]">
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-white/50">جاري التحميل...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <SelfDialogueIconNew className="h-12 w-12 text-white/20 mb-3" />
+                  <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
+                  <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex animate-message-pop ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}
                     >
-                      <div
-                        className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
-                          msg.sender === 'me'
-                            ? 'bg-blue-600/40 text-blue-50 rounded-bl-sm border border-blue-400/30'
-                            : 'bg-pink-600/40 text-pink-50 rounded-br-sm border border-pink-400/30'
-                        }`}
+                      <div 
+                          className={`max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}
+                          onMouseDown={() => handleMouseDown(msg.id)}
+                          onMouseUp={handleMouseUp}
+                          onMouseLeave={handleMouseUp}
+                          onTouchStart={() => handleMouseDown(msg.id)}
+                          onTouchEnd={handleMouseUp}
                       >
-                        <p className="text-sm leading-relaxed">{msg.message}</p>
-                      </div>
-                      <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-                        {msg.sender === 'me' ? (
-                          <User className="h-3 w-3 text-blue-400/60" />
-                        ) : (
-                          <Heart className="h-3 w-3 text-pink-400/60" />
-                        )}
-                        <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
-                          {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
-                        </span>
+                        <div
+                          className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
+                            msg.sender === 'me'
+                              ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
+                              : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed">{msg.message}</p>
+                        </div>
+                        <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
+                          {msg.sender === 'me' ? (
+                            <User className="h-3 w-3 text-blue-400/60" />
+                          ) : (
+                            <Heart className="h-3 w-3 text-pink-400/60" />
+                          )}
+                          <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
+                            {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-          
-          {/* Input Area */}
-          <div className="p-3 pt-2 border-t border-white/5 bg-black/30">
-            
-            <div className="flex items-center justify-center gap-2 mb-2">
-                
-                {/* ✨ زر التبديل التلقائي */}
-                <button
-                    onClick={() => setIsAutoSwitch(!isAutoSwitch)}
-                    className={`group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 ${
-                        isAutoSwitch 
-                        ? 'text-green-400 bg-green-500/10'
-                        : 'text-white/5 bg-transparent hover:text-white/20'
-                    }`}
-                    title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
-                >
-                    <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* ✨ Main Toggle Switch: نفسي على اليسار، أنا على اليمين */}
-                <div dir="ltr" className="relative flex items-center justify-center bg-black/40 rounded-full p-0.5 w-[140px] border border-white/5 select-none shadow-inner">
-                
-                  {/* الخلفية المتحركة */}
-                  <div 
-                      className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-lg z-0 ${
-                      currentSender === 'myself'
-                          ? 'left-0.5 bg-pink-600'
-                          : 'left-[calc(50%+2px)] bg-blue-600'
-                      }`}
-                  />
-
-                  {/* زر "نفسي" - على اليسار */}
-                  <button
-                      onClick={() => handleManualSwitch('myself')}
-                      className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
-                          currentSender === 'myself' 
-                          ? 'text-white font-bold drop-shadow-md'
-                          : 'text-gray-400 font-medium hover:text-gray-200'
-                      }`}
-                  >
-                      <Heart className="h-3 w-3" />
-                      نفسي
-                  </button>
-
-                  {/* زر "أنا" - على اليمين */}
-                  <button
-                      onClick={() => handleManualSwitch('me')}
-                      className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
-                          currentSender === 'me' 
-                          ? 'text-white font-bold drop-shadow-md'
-                          : 'text-gray-400 font-medium hover:text-gray-200'
-                      }`}
-                  >
-                      <User className="h-3 w-3" />
-                      أنا
-                  </button>
+                  ))}
                 </div>
-                
-                {/* Spacer */}
-                <div className="w-6" />
-            </div>
+              )}
+            </ScrollArea>
             
-            <div className="flex flex-col gap-2">
-              <Textarea
-                ref={inputRef}
-                placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                className={`w-full min-h-[40px] max-h-[100px] rounded-lg bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-1000 ${
-                  currentSender === 'me' 
-                    ? 'focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20' 
-                    : 'focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20'
-                }`}
-                rows={1}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
-                className={`w-full rounded-lg h-8 transition-all duration-1000 ${
-                  currentSender === 'me'
-                    ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/30 text-white'
-                    : 'bg-pink-600 hover:bg-pink-700 disabled:bg-pink-600/30 text-white'
-                }`}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+            {/* Input Area */}
+            <div className="p-3 pt-2 border-t border-white/5 bg-black/30">
+              
+              <div className="flex items-center justify-center gap-2 mb-2">
+                  
+                  {/* زر التبديل التلقائي - زجاجي */}
+                  <button
+                      onClick={() => setIsAutoSwitch(!isAutoSwitch)}
+                      className={`group relative flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-md transition-all duration-500 ${
+                          isAutoSwitch 
+                          ? 'text-green-400 bg-green-500/15 border border-green-400/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.2)]'
+                          : 'text-white/20 bg-white/5 border border-white/10 hover:text-white/40'
+                      }`}
+                      title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
+                  >
+                      <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Main Toggle Switch - زجاجي */}
+                  <div dir="ltr" className="relative flex items-center justify-center bg-white/5 backdrop-blur-md rounded-full p-0.5 w-[140px] border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                  
+                    {/* الخلفية المتحركة - زجاجية */}
+                    <div 
+                        className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 backdrop-blur-md ${
+                        currentSender === 'myself'
+                            ? 'left-0.5 bg-pink-500/40 border border-pink-400/40 shadow-[inset_0_1px_10px_rgba(236,72,153,0.3),0_0_15px_rgba(236,72,153,0.2)]'
+                            : 'left-[calc(50%+2px)] bg-blue-500/40 border border-blue-400/40 shadow-[inset_0_1px_10px_rgba(59,130,246,0.3),0_0_15px_rgba(59,130,246,0.2)]'
+                        }`}
+                    />
+
+                    {/* زر "نفسي" */}
+                    <button
+                        onClick={() => handleManualSwitch('myself')}
+                        className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
+                            currentSender === 'myself' 
+                            ? 'text-white font-bold drop-shadow-md'
+                            : 'text-gray-400 font-medium hover:text-gray-200'
+                        }`}
+                    >
+                        <Heart className="h-3 w-3" />
+                        نفسي
+                    </button>
+
+                    {/* زر "أنا" */}
+                    <button
+                        onClick={() => handleManualSwitch('me')}
+                        className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
+                            currentSender === 'me' 
+                            ? 'text-white font-bold drop-shadow-md'
+                            : 'text-gray-400 font-medium hover:text-gray-200'
+                        }`}
+                    >
+                        <User className="h-3 w-3" />
+                        أنا
+                    </button>
+                  </div>
+                  
+                  {/* Spacer */}
+                  <div className="w-6" />
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <Textarea
+                  ref={inputRef}
+                  placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className={`w-full min-h-[40px] max-h-[100px] rounded-xl bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-white/30 resize-none transition-all duration-1000 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] ${
+                    currentSender === 'me' 
+                      ? 'focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20 focus:shadow-[inset_0_2px_12px_rgba(59,130,246,0.15)]' 
+                      : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20 focus:shadow-[inset_0_2px_12px_rgba(236,72,153,0.15)]'
+                  }`}
+                  rows={1}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim()}
+                  className={`w-full rounded-xl h-8 backdrop-blur-md transition-all duration-1000 ${
+                    currentSender === 'me'
+                      ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] disabled:bg-blue-600/10 disabled:border-blue-400/10 text-white'
+                      : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] disabled:bg-pink-600/10 disabled:border-pink-400/10 text-white'
+                  }`}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
