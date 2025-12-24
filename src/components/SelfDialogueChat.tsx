@@ -204,6 +204,7 @@ export function SelfDialogueChat() {
 
   const handleManualSwitch = (sender: 'me' | 'myself') => {
     setCurrentSender(sender);
+    // Prevent keyboard from closing
     setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
@@ -233,7 +234,7 @@ export function SelfDialogueChat() {
       setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
     }
     
-    // Focus input after state updates
+    // Focus input after state updates to keep keyboard open
     requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
@@ -268,15 +269,15 @@ export function SelfDialogueChat() {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
-          <DialogHeader className="p-1 border-b border-white/5">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-1 border-b border-white/5 flex-shrink-0">
             <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
             <DialogDescription className="sr-only">
               نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"نفسي".
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col h-[75vh]">
+          <div className="flex flex-col flex-1 min-h-0">
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {loading ? (
@@ -297,13 +298,17 @@ export function SelfDialogueChat() {
             </ScrollArea>
             
             {/* Input Area */}
-            <div className="p-3 pt-2 border-t border-white/5 bg-black/30">
+            <div className="p-3 pt-2 border-t border-white/5 bg-black/30 flex-shrink-0">
               
               <div className="flex items-center justify-center gap-2 mb-2">
                   
                   {/* زر التبديل التلقائي - زجاجي */}
                   <button
-                      onClick={() => setIsAutoSwitch(!isAutoSwitch)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsAutoSwitch(!isAutoSwitch);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
                       className={`group relative flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-md transition-all duration-500 ${
                           isAutoSwitch 
                           ? 'text-green-300/60 bg-green-900/20 border border-green-800/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.1)]'
@@ -328,7 +333,11 @@ export function SelfDialogueChat() {
 
                     {/* زر "نفسي" */}
                     <button
-                        onClick={() => handleManualSwitch('myself')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleManualSwitch('myself');
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
                         className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
                             currentSender === 'myself' 
                             ? 'text-white font-bold drop-shadow-md'
@@ -341,7 +350,11 @@ export function SelfDialogueChat() {
 
                     {/* زر "أنا" */}
                     <button
-                        onClick={() => handleManualSwitch('me')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleManualSwitch('me');
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
                         className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${
                             currentSender === 'me' 
                             ? 'text-white font-bold drop-shadow-md'
@@ -377,7 +390,11 @@ export function SelfDialogueChat() {
                   rows={1}
                 />
                 <Button
-                  onClick={handleSendMessage}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
                   disabled={!inputValue.trim()}
                   className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${
                     currentSender === 'me'
