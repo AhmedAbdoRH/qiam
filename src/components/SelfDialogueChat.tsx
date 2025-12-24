@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageCircleHeart, Send, User, Heart, Repeat } from 'lucide-react';
+import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -15,6 +16,28 @@ const styles = `
   }
   .animate-message-pop {
     animation: message-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  
+  @keyframes wave-gradient {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 50% 25%; }
+    50% { background-position: 100% 50%; }
+    75% { background-position: 50% 75%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .wave-gradient-bg {
+    background: linear-gradient(
+      45deg,
+      rgba(139, 0, 0, 0.3),    /* dark red - more transparent */
+      rgba(184, 134, 11, 0.3),  /* dark yellow - more transparent */
+      rgba(255, 140, 0, 0.3),   /* dark orange - more transparent */
+      rgba(85, 107, 47, 0.3),   /* dark green - more transparent */
+      rgba(139, 0, 0, 0.3),    /* dark red - more transparent */
+      rgba(184, 134, 11, 0.3)   /* dark yellow - more transparent */
+    );
+    background-size: 300% 300%;
+    animation: wave-gradient 15s ease-in-out infinite;
   }
 `;
 
@@ -173,8 +196,8 @@ export function SelfDialogueChat() {
       <style>{styles}</style>
       
       <DialogTrigger asChild>
-        <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/80 to-purple-600/80 backdrop-blur-lg border border-white/20 shadow-lg shadow-purple-500/30 transition-all hover:scale-110 hover:shadow-purple-500/50">
-          <MessageCircleHeart className="h-7 w-7 text-white" />
+        <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60">
+          <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
@@ -191,7 +214,7 @@ export function SelfDialogueChat() {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <MessageCircleHeart className="h-12 w-12 text-white/20 mb-3" />
+                <SelfDialogueIconNew className="h-12 w-12 text-white/20 mb-3" />
                 <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
                 <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
               </div>

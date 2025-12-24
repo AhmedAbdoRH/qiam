@@ -65,8 +65,6 @@ export const FeelingTaskList = ({ tasks, onTasksChange }: FeelingTaskListProps) 
 
   return (
     <div className="bg-card rounded-xl p-4 mb-6 border border-border/50 shadow-sm">
-      <h3 className="text-sm font-medium text-foreground mb-3">قائمة المهام</h3>
-      
       <form onSubmit={addTask} className="flex gap-2 mb-4">
         <Input
           type="text"
