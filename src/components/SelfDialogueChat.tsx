@@ -72,6 +72,15 @@ export function SelfDialogueChat() {
     }
   }, [isOpen, user]);
 
+  const handleCopyMessage = (message: string) => {
+    navigator.clipboard.writeText(message).then(() => {
+      // Optional: Show a brief visual feedback
+      // Could add a toast notification here if needed
+    }).catch(err => {
+      console.error('Failed to copy message: ', err);
+    });
+  };
+
   const handleMouseDown = (id: string) => {
     longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
   };
@@ -95,6 +104,7 @@ export function SelfDialogueChat() {
         >
           <div 
             className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
+            onClick={() => handleCopyMessage(msg.message)}
             onMouseDown={() => handleMouseDown(msg.id)}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
@@ -325,7 +335,7 @@ export function SelfDialogueChat() {
             </ScrollArea>
             
             {/* Input Area */}
-            <div className="p-3 pt-2 border-t border-white/5 bg-black/30 flex-shrink-0">
+            <div className="p-2 pt-1 pb-3 border-t border-white/5 bg-black/30 flex-shrink-0">
               
               <div className="flex items-center justify-center gap-2 mb-2">
                   
@@ -424,13 +434,21 @@ export function SelfDialogueChat() {
                   onClick={handleSendButtonClick}
                   onMouseDown={(e) => e.preventDefault()}
                   className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${
-                    currentSender === 'me'
-                      ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
-                      : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white'
+                    inputValue.trim()
+                      ? currentSender === 'me'
+                        ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
+                        : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white'
+                      : 'bg-black hover:bg-gray-900 border border-white/20 text-white'
                   }`}
                 >
-                  <Send className="h-5 w-5 ml-2" />
-                  إرسال
+                  {inputValue.trim() ? (
+                    <>
+                      <Send className="h-5 w-5 ml-2" />
+                      إرسال
+                    </>
+                  ) : (
+                    <Repeat className="h-5 w-5 opacity-60" />
+                  )}
                 </Button>
               </div>
             </div>
