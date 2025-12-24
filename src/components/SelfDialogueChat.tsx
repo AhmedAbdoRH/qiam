@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
@@ -8,59 +8,33 @@ import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-// ✨ إضافة كلاسات الأنيميشن يدوياً لضمان النعومة
+// ✨ Optimized animations and styles for smoother chat experience
 const styles = `
   @keyframes message-pop {
-    0% { opacity: 0; transform: translateY(15px) scale(0.98); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
   .animate-message-pop {
-    animation: message-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation: message-pop 0.2s ease-out;
   }
 
-  /* تثبيت مساحة شريط التمرير لتجنب “الرجّة” عند الظهور/الاختفاء */
+  /* Optimized scroll container */
   [data-radix-scroll-area-viewport] {
-    scrollbar-gutter: stable;
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    scroll-behavior: auto;
+  }
+  
+  /* Disable animations when user prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-message-pop {
+      animation: none;
+    }
+    [data-radix-scroll-area-viewport] {
+      scroll-behavior: auto;
+    }
   }
 
-  @keyframes wave-gradient {
-    0% { background-position: 0% 50%; }
-    25% { background-position: 50% 25%; }
-    50% { background-position: 100% 50%; }
-    75% { background-position: 50% 75%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  .wave-gradient-bg {
-    background: linear-gradient(
-      45deg,
-      rgba(139, 0, 0, 0.3),
-      rgba(184, 134, 11, 0.3),
-      rgba(255, 140, 0, 0.3),
-      rgba(85, 107, 47, 0.3),
-      rgba(139, 0, 0, 0.3),
-      rgba(184, 134, 11, 0.3)
-    );
-    background-size: 300% 300%;
-    animation: wave-gradient 15s ease-in-out infinite;
-  }
-
-  .subtle-wave-bg {
-    background: linear-gradient(
-      45deg,
-      rgba(139, 0, 0, 0.06),
-      rgba(184, 134, 11, 0.06),
-      rgba(255, 140, 0, 0.06),
-      rgba(85, 107, 47, 0.06),
-      rgba(139, 0, 0, 0.06),
-      rgba(184, 134, 11, 0.06)
-    );
-    background-size: 400% 400%;
-    animation: wave-gradient 25s ease-in-out infinite;
-  }
-`;
+  `;
 
 interface DialogueMessage {
   id: string;
@@ -82,6 +56,15 @@ export function SelfDialogueChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('ar-SA', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
   useEffect(() => {
     if (isOpen && user) {
       loadMessages();
@@ -89,16 +72,85 @@ export function SelfDialogueChat() {
     }
   }, [isOpen, user]);
 
+  const handleMouseDown = (id: string) => {
+    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const messageItems = useMemo(() => {
+    return messages.map((msg, index) => {
+      const shouldAnimate = messages.length - index <= 5;
+      return (
+        <div 
+          key={msg.id}
+          className={`flex ${shouldAnimate ? 'animate-message-pop' : ''} ${
+            msg.sender === 'me' ? 'justify-start' : 'justify-end'
+          }`}
+        >
+          <div 
+            className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
+            onMouseDown={() => handleMouseDown(msg.id)}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={() => handleMouseDown(msg.id)}
+            onTouchEnd={handleMouseUp}
+          >
+            <div
+              className={`inline-block p-2 rounded-2xl break-words ${
+                msg.sender === 'me'
+                  ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
+                  : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
+              }`}
+            >
+              <p className="text-xs leading-tight">{msg.message}</p>
+            </div>
+            <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
+              {msg.sender === 'me' ? (
+                <User className="h-2 w-2 text-blue-400/30" />
+              ) : (
+                <Heart className="h-2 w-2 text-pink-400/30" />
+              )}
+              <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
+                {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
+              </span>
+            </div>
+          </div>
+          {index === messages.length - 1 && <div ref={messagesEndRef} />}
+        </div>
+      );
+    });
+  }, [messages, handleMouseDown, handleMouseUp]);
+
+  // Simple scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+  }, []);
+
+  // Optimized scroll handler with better stability
   useEffect(() => {
-    setTimeout(() => {
-      if (scrollRef.current) {
-        const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
-      }
-    }, 100); // زيادة طفيفة للتأكد من ان الأنيميشن لا يعيق السكرول
-  }, [messages]);
+    if (!isOpen) return;
+    
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+    
+    // Simple, direct scroll without complex timing
+    const scrollTimeout = setTimeout(() => {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }, 50);
+    
+    return () => {
+      clearTimeout(scrollTimeout);
+    };
+  }, [messages, isOpen]);
 
   const loadMessages = async () => {
     if (!user) return;
@@ -149,16 +201,6 @@ export function SelfDialogueChat() {
     }
   };
 
-  const handleMouseDown = (id: string) => {
-    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
-  };
-
-  const handleMouseUp = () => {
-    if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-    }
-  };
 
   const handleManualSwitch = (sender: 'me' | 'myself') => {
     setCurrentSender(sender);
@@ -170,24 +212,31 @@ export function SelfDialogueChat() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
 
+    const messageText = inputValue.trim();
+    setInputValue('');
+    
+    // Create optimistic update
+    const tempId = crypto.randomUUID();
     const senderForThisMessage = currentSender;
     const newMessage: DialogueMessage = {
-      id: crypto.randomUUID(),
+      id: tempId,
       sender: senderForThisMessage,
-      message: inputValue.trim(),
+      message: messageText,
       created_at: new Date().toISOString()
     };
 
+    // Update UI immediately
     setMessages(prev => [...prev, newMessage]);
-    setInputValue('');
     
+    // Switch sender if auto-switch is enabled
     if (isAutoSwitch) {
-        setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
+      setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
     }
     
-    setTimeout(() => {
-        inputRef.current?.focus();
-    }, 0);
+    // Focus input after state updates
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     try {
       const { error } = await supabase
@@ -204,13 +253,6 @@ export function SelfDialogueChat() {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ar-SA', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <>
       {/* Inject Styles */}
@@ -220,13 +262,13 @@ export function SelfDialogueChat() {
         <DialogTrigger asChild>
           <Button
             type="button"
-            className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60"
+            className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:scale-105"
           >
-            <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
+            <SelfDialogueIconNew className="h-7 w-7" />
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
           <DialogHeader className="p-1 border-b border-white/5">
             <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
             <DialogDescription className="sr-only">
@@ -234,7 +276,7 @@ export function SelfDialogueChat() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col h-[60vh]">
+          <div className="flex flex-col h-[75vh]">
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {loading ? (
@@ -248,42 +290,8 @@ export function SelfDialogueChat() {
                   <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex animate-message-pop ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}
-                    >
-                      <div 
-                          className={`max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform ${msg.sender === 'me' ? 'order-1' : 'order-1'}`}
-                          onMouseDown={() => handleMouseDown(msg.id)}
-                          onMouseUp={handleMouseUp}
-                          onMouseLeave={handleMouseUp}
-                          onTouchStart={() => handleMouseDown(msg.id)}
-                          onTouchEnd={handleMouseUp}
-                      >
-                        <div
-                          className={`inline-block p-3 rounded-2xl break-words transition-all duration-300 ${
-                            msg.sender === 'me'
-                              ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
-                              : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
-                          }`}
-                        >
-                          <p className="text-sm leading-relaxed">{msg.message}</p>
-                        </div>
-                        <div className={`flex items-center gap-1 mt-1 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-                          {msg.sender === 'me' ? (
-                            <User className="h-3 w-3 text-blue-400/60" />
-                          ) : (
-                            <Heart className="h-3 w-3 text-pink-400/60" />
-                          )}
-                          <span className={`text-[10px] ${msg.sender === 'me' ? 'text-blue-400/60' : 'text-pink-400/60'}`}>
-                            {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="space-y-1">
+                  {messageItems}
                 </div>
               )}
             </ScrollArea>
@@ -298,7 +306,7 @@ export function SelfDialogueChat() {
                       onClick={() => setIsAutoSwitch(!isAutoSwitch)}
                       className={`group relative flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-md transition-all duration-500 ${
                           isAutoSwitch 
-                          ? 'text-green-400 bg-green-500/15 border border-green-400/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.2)]'
+                          ? 'text-green-300/60 bg-green-900/20 border border-green-800/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.1)]'
                           : 'text-white/20 bg-white/5 border border-white/10 hover:text-white/40'
                       }`}
                       title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
@@ -371,13 +379,14 @@ export function SelfDialogueChat() {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim()}
-                  className={`w-full rounded-xl h-8 backdrop-blur-md transition-all duration-1000 ${
+                  className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${
                     currentSender === 'me'
                       ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] disabled:bg-blue-600/10 disabled:border-blue-400/10 text-white'
                       : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] disabled:bg-pink-600/10 disabled:border-pink-400/10 text-white'
                   }`}
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5 ml-2" />
+                  إرسال
                 </Button>
               </div>
             </div>
