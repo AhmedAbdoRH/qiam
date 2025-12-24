@@ -34,6 +34,28 @@ const styles = `
     }
   }
 
+  @keyframes dynamic-gradient {
+    0% { background-position: 0% 50%; }
+    20% { background-position: 30% 25%; }
+    40% { background-position: 60% 50%; }
+    60% { background-position: 90% 75%; }
+    80% { background-position: 120% 50%; }
+    100% { background-position: 150% 25%; }
+  }
+
+  .dynamic-gradient-bg {
+    background: linear-gradient(
+      45deg,
+      rgba(139, 0, 0, 0.4),
+      rgba(255, 140, 0, 0.4),
+      rgba(85, 107, 47, 0.4),
+      rgba(184, 134, 11, 0.4),
+      rgba(139, 0, 0, 0.4)
+    );
+    background-size: 400% 400%;
+    animation: dynamic-gradient 15s ease-in-out infinite;
+  }
+
   `;
 
 interface DialogueMessage {
@@ -300,7 +322,7 @@ export function SelfDialogueChat() {
         <DialogTrigger asChild>
           <Button
             type="button"
-            className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:scale-105"
+            className="fixed bottom-32 left-8 z-50 flex h-14 w-14 items-center justify-center rounded-full dynamic-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:scale-105"
           >
             <SelfDialogueIconNew className="h-7 w-7" />
           </Button>
