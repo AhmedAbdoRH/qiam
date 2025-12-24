@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageCircleHeart, Send, User, Heart, Repeat } from 'lucide-react';
@@ -215,21 +215,25 @@ export function SelfDialogueChat() {
     <>
       {/* Inject Styles */}
       <style>{styles}</style>
-      
-      {/* Floating Button - منفصل عن Dialog */}
-      <Button 
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60"
-      >
-        <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
-      </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full wave-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl shadow-black/40 transition-all hover:scale-110 hover:shadow-black/60"
+          >
+            <SelfDialogueIconNew className="h-7 w-7 drop-shadow-lg" />
+          </Button>
+        </DialogTrigger>
+
         <DialogContent className="sm:max-w-[450px] max-h-[85vh] bg-black subtle-wave-bg backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden">
           <DialogHeader className="p-1 border-b border-white/5">
             <DialogTitle className="sr-only">حوار مع النفس</DialogTitle>
+            <DialogDescription className="sr-only">
+              نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"نفسي".
+            </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex flex-col h-[60vh]">
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
