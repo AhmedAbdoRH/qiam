@@ -17,7 +17,14 @@ const styles = `
   .animate-message-pop {
     animation: message-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
-  
+
+  /* تثبيت مساحة شريط التمرير لتجنب “الرجّة” عند الظهور/الاختفاء */
+  [data-radix-scroll-area-viewport] {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+
   @keyframes wave-gradient {
     0% { background-position: 0% 50%; }
     25% { background-position: 50% 25%; }
@@ -25,7 +32,7 @@ const styles = `
     75% { background-position: 50% 75%; }
     100% { background-position: 0% 50%; }
   }
-  
+
   .wave-gradient-bg {
     background: linear-gradient(
       45deg,
@@ -39,7 +46,7 @@ const styles = `
     background-size: 300% 300%;
     animation: wave-gradient 15s ease-in-out infinite;
   }
-  
+
   .subtle-wave-bg {
     background: linear-gradient(
       45deg,
