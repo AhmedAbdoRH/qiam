@@ -3,7 +3,8 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock } from 'lucide-react';
+import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -76,7 +77,7 @@ interface DialogueMessage {
 }
 
 export function SelfDialogueChat() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -86,10 +87,14 @@ export function SelfDialogueChat() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const [archivedMessages, setArchivedMessages] = useState<DialogueMessage[]>([]);
+  const [showPinInput, setShowPinInput] = useState(true);
+  const [pinValue, setPinValue] = useState('');
+  const [pinError, setPinError] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pinInputRef = useRef<HTMLInputElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -317,10 +322,10 @@ export function SelfDialogueChat() {
       }
 
       // Merge and sort
-      const allMessages = [...remoteMessages];
+      const allMessages: DialogueMessage[] = [...remoteMessages];
       pendingMessages.forEach(p => {
         if (!allMessages.some(m => m.id === p.id)) {
-          allMessages.push(p);
+          allMessages.push(p as DialogueMessage);
         }
       });
       
@@ -554,7 +559,15 @@ export function SelfDialogueChat() {
       {/* Inject Styles */}
       <style>{styles}</style>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          // Reset PIN state when closing
+          setShowPinInput(true);
+          setPinValue('');
+          setPinError(false);
+        }
+      }}>
         <DialogTrigger asChild>
           <Button
             type="button"
@@ -565,6 +578,57 @@ export function SelfDialogueChat() {
         </DialogTrigger>
 
         <DialogContent className="sm:max-w-[600px] max-h-[100vh] h-[100vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden flex flex-col">
+          {showPinInput ? (
+            // PIN Entry Screen
+            <div className="flex flex-col items-center justify-center h-full p-8">
+              <Lock className="h-16 w-16 text-white/30 mb-6" />
+              <h2 className="text-lg font-medium text-white/80 mb-2">محادثة محمية</h2>
+              <p className="text-sm text-white/50 mb-6 text-center">أدخل الرقم السري للوصول</p>
+              
+              <Input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
+                value={pinValue}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                  setPinValue(val);
+                  setPinError(false);
+                  
+                  if (val.length === 2) {
+                    if (val === '88') {
+                      setShowPinInput(false);
+                      loadMessages();
+                      syncPendingMessages();
+                    } else {
+                      setPinError(true);
+                      setPinValue('');
+                      toast.error('رقم سري خاطئ! جاري تسجيل الخروج...');
+                      setTimeout(() => {
+                        setIsOpen(false);
+                        signOut();
+                      }, 1500);
+                    }
+                  }
+                }}
+                className={`w-24 text-center text-2xl tracking-[0.5em] bg-white/10 border-white/20 text-white placeholder:text-white/30 ${
+                  pinError ? 'border-red-500 shake-animation' : ''
+                }`}
+                placeholder="••"
+                autoFocus
+              />
+              
+              <p className="text-xs text-white/30 mt-4">أدخل رقمين</p>
+              
+              <DialogDescription className="sr-only">
+                أدخل الرقم السري للوصول للمحادثة
+              </DialogDescription>
+            </div>
+          ) : (
+            // Regular Chat Content
+            <>
           <DialogHeader className="p-1 border-b border-white/5 flex-shrink-0 flex-row items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <DialogTitle className="text-sm font-medium text-white/70">
@@ -777,6 +841,8 @@ export function SelfDialogueChat() {
               </div>
             )}
           </div>
+          </>
+          )}
         </DialogContent>
       </Dialog>
     </>

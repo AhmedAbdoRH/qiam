@@ -99,7 +99,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          is_archived: boolean
+          is_archived: boolean | null
           message: string
           sender: string
           user_id: string
@@ -107,7 +107,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          is_archived?: boolean
+          is_archived?: boolean | null
           message: string
           sender: string
           user_id: string
@@ -115,7 +115,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          is_archived?: boolean
+          is_archived?: boolean | null
           message?: string
           sender?: string
           user_id?: string
