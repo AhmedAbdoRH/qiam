@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2 } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -146,6 +146,7 @@ interface DialogueMessage {
   sender: 'me' | 'myself';
   message: string;
   created_at: string;
+  session_title?: string | null;
   status?: 'synced' | 'pending' | 'error';
 }
 
@@ -160,11 +161,13 @@ export function SelfDialogueChat() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const [archivedMessages, setArchivedMessages] = useState<DialogueMessage[]>([]);
-  const [archiveSessions, setArchiveSessions] = useState<{ id: string, date: string, firstMessage: string }[]>([]);
+  const [archiveSessions, setArchiveSessions] = useState<{ id: string, date: string, title?: string | null, firstMessage: string }[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showPinInput, setShowPinInput] = useState(true);
   const [pinValue, setPinValue] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [sessionTitle, setSessionTitle] = useState<string>('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -296,7 +299,7 @@ export function SelfDialogueChat() {
               <div className="flex items-center gap-2">
                 {session.id === 'legacy' && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40">قديم</span>}
                 <p className="text-xs text-white/70 line-clamp-2 leading-relaxed flex-1">
-                  {session.firstMessage}
+                  {session.title || session.firstMessage}
                 </p>
               </div>
             </button>
@@ -376,18 +379,29 @@ export function SelfDialogueChat() {
     );
   }, [messages, archivedMessages, showArchive, archiveSessions, selectedSessionId, handleMouseDown, handleMouseUp]);
 
-  // Optimized scroll handler - only scroll when messages change
+  // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
-    if (!isOpen || showArchive) return;
+    if (!isOpen) return;
 
-    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!scrollContainer) return;
+    const scrollToBottom = () => {
+      const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    };
 
-    // Use requestAnimationFrame for smoother scrolling
-    requestAnimationFrame(() => {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    });
-  }, [messages.length, isOpen]);
+    // Scroll immediately after render cycle
+    requestAnimationFrame(scrollToBottom);
+
+    // Also scroll after a short delay to be absolutely sure (especially on mobile/slow devices)
+    const timeout = setTimeout(scrollToBottom, 100);
+    const timeout2 = setTimeout(scrollToBottom, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      clearTimeout(timeout2);
+    };
+  }, [messages.length, archivedMessages.length, isOpen, showPinInput, selectedSessionId, showArchive]);
 
   const loadMessages = async () => {
     if (!user) return;
@@ -431,6 +445,7 @@ export function SelfDialogueChat() {
       setMessages(allMessages);
 
       if (allMessages.length > 0) {
+        setSessionTitle(allMessages[0].session_title || 'حوار مع النفس');
         const lastSender = allMessages[allMessages.length - 1].sender as 'me' | 'myself';
         if (isAutoSwitch) {
           setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
@@ -492,7 +507,7 @@ export function SelfDialogueChat() {
       // Get all archived messages for this user
       const { data, error } = await supabase
         .from('self_dialogue_messages')
-        .select('archive_session_id, created_at, message')
+        .select('archive_session_id, created_at, message, session_title')
         .eq('user_id', user.id)
         .eq('is_archived', true)
         .order('created_at', { ascending: false });
@@ -508,6 +523,7 @@ export function SelfDialogueChat() {
           sessionsMap.set(sId, {
             id: sId,
             date: msg.created_at,
+            title: msg.session_title,
             firstMessage: msg.message
           });
         }
@@ -543,13 +559,19 @@ export function SelfDialogueChat() {
       const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) throw error;
-      setArchivedMessages((data || []).map(msg => ({
+      const msgs = (data || []).map(msg => ({
         id: msg.id,
         sender: msg.sender as 'me' | 'myself',
         message: msg.message,
         created_at: msg.created_at,
+        session_title: msg.session_title,
         status: 'synced'
-      })));
+      })) as DialogueMessage[];
+
+      setArchivedMessages(msgs);
+      if (msgs.length > 0) {
+        setSessionTitle(msgs[0].session_title || 'جلسة مؤرشفة');
+      }
     } catch (error) {
       console.error('Error loading archived messages:', error);
       toast.error('حدث خطأ أثناء تحميل رسائل الأرشيف');
@@ -602,6 +624,49 @@ export function SelfDialogueChat() {
     } catch (error) {
       console.error('Error archiving chat:', error);
       toast.error('حدث خطأ أثناء أرشفة المحادثة. يرجى التأكد من اتصال الإنترنت.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleUpdateSessionTitle = async (newTitle: string) => {
+    if (!user || !newTitle.trim()) return;
+    setIsSyncing(true);
+    try {
+      const query = supabase
+        .from('self_dialogue_messages')
+        .update({ session_title: newTitle })
+        .eq('user_id', user.id);
+
+      if (showArchive && selectedSessionId) {
+        if (selectedSessionId === 'legacy') {
+          query.is('archive_session_id', null);
+        } else {
+          query.eq('archive_session_id', selectedSessionId);
+        }
+      } else {
+        query.eq('is_archived', false);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      // Update the title in state for all messages to ensure consistency
+      if (showArchive) {
+        setArchivedMessages(prev => prev.map(m => ({ ...m, session_title: newTitle })));
+      } else {
+        setMessages(prev => prev.map(m => ({ ...m, session_title: newTitle })));
+      }
+
+      setSessionTitle(newTitle);
+      if (showArchive) {
+        // Update local state for archive list
+        setArchiveSessions(prev => prev.map(s => s.id === selectedSessionId ? { ...s, title: newTitle } : s));
+      }
+      toast.success('تم تحديث العنوان');
+    } catch (err) {
+      console.error('Error updating title:', err);
+      toast.error('فشل تحديث العنوان');
     } finally {
       setIsSyncing(false);
     }
@@ -672,7 +737,8 @@ export function SelfDialogueChat() {
           user_id: user.id,
           sender: senderForThisMessage,
           message: newMessage.message,
-          created_at: newMessage.created_at
+          created_at: newMessage.created_at,
+          session_title: sessionTitle || null
         });
 
       if (error) throw error;
@@ -792,10 +858,39 @@ export function SelfDialogueChat() {
             // Regular Chat Content
             <>
               <DialogHeader className="p-1 border-b border-white/5 flex-shrink-0 flex-row items-center justify-between px-4">
-                <div className="flex items-center gap-2">
-                  <DialogTitle className="text-sm font-medium text-white/70">
-                    {showArchive ? 'أرشيف المحادثات' : 'حوار مع النفس'}
-                  </DialogTitle>
+                <div className="flex items-center gap-2 flex-1">
+                  {isEditingTitle ? (
+                    <div className="flex items-center gap-2 w-full max-w-[200px]">
+                      <Input
+                        value={sessionTitle}
+                        onChange={(e) => setSessionTitle(e.target.value)}
+                        className="h-7 text-xs bg-white/10 border-white/20 text-white"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleUpdateSessionTitle(sessionTitle);
+                            setIsEditingTitle(false);
+                          }
+                        }}
+                        onBlur={() => {
+                          handleUpdateSessionTitle(sessionTitle);
+                          setIsEditingTitle(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center gap-2 cursor-pointer group"
+                      onClick={() => !showArchive || selectedSessionId ? setIsEditingTitle(true) : null}
+                    >
+                      <DialogTitle className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                        {showArchive && !selectedSessionId ? 'أرشيف المحادثات' : (sessionTitle || 'حوار مع النفس')}
+                      </DialogTitle>
+                      {(!showArchive || selectedSessionId) && (
+                        <Edit2 className="h-3 w-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                      )}
+                    </div>
+                  )}
                   {isSyncing && (
                     <Loader2 className="h-3 w-3 text-blue-400 animate-spin" />
                   )}

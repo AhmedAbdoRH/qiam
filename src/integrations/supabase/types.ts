@@ -100,6 +100,7 @@ export type Database = {
           progress: number | null
           updated_at: string | null
           user_id: string
+          verses_link: string | null
         }
         Insert: {
           created_at?: string | null
@@ -111,6 +112,7 @@ export type Database = {
           progress?: number | null
           updated_at?: string | null
           user_id: string
+          verses_link?: string | null
         }
         Update: {
           created_at?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           progress?: number | null
           updated_at?: string | null
           user_id?: string
+          verses_link?: string | null
         }
         Relationships: []
       }
@@ -133,6 +136,7 @@ export type Database = {
           is_archived: boolean | null
           message: string
           sender: string
+          session_title: string | null
           user_id: string
         }
         Insert: {
@@ -142,6 +146,7 @@ export type Database = {
           is_archived?: boolean | null
           message: string
           sender: string
+          session_title?: string | null
           user_id: string
         }
         Update: {
@@ -151,6 +156,7 @@ export type Database = {
           is_archived?: boolean | null
           message?: string
           sender?: string
+          session_title?: string | null
           user_id?: string
         }
         Relationships: []
