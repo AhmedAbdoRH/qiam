@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -65,9 +65,35 @@ export type Database = {
         }
         Relationships: []
       }
+      divine_name_monologues: {
+        Row: {
+          created_at: string
+          divine_name: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          divine_name: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          divine_name?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       divine_names: {
         Row: {
           created_at: string | null
+          dhikr_count: number | null
+          dhikr_notes: string | null
           divine_name: string
           id: string
           notes: string | null
@@ -77,6 +103,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dhikr_count?: number | null
+          dhikr_notes?: string | null
           divine_name: string
           id?: string
           notes?: string | null
@@ -86,6 +114,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dhikr_count?: number | null
+          dhikr_notes?: string | null
           divine_name?: string
           id?: string
           notes?: string | null
@@ -97,6 +127,7 @@ export type Database = {
       }
       self_dialogue_messages: {
         Row: {
+          archive_session_id: string | null
           created_at: string
           id: string
           is_archived: boolean | null
@@ -105,6 +136,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
@@ -113,6 +145,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
