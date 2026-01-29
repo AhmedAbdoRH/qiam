@@ -857,7 +857,7 @@ export function SelfDialogueChat() {
           ) : (
             // Regular Chat Content
             <>
-              <DialogHeader className="p-1 border-b border-white/5 flex-shrink-0 flex-row items-center justify-between px-4">
+              <DialogHeader className="p-4 border-b border-white/10 flex-shrink-0 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                   {isEditingTitle ? (
                     <div className="flex items-center gap-2 w-full max-w-[200px]">
