@@ -412,7 +412,9 @@ export function SelfDialogueChat() {
         .select('*')
         .eq('user_id', user.id)
         .eq('is_archived', false) // Only load non-archived messages
-        .order('created_at', { ascending: true });
+        // Secondary order stabilizes results when multiple rows share the same created_at
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true });
 
       if (error) throw error;
 
@@ -441,7 +443,11 @@ export function SelfDialogueChat() {
         }
       });
 
-      allMessages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      allMessages.sort((a, b) => {
+        const t = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        if (t !== 0) return t;
+        return a.id.localeCompare(b.id);
+      });
       setMessages(allMessages);
 
       if (allMessages.length > 0) {
@@ -556,7 +562,9 @@ export function SelfDialogueChat() {
         query.eq('archive_session_id', sessionId);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: true });
+      const { data, error } = await query
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true });
 
       if (error) throw error;
       const msgs = (data || []).map(msg => ({
@@ -806,7 +814,9 @@ export function SelfDialogueChat() {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[600px] max-h-[100vh] h-[100vh] bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 text-white p-0 overflow-hidden flex flex-col">
+        <DialogContent
+          className="top-0 left-0 translate-x-0 translate-y-0 w-[100vw] max-w-[100vw] h-[100dvh] max-h-[100dvh] rounded-none sm:top-[50%] sm:left-[50%] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-[600px] sm:h-auto sm:max-h-[90vh] sm:rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10 text-white p-0 overflow-hidden flex flex-col"
+        >
           {showPinInput ? (
             // PIN Entry Screen
             <div className="flex flex-col items-center justify-center h-full p-8">
