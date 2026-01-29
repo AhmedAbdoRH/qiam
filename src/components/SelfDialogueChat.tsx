@@ -148,7 +148,11 @@ interface DialogueMessage {
   created_at: string;
   session_title?: string | null;
   status?: 'synced' | 'pending' | 'error';
+  localSeq?: number; // Local sequence number for stable ordering
 }
+
+// Global sequence counter to ensure message ordering even within same millisecond
+let globalMessageSeq = 0;
 
 export function SelfDialogueChat() {
   const { user, signOut } = useAuth();
@@ -443,9 +447,15 @@ export function SelfDialogueChat() {
         }
       });
 
+      // Sort by timestamp first, then by localSeq (for local messages), then by id
       allMessages.sort((a, b) => {
         const t = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         if (t !== 0) return t;
+        // Use localSeq for stable ordering of locally-created messages
+        if (a.localSeq !== undefined && b.localSeq !== undefined) {
+          return a.localSeq - b.localSeq;
+        }
+        // Fallback to id comparison for database messages
         return a.id.localeCompare(b.id);
       });
       setMessages(allMessages);
@@ -707,18 +717,20 @@ export function SelfDialogueChat() {
     const messageText = inputValue.trim();
     setInputValue('');
 
-    // Create optimistic update
+    // Create optimistic update with sequence number to ensure stable ordering
     const tempId = crypto.randomUUID();
     const senderForThisMessage = currentSender;
+    globalMessageSeq++;
     const newMessage: DialogueMessage = {
       id: tempId,
       sender: senderForThisMessage,
       message: messageText,
       created_at: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      localSeq: globalMessageSeq
     };
 
-    // Update UI immediately
+    // Update UI immediately - just append, don't re-sort
     setMessages(prev => [...prev, newMessage]);
 
     // Save to local storage as pending
