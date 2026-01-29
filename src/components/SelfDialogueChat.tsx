@@ -155,8 +155,8 @@ export function SelfDialogueChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('me');
-  const [isAutoSwitch, setIsAutoSwitch] = useState(true);
+  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
+  const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
