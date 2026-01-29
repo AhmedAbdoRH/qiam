@@ -65,6 +65,30 @@ export type Database = {
         }
         Relationships: []
       }
+      divine_name_monologues: {
+        Row: {
+          created_at: string
+          divine_name: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          divine_name: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          divine_name?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       divine_names: {
         Row: {
           created_at: string | null
@@ -97,27 +121,33 @@ export type Database = {
       }
       self_dialogue_messages: {
         Row: {
+          archive_session_id: string | null
           created_at: string
           id: string
           is_archived: boolean | null
           message: string
           sender: string
+          session_title: string | null
           user_id: string
         }
         Insert: {
+          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
           message: string
           sender: string
+          session_title?: string | null
           user_id: string
         }
         Update: {
+          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
           message?: string
           sender?: string
+          session_title?: string | null
           user_id?: string
         }
         Relationships: []
