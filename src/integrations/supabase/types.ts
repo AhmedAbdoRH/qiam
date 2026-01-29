@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -65,98 +65,59 @@ export type Database = {
         }
         Relationships: []
       }
-      divine_name_monologues: {
-        Row: {
-          created_at: string
-          divine_name: string
-          id: string
-          message: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          divine_name: string
-          id?: string
-          message: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          divine_name?: string
-          id?: string
-          message?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       divine_names: {
         Row: {
           created_at: string | null
-          dhikr_count: number | null
-          dhikr_notes: string | null
           divine_name: string
           id: string
           notes: string | null
           progress: number | null
           updated_at: string | null
           user_id: string
-          verses_link: string | null
         }
         Insert: {
           created_at?: string | null
-          dhikr_count?: number | null
-          dhikr_notes?: string | null
           divine_name: string
           id?: string
           notes?: string | null
           progress?: number | null
           updated_at?: string | null
           user_id: string
-          verses_link?: string | null
         }
         Update: {
           created_at?: string | null
-          dhikr_count?: number | null
-          dhikr_notes?: string | null
           divine_name?: string
           id?: string
           notes?: string | null
           progress?: number | null
           updated_at?: string | null
           user_id?: string
-          verses_link?: string | null
         }
         Relationships: []
       }
       self_dialogue_messages: {
         Row: {
-          archive_session_id: string | null
           created_at: string
           id: string
           is_archived: boolean | null
           message: string
           sender: string
-          session_title: string | null
           user_id: string
         }
         Insert: {
-          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
           message: string
           sender: string
-          session_title?: string | null
           user_id: string
         }
         Update: {
-          archive_session_id?: string | null
           created_at?: string
           id?: string
           is_archived?: boolean | null
           message?: string
           sender?: string
-          session_title?: string | null
           user_id?: string
         }
         Relationships: []
