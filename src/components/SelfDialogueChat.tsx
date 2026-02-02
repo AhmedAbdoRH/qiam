@@ -156,8 +156,8 @@ interface DialogueMessage {
 type ChatMode = 'anima_motherhood' | 'anima_femininity';
 
 const CHAT_MODES: { id: ChatMode; label: string; icon: string }[] = [
-  { id: 'anima_motherhood', label: 'أمومتي', icon: '🤱' },
-  { id: 'anima_femininity', label: 'أنوثتي', icon: '💃' },
+  { id: 'anima_motherhood', label: 'أمومتي', icon: '' },
+  { id: 'anima_femininity', label: 'أنوثتي', icon: '' },
 ];
 
 // Global sequence counter to ensure message ordering even within same millisecond
