@@ -122,6 +122,7 @@ export type Database = {
       self_dialogue_messages: {
         Row: {
           archive_session_id: string | null
+          chat_mode: string
           created_at: string
           id: string
           is_archived: boolean | null
@@ -132,6 +133,7 @@ export type Database = {
         }
         Insert: {
           archive_session_id?: string | null
+          chat_mode?: string
           created_at?: string
           id?: string
           is_archived?: boolean | null
@@ -142,6 +144,7 @@ export type Database = {
         }
         Update: {
           archive_session_id?: string | null
+          chat_mode?: string
           created_at?: string
           id?: string
           is_archived?: boolean | null

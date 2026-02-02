@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2 } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -149,7 +149,16 @@ interface DialogueMessage {
   session_title?: string | null;
   status?: 'synced' | 'pending' | 'error';
   localSeq?: number; // Local sequence number for stable ordering
+  chat_mode?: ChatMode;
 }
+
+// Chat modes for Anima feature
+type ChatMode = 'anima_motherhood' | 'anima_femininity';
+
+const CHAT_MODES: { id: ChatMode; label: string; icon: string }[] = [
+  { id: 'anima_motherhood', label: 'أمومتي', icon: '🤱' },
+  { id: 'anima_femininity', label: 'أنوثتي', icon: '💃' },
+];
 
 // Global sequence counter to ensure message ordering even within same millisecond
 let globalMessageSeq = 0;
@@ -172,6 +181,7 @@ export function SelfDialogueChat() {
   const [pinError, setPinError] = useState(false);
   const [sessionTitle, setSessionTitle] = useState<string>('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [currentChatMode, setCurrentChatMode] = useState<ChatMode>('anima_motherhood');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -209,7 +219,8 @@ export function SelfDialogueChat() {
             user_id: user.id,
             sender: msg.sender,
             message: msg.message,
-            created_at: msg.created_at // Use original creation time
+            created_at: msg.created_at,
+            chat_mode: msg.chat_mode || 'anima_motherhood'
           });
 
         if (!error) {
@@ -240,7 +251,7 @@ export function SelfDialogueChat() {
 
   useEffect(() => {
     if (isOpen && user) {
-      loadMessages();
+      loadMessages(currentChatMode);
       syncPendingMessages();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -252,7 +263,15 @@ export function SelfDialogueChat() {
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [isOpen, user, syncPendingMessages]);
+  }, [isOpen, user, syncPendingMessages, currentChatMode]);
+
+  // Handle chat mode change
+  const handleChatModeChange = (mode: ChatMode) => {
+    if (mode === currentChatMode) return;
+    setCurrentChatMode(mode);
+    setMessages([]);
+    loadMessages(mode);
+  };
 
   const handleCopyMessage = (message: string) => {
     navigator.clipboard.writeText(message).then(() => {
@@ -407,16 +426,17 @@ export function SelfDialogueChat() {
     };
   }, [messages.length, archivedMessages.length, isOpen, showPinInput, selectedSessionId, showArchive]);
 
-  const loadMessages = async () => {
+  const loadMessages = async (mode?: ChatMode) => {
     if (!user) return;
+    const modeToLoad = mode || currentChatMode;
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('self_dialogue_messages')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_archived', false) // Only load non-archived messages
-        // Secondary order stabilizes results when multiple rows share the same created_at
+        .eq('is_archived', false)
+        .eq('chat_mode', modeToLoad)
         .order('created_at', { ascending: true })
         .order('id', { ascending: true });
 
@@ -427,15 +447,18 @@ export function SelfDialogueChat() {
         sender: msg.sender as 'me' | 'myself',
         message: msg.message,
         created_at: msg.created_at,
-        status: 'synced' as const
+        status: 'synced' as const,
+        chat_mode: msg.chat_mode as ChatMode
       }));
 
-      // Get local pending messages
+      // Get local pending messages for this mode
       let pendingMessages: DialogueMessage[] = [];
       if (PENDING_MESSAGES_KEY) {
         const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
         if (stored) {
-          pendingMessages = JSON.parse(stored);
+          const allPending = JSON.parse(stored);
+          // Filter pending messages by current mode
+          pendingMessages = allPending.filter((m: DialogueMessage) => m.chat_mode === modeToLoad);
         }
       }
 
@@ -727,7 +750,8 @@ export function SelfDialogueChat() {
       message: messageText,
       created_at: new Date().toISOString(),
       status: 'pending',
-      localSeq: globalMessageSeq
+      localSeq: globalMessageSeq,
+      chat_mode: currentChatMode
     };
 
     // Update UI immediately - just append, don't re-sort
@@ -758,7 +782,8 @@ export function SelfDialogueChat() {
           sender: senderForThisMessage,
           message: newMessage.message,
           created_at: newMessage.created_at,
-          session_title: sessionTitle || null
+          session_title: sessionTitle || null,
+          chat_mode: currentChatMode
         });
 
       if (error) throw error;
@@ -980,6 +1005,26 @@ export function SelfDialogueChat() {
                 </DialogDescription>
               </DialogHeader>
 
+              {/* Chat Mode Tabs */}
+              {!showArchive && (
+                <div className="flex items-center justify-center gap-1 px-4 py-2 border-b border-white/5 bg-black/20">
+                  {CHAT_MODES.map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => handleChatModeChange(mode.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                        currentChatMode === mode.id
+                          ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/30 shadow-[0_0_10px_rgba(236,72,153,0.2)]'
+                          : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+                      }`}
+                    >
+                      <span>{mode.icon}</span>
+                      <span>{mode.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="flex flex-col flex-1 min-h-0">
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 p-4" ref={scrollRef}>
@@ -989,8 +1034,10 @@ export function SelfDialogueChat() {
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                      <SelfDialogueIconNew className="h-12 w-12 text-white/20 mb-3" />
-                      <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
+                      <span className="text-4xl mb-3">{CHAT_MODES.find(m => m.id === currentChatMode)?.icon || '💬'}</span>
+                      <p className="text-white/40 text-sm">
+                        {currentChatMode === 'anima_motherhood' ? 'ابدأ حوارك مع أمومتك' : 'ابدأ حوارك مع أنوثتك'}
+                      </p>
                       <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
                     </div>
                   ) : (
