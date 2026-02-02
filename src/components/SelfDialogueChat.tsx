@@ -115,7 +115,7 @@ const MessageBubble = React.memo(function MessageBubble({
             : 'bg-pink-500/20 text-pink-50 rounded-br-sm border border-pink-400/30'
             }`}
         >
-          <p className="text-xs leading-tight">{msg.message}</p>
+          <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
         </div>
         <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
           {msg.sender === 'me' ? (
