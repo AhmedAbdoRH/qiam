@@ -3,13 +3,13 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, List, Trash2, Download, Settings } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 // ✨ Optimized animations and styles for smoother chat experience
 const styles = `
   @keyframes message-pop {
@@ -182,11 +182,13 @@ export function SelfDialogueChat() {
   const [sessionTitle, setSessionTitle] = useState<string>('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentChatMode, setCurrentChatMode] = useState<ChatMode>('anima_motherhood');
+  const [showCapabilitiesMenu, setShowCapabilitiesMenu] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
+  const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -1080,21 +1082,124 @@ export function SelfDialogueChat() {
                             }`}
                         />
 
-                        {/* زر "نفسي" */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleManualSwitch('myself');
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
-                            ? 'text-white font-bold drop-shadow-md'
-                            : 'text-gray-400 font-medium hover:text-gray-200'
-                            }`}
-                        >
-                          <Heart className="h-3 w-3" />
-                          نفسي
-                        </button>
+                        {/* زر الوضع الحالي (أمومتي/أنوثتي) */}
+                        <Popover open={showCapabilitiesMenu} onOpenChange={setShowCapabilitiesMenu}>
+                          <PopoverTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleManualSwitch('myself');
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                modeButtonLongPressRef.current = setTimeout(() => {
+                                  setShowCapabilitiesMenu(true);
+                                }, 500);
+                              }}
+                              onMouseUp={() => {
+                                if (modeButtonLongPressRef.current) {
+                                  clearTimeout(modeButtonLongPressRef.current);
+                                  modeButtonLongPressRef.current = null;
+                                }
+                              }}
+                              onMouseLeave={() => {
+                                if (modeButtonLongPressRef.current) {
+                                  clearTimeout(modeButtonLongPressRef.current);
+                                  modeButtonLongPressRef.current = null;
+                                }
+                              }}
+                              onTouchStart={(e) => {
+                                modeButtonLongPressRef.current = setTimeout(() => {
+                                  setShowCapabilitiesMenu(true);
+                                }, 500);
+                              }}
+                              onTouchEnd={() => {
+                                if (modeButtonLongPressRef.current) {
+                                  clearTimeout(modeButtonLongPressRef.current);
+                                  modeButtonLongPressRef.current = null;
+                                }
+                              }}
+                              className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
+                                ? 'text-white font-bold drop-shadow-md'
+                                : 'text-gray-400 font-medium hover:text-gray-200'
+                                }`}
+                            >
+                              <Heart className="h-3 w-3" />
+                              {currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي'}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent 
+                            className="w-48 p-2 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+                            side="top"
+                            align="center"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <p className="text-[10px] text-white/40 px-2 py-1 border-b border-white/10 mb-1">
+                                إمكانات {currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي'}
+                              </p>
+                              <button
+                                onClick={() => {
+                                  handleArchiveChat();
+                                  setShowCapabilitiesMenu(false);
+                                }}
+                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                              >
+                                <Archive className="h-3.5 w-3.5" />
+                                أرشفة المحادثة
+                              </button>
+                              <button
+                                onClick={() => {
+                                  loadArchiveSessions();
+                                  setShowArchive(true);
+                                  setShowCapabilitiesMenu(false);
+                                }}
+                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                              >
+                                <List className="h-3.5 w-3.5" />
+                                عرض الأرشيف
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (messages.length > 0) {
+                                    const text = messages.map(m => `${m.sender === 'me' ? 'أنا' : (currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي')}: ${m.message}`).join('\n');
+                                    navigator.clipboard.writeText(text);
+                                    toast.success('تم نسخ المحادثة');
+                                  }
+                                  setShowCapabilitiesMenu(false);
+                                }}
+                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                نسخ المحادثة
+                              </button>
+                              <div className="border-t border-white/10 mt-1 pt-1">
+                                <button
+                                  onClick={async () => {
+                                    if (messages.length > 0 && confirm('هل أنت متأكد من حذف جميع الرسائل؟')) {
+                                      try {
+                                        await supabase
+                                          .from('self_dialogue_messages')
+                                          .delete()
+                                          .eq('user_id', user?.id)
+                                          .eq('chat_mode', currentChatMode)
+                                          .eq('is_archived', false);
+                                        setMessages([]);
+                                        toast.success('تم حذف المحادثة');
+                                      } catch (error) {
+                                        toast.error('فشل حذف المحادثة');
+                                      }
+                                    }
+                                    setShowCapabilitiesMenu(false);
+                                  }}
+                                  className="flex items-center gap-2 px-2 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors w-full"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  حذف المحادثة
+                                </button>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
 
                         {/* زر "أنا" */}
                         <button
