@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, List, Trash2, Download, Settings } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2 } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -155,6 +155,12 @@ interface DialogueMessage {
 // Chat modes for Anima feature
 type ChatMode = 'anima_motherhood' | 'anima_femininity';
 
+interface AnimaCapability {
+  id: string;
+  capability_text: string;
+  order_index: number;
+}
+
 const CHAT_MODES: { id: ChatMode; label: string; icon: string }[] = [
   { id: 'anima_motherhood', label: 'أمومتي', icon: '' },
   { id: 'anima_femininity', label: 'أنوثتي', icon: '' },
@@ -183,6 +189,9 @@ export function SelfDialogueChat() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentChatMode, setCurrentChatMode] = useState<ChatMode>('anima_motherhood');
   const [showCapabilitiesMenu, setShowCapabilitiesMenu] = useState(false);
+  const [capabilities, setCapabilities] = useState<AnimaCapability[]>([]);
+  const [newCapabilityText, setNewCapabilityText] = useState('');
+  const [loadingCapabilities, setLoadingCapabilities] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -273,7 +282,123 @@ export function SelfDialogueChat() {
     setCurrentChatMode(mode);
     setMessages([]);
     loadMessages(mode);
+    loadCapabilities(mode);
   };
+
+  // Load capabilities for current mode
+  const loadCapabilities = useCallback(async (mode?: ChatMode) => {
+    if (!user) return;
+    const modeToLoad = mode || currentChatMode;
+    setLoadingCapabilities(true);
+    try {
+      const { data, error } = await supabase
+        .from('anima_capabilities')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('chat_mode', modeToLoad)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      setCapabilities(data || []);
+    } catch (error) {
+      console.error('Error loading capabilities:', error);
+    } finally {
+      setLoadingCapabilities(false);
+    }
+  }, [user, currentChatMode]);
+
+  // Add new capability
+  const handleAddCapability = async () => {
+    if (!user || !newCapabilityText.trim()) return;
+    
+    const maxOrder = capabilities.length > 0 
+      ? Math.max(...capabilities.map(c => c.order_index)) + 1 
+      : 0;
+
+    try {
+      const { data, error } = await supabase
+        .from('anima_capabilities')
+        .insert({
+          user_id: user.id,
+          chat_mode: currentChatMode,
+          capability_text: newCapabilityText.trim(),
+          order_index: maxOrder
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setCapabilities(prev => [...prev, data]);
+      setNewCapabilityText('');
+      toast.success('تم إضافة الإمكانية');
+    } catch (error) {
+      console.error('Error adding capability:', error);
+      toast.error('فشل إضافة الإمكانية');
+    }
+  };
+
+  // Delete capability
+  const handleDeleteCapability = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('anima_capabilities')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setCapabilities(prev => prev.filter(c => c.id !== id));
+      toast.success('تم حذف الإمكانية');
+    } catch (error) {
+      console.error('Error deleting capability:', error);
+      toast.error('فشل حذف الإمكانية');
+    }
+  };
+
+  // Move capability up/down
+  const handleMoveCapability = async (id: string, direction: 'up' | 'down') => {
+    const index = capabilities.findIndex(c => c.id === id);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === capabilities.length - 1) return;
+
+    const newCapabilities = [...capabilities];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Swap order_index values
+    const tempOrder = newCapabilities[index].order_index;
+    newCapabilities[index].order_index = newCapabilities[swapIndex].order_index;
+    newCapabilities[swapIndex].order_index = tempOrder;
+    
+    // Swap positions in array
+    [newCapabilities[index], newCapabilities[swapIndex]] = [newCapabilities[swapIndex], newCapabilities[index]];
+    
+    setCapabilities(newCapabilities);
+
+    // Update in database
+    try {
+      await Promise.all([
+        supabase
+          .from('anima_capabilities')
+          .update({ order_index: newCapabilities[index].order_index })
+          .eq('id', newCapabilities[index].id),
+        supabase
+          .from('anima_capabilities')
+          .update({ order_index: newCapabilities[swapIndex].order_index })
+          .eq('id', newCapabilities[swapIndex].id)
+      ]);
+    } catch (error) {
+      console.error('Error reordering capabilities:', error);
+    }
+  };
+
+  // Load capabilities when menu opens
+  useEffect(() => {
+    if (showCapabilitiesMenu && user) {
+      loadCapabilities();
+    }
+  }, [showCapabilitiesMenu, user, loadCapabilities]);
 
   const handleCopyMessage = (message: string) => {
     navigator.clipboard.writeText(message).then(() => {
@@ -1129,72 +1254,81 @@ export function SelfDialogueChat() {
                             </button>
                           </PopoverTrigger>
                           <PopoverContent 
-                            className="w-48 p-2 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+                            className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-80 overflow-hidden flex flex-col"
                             side="top"
                             align="center"
                           >
-                            <div className="flex flex-col gap-1">
-                              <p className="text-[10px] text-white/40 px-2 py-1 border-b border-white/10 mb-1">
+                            <div className="flex flex-col gap-2 h-full">
+                              <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
                                 إمكانات {currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي'}
                               </p>
-                              <button
-                                onClick={() => {
-                                  handleArchiveChat();
-                                  setShowCapabilitiesMenu(false);
-                                }}
-                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                              >
-                                <Archive className="h-3.5 w-3.5" />
-                                أرشفة المحادثة
-                              </button>
-                              <button
-                                onClick={() => {
-                                  loadArchiveSessions();
-                                  setShowArchive(true);
-                                  setShowCapabilitiesMenu(false);
-                                }}
-                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                              >
-                                <List className="h-3.5 w-3.5" />
-                                عرض الأرشيف
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (messages.length > 0) {
-                                    const text = messages.map(m => `${m.sender === 'me' ? 'أنا' : (currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي')}: ${m.message}`).join('\n');
-                                    navigator.clipboard.writeText(text);
-                                    toast.success('تم نسخ المحادثة');
-                                  }
-                                  setShowCapabilitiesMenu(false);
-                                }}
-                                className="flex items-center gap-2 px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                                نسخ المحادثة
-                              </button>
-                              <div className="border-t border-white/10 mt-1 pt-1">
-                                <button
-                                  onClick={async () => {
-                                    if (messages.length > 0 && confirm('هل أنت متأكد من حذف جميع الرسائل؟')) {
-                                      try {
-                                        await supabase
-                                          .from('self_dialogue_messages')
-                                          .delete()
-                                          .eq('user_id', user?.id)
-                                          .eq('chat_mode', currentChatMode)
-                                          .eq('is_archived', false);
-                                        setMessages([]);
-                                        toast.success('تم حذف المحادثة');
-                                      } catch (error) {
-                                        toast.error('فشل حذف المحادثة');
-                                      }
+                              
+                              {/* Capabilities List */}
+                              <div className="flex-1 overflow-y-auto space-y-1 min-h-0 max-h-40">
+                                {loadingCapabilities ? (
+                                  <div className="flex items-center justify-center py-4">
+                                    <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                                  </div>
+                                ) : capabilities.length === 0 ? (
+                                  <p className="text-[10px] text-white/30 text-center py-4">
+                                    لا توجد إمكانات بعد
+                                  </p>
+                                ) : (
+                                  capabilities.map((cap, index) => (
+                                    <div 
+                                      key={cap.id}
+                                      className="flex items-center gap-1 p-2 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors"
+                                    >
+                                      <div className="flex flex-col gap-0.5">
+                                        <button
+                                          onClick={() => handleMoveCapability(cap.id, 'up')}
+                                          disabled={index === 0}
+                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                          <GripVertical className="h-2.5 w-2.5 rotate-90" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleMoveCapability(cap.id, 'down')}
+                                          disabled={index === capabilities.length - 1}
+                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                          <GripVertical className="h-2.5 w-2.5 -rotate-90" />
+                                        </button>
+                                      </div>
+                                      <span className="flex-1 text-xs text-white/80 pr-1">
+                                        {cap.capability_text}
+                                      </span>
+                                      <button
+                                        onClick={() => handleDeleteCapability(cap.id)}
+                                        className="p-1 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+
+                              {/* Add New Capability */}
+                              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                <Input
+                                  value={newCapabilityText}
+                                  onChange={(e) => setNewCapabilityText(e.target.value)}
+                                  placeholder="إضافة إمكانية..."
+                                  className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddCapability();
                                     }
-                                    setShowCapabilitiesMenu(false);
                                   }}
-                                  className="flex items-center gap-2 px-2 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors w-full"
+                                />
+                                <button
+                                  onClick={handleAddCapability}
+                                  disabled={!newCapabilityText.trim()}
+                                  className="p-2 rounded-lg bg-pink-500/20 text-pink-300 hover:bg-pink-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  حذف المحادثة
+                                  <Plus className="h-3.5 w-3.5" />
                                 </button>
                               </div>
                             </div>

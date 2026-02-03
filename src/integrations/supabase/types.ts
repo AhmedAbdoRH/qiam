@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      anima_capabilities: {
+        Row: {
+          capability_text: string
+          chat_mode: string
+          created_at: string
+          id: string
+          order_index: number
+          user_id: string
+        }
+        Insert: {
+          capability_text: string
+          chat_mode?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          user_id: string
+        }
+        Update: {
+          capability_text?: string
+          chat_mode?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       behavioral_values: {
         Row: {
           balance_percentage: number | null
