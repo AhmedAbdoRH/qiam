@@ -152,19 +152,14 @@ interface DialogueMessage {
   chat_mode?: ChatMode;
 }
 
-// Chat modes for Anima feature
-type ChatMode = 'anima_motherhood' | 'anima_femininity';
+// Chat mode - single mode now
+type ChatMode = 'self';
 
 interface AnimaCapability {
   id: string;
   capability_text: string;
   order_index: number;
 }
-
-const CHAT_MODES: { id: ChatMode; label: string; icon: string }[] = [
-  { id: 'anima_motherhood', label: 'أمومتي', icon: '' },
-  { id: 'anima_femininity', label: 'أنوثتي', icon: '' },
-];
 
 // Global sequence counter to ensure message ordering even within same millisecond
 let globalMessageSeq = 0;
@@ -187,7 +182,7 @@ export function SelfDialogueChat() {
   const [pinError, setPinError] = useState(false);
   const [sessionTitle, setSessionTitle] = useState<string>('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [currentChatMode, setCurrentChatMode] = useState<ChatMode>('anima_motherhood');
+  const [currentChatMode, setCurrentChatMode] = useState<ChatMode>('self');
   const [showCapabilitiesMenu, setShowCapabilitiesMenu] = useState(false);
   const [capabilities, setCapabilities] = useState<AnimaCapability[]>([]);
   const [newCapabilityText, setNewCapabilityText] = useState('');
@@ -276,14 +271,6 @@ export function SelfDialogueChat() {
     return () => window.removeEventListener('online', handleOnline);
   }, [isOpen, user, syncPendingMessages, currentChatMode]);
 
-  // Handle chat mode change
-  const handleChatModeChange = (mode: ChatMode) => {
-    if (mode === currentChatMode) return;
-    setCurrentChatMode(mode);
-    setMessages([]);
-    loadMessages(mode);
-    loadCapabilities(mode);
-  };
 
   // Load capabilities for current mode
   const loadCapabilities = useCallback(async (mode?: ChatMode) => {
@@ -1132,25 +1119,6 @@ export function SelfDialogueChat() {
                 </DialogDescription>
               </DialogHeader>
 
-              {/* Chat Mode Tabs */}
-              {!showArchive && (
-                <div className="flex items-center justify-center gap-1 px-4 py-2 border-b border-white/5 bg-black/20">
-                  {CHAT_MODES.map((mode) => (
-                    <button
-                      key={mode.id}
-                      onClick={() => handleChatModeChange(mode.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                        currentChatMode === mode.id
-                          ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/30 shadow-[0_0_10px_rgba(236,72,153,0.2)]'
-                          : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
-                      }`}
-                    >
-                      <span>{mode.icon}</span>
-                      <span>{mode.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
 
               <div className="flex flex-col flex-1 min-h-0">
                 {/* Messages Area */}
@@ -1161,10 +1129,8 @@ export function SelfDialogueChat() {
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                      <span className="text-4xl mb-3">{CHAT_MODES.find(m => m.id === currentChatMode)?.icon || '💬'}</span>
-                      <p className="text-white/40 text-sm">
-                        {currentChatMode === 'anima_motherhood' ? 'ابدأ حوارك مع أمومتك' : 'ابدأ حوارك مع أنوثتك'}
-                      </p>
+                      <span className="text-4xl mb-3">💬</span>
+                      <p className="text-white/40 text-sm">ابدأ حوارك مع نفسك</p>
                       <p className="text-white/30 text-xs mt-1">اضغط مطولاً على الرسالة لحذفها</p>
                     </div>
                   ) : (
@@ -1250,21 +1216,21 @@ export function SelfDialogueChat() {
                                 }`}
                             >
                               <Heart className="h-3 w-3" />
-                              {currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي'}
+                              نفسي
                             </button>
                           </PopoverTrigger>
                           <PopoverContent 
-                            className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-80 overflow-hidden flex flex-col"
+                            className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-[60vh] overflow-hidden flex flex-col"
                             side="top"
                             align="center"
                           >
                             <div className="flex flex-col gap-2 h-full">
                               <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                                إمكانات {currentChatMode === 'anima_motherhood' ? 'أمومتي' : 'أنوثتي'}
+                                إمكانات النفس
                               </p>
                               
                               {/* Capabilities List */}
-                              <div className="flex-1 overflow-y-auto space-y-1 min-h-0 max-h-40">
+                              <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
                                 {loadingCapabilities ? (
                                   <div className="flex items-center justify-center py-4">
                                     <Loader2 className="h-4 w-4 animate-spin text-white/40" />
