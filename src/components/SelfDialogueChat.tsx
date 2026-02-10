@@ -493,7 +493,7 @@ export function SelfDialogueChat() {
                     <Heart className="h-2 w-2 text-pink-400/30" />
                   )}
                   <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
-                    {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
+                    {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
                   </span>
 
                   {/* Status Indicator */}
@@ -598,7 +598,7 @@ export function SelfDialogueChat() {
       setMessages(allMessages);
 
       if (allMessages.length > 0) {
-        setSessionTitle(allMessages[0].session_title || 'حوار مع النفس');
+        setSessionTitle(allMessages[0].session_title || 'حوار مع الأنيما');
         const lastSender = allMessages[allMessages.length - 1].sender as 'me' | 'myself';
         if (isAutoSwitch) {
           setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
@@ -1045,7 +1045,7 @@ export function SelfDialogueChat() {
                       onClick={() => !showArchive || selectedSessionId ? setIsEditingTitle(true) : null}
                     >
                       <DialogTitle className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-                        {showArchive && !selectedSessionId ? 'أرشيف المحادثات' : (sessionTitle || 'حوار مع النفس')}
+                        {showArchive && !selectedSessionId ? 'أرشيف المحادثات' : (sessionTitle || 'حوار مع الأنيما')}
                       </DialogTitle>
                       {(!showArchive || selectedSessionId) && (
                         <Edit2 className="h-3 w-3 text-white/20 group-hover:text-white/50 transition-colors" />
@@ -1115,7 +1115,7 @@ export function SelfDialogueChat() {
                 </div>
 
                 <DialogDescription className="sr-only">
-                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"نفسي".
+                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"الأنيما".
                 </DialogDescription>
               </DialogHeader>
 
@@ -1216,7 +1216,7 @@ export function SelfDialogueChat() {
                                 }`}
                             >
                               <Heart className="h-3 w-3" />
-                              نفسي
+                              الأنيما
                             </button>
                           </PopoverTrigger>
                           <PopoverContent 
@@ -1226,7 +1226,7 @@ export function SelfDialogueChat() {
                           >
                             <div className="flex flex-col gap-2 h-full">
                               <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                                إمكانات النفس
+                                إمكانات الأنيما
                               </p>
                               
                               {/* Capabilities List */}
@@ -1325,7 +1325,7 @@ export function SelfDialogueChat() {
                     <div className="flex flex-col gap-2">
                       <Textarea
                         ref={inputRef}
-                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "نفسي"...'}
+                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "الأنيما"...'}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => {
