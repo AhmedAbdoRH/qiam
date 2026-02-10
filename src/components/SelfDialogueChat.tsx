@@ -124,7 +124,7 @@ const MessageBubble = React.memo(function MessageBubble({
             <Heart className="h-2 w-2 text-pink-400/30" />
           )}
           <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
-            {msg.sender === 'me' ? 'أنا' : 'نفسي'} • {formatTime(msg.created_at)}
+            {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
           </span>
           {msg.status === 'pending' && (
             <RefreshCw className="h-2 w-2 text-blue-400/40 animate-spin ml-0.5" />
