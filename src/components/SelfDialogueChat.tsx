@@ -193,6 +193,8 @@ export function SelfDialogueChat() {
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
   const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const sendLongPressFiredRef = useRef(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -463,52 +465,67 @@ export function SelfDialogueChat() {
 
         {targetMessages.map((msg, index) => {
           const shouldAnimate = targetMessages.length - index <= 5 && !showArchive;
+          
+          // Check if there's a time gap > 1.5 hours from previous message (auto spacer)
+          const prevMsg = index > 0 ? targetMessages[index - 1] : null;
+          const showAutoSpacer = prevMsg && 
+            msg.message !== '__SPACER__' && 
+            prevMsg.message !== '__SPACER__' &&
+            (new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime()) > 90 * 60 * 1000;
+
+          // Render spacer message
+          if (msg.message === '__SPACER__') {
+            return <div key={msg.id} className="h-10" />;
+          }
+
           return (
-            <div
-              key={msg.id}
-              className={`flex ${shouldAnimate ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'
-                }`}
-            >
+            <React.Fragment key={msg.id}>
+              {showAutoSpacer && <div className="h-10" />}
               <div
-                className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
-                onClick={() => handleCopyMessage(msg.message)}
-                onMouseDown={() => handleMouseDown(msg.id)}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={() => handleMouseDown(msg.id)}
-                onTouchEnd={handleMouseUp}
+                className={`flex ${shouldAnimate ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'
+                  }`}
               >
                 <div
-                  className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-                    ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
-                    : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
-                    }`}
+                  className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
+                  onClick={() => handleCopyMessage(msg.message)}
+                  onMouseDown={() => handleMouseDown(msg.id)}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={() => handleMouseDown(msg.id)}
+                  onTouchEnd={handleMouseUp}
                 >
-                  <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
-                </div>
-                <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-                  {msg.sender === 'me' ? (
-                    <User className="h-2 w-2 text-blue-400/30" />
-                  ) : (
-                    <Heart className="h-2 w-2 text-pink-400/30" />
-                  )}
-                  <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
-                    {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
-                  </span>
+                  <div
+                    className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
+                      ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
+                      : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
+                      }`}
+                  >
+                    <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
+                  </div>
+                  <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
+                    {msg.sender === 'me' ? (
+                      <User className="h-2 w-2 text-blue-400/30" />
+                    ) : (
+                      <Heart className="h-2 w-2 text-pink-400/30" />
+                    )}
+                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
+                      {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
+                    </span>
 
-                  {/* Status Indicator */}
-                  {msg.status === 'pending' && (
-                    <RefreshCw className="h-2 w-2 text-blue-400/40 animate-spin ml-0.5" />
-                  )}
-                  {msg.status === 'error' && (
-                    <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
-                  )}
-                  {msg.status === 'synced' && (
-                    <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
-                  )}
+                    {/* Status Indicator */}
+                    {msg.status === 'pending' && (
+                      <RefreshCw className="h-2 w-2 text-blue-400/40 animate-spin ml-0.5" />
+                    )}
+                    {msg.status === 'error' && (
+                      <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
+                    )}
+                    {msg.status === 'synced' && (
+                      <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </React.Fragment>
           );
         })}
         <div ref={messagesEndRef} />
@@ -835,21 +852,59 @@ export function SelfDialogueChat() {
     }, 0);
   };
 
+  const insertSpacer = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const spacerMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__SPACER__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: currentChatMode
+    };
+    setMessages(prev => [...prev, spacerMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__SPACER__',
+        created_at: spacerMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: currentChatMode
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch { 
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
   const handleSendButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Skip if long-press just fired
+    if (sendLongPressFiredRef.current) {
+      sendLongPressFiredRef.current = false;
+      return;
+    }
 
     if (!inputValue.trim()) {
-      // If no text, toggle between 'me' and 'myself'
       const newSender = currentSender === 'me' ? 'myself' : 'me';
       handleManualSwitch(newSender);
     } else {
-      // If there's text, send the message
       handleSendMessage();
     }
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
+
+    // Auto-insert spacer if last message was > 1.5 hours ago
+    const lastMsg = messages.filter(m => m.message !== '__SPACER__').at(-1);
+    if (lastMsg && (Date.now() - new Date(lastMsg.created_at).getTime()) > 90 * 60 * 1000) {
+      await insertSpacer();
+    }
 
     const messageText = inputValue.trim();
     setInputValue('');
@@ -1345,7 +1400,41 @@ export function SelfDialogueChat() {
                       />
                       <Button
                         onClick={handleSendButtonClick}
-                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          sendLongPressFiredRef.current = false;
+                          sendLongPressRef.current = setTimeout(() => {
+                            sendLongPressFiredRef.current = true;
+                            insertSpacer();
+                            sendLongPressRef.current = null;
+                          }, 600);
+                        }}
+                        onMouseUp={() => {
+                          if (sendLongPressRef.current) {
+                            clearTimeout(sendLongPressRef.current);
+                            sendLongPressRef.current = null;
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          if (sendLongPressRef.current) {
+                            clearTimeout(sendLongPressRef.current);
+                            sendLongPressRef.current = null;
+                          }
+                        }}
+                        onTouchStart={() => {
+                          sendLongPressFiredRef.current = false;
+                          sendLongPressRef.current = setTimeout(() => {
+                            sendLongPressFiredRef.current = true;
+                            insertSpacer();
+                            sendLongPressRef.current = null;
+                          }, 600);
+                        }}
+                        onTouchEnd={() => {
+                          if (sendLongPressRef.current) {
+                            clearTimeout(sendLongPressRef.current);
+                            sendLongPressRef.current = null;
+                          }
+                        }}
                         className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${inputValue.trim()
                           ? currentSender === 'me'
                             ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
