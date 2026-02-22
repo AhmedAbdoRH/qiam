@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -482,12 +482,15 @@ export function SelfDialogueChat() {
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneTitle = msg.message.replace('__MILESTONE__', '');
             return (
-              <div key={msg.id} className="flex justify-center py-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/30 via-yellow-500/20 to-amber-500/30 rounded-2xl blur-xl" />
-                  <div className="relative flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-br from-amber-500/25 via-yellow-500/15 to-orange-500/20 border border-amber-400/50 backdrop-blur-lg shadow-[0_8px_32px_rgba(217,119,6,0.2)]">
-                    <Trophy className="h-5 w-5 text-amber-300 drop-shadow-lg" />
-                    <span className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="relative flex items-center gap-2">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 rounded-xl blur-md" />
+                  <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/15 border border-amber-400/40 backdrop-blur-md">
+                    <Trophy className="h-4 w-4 text-amber-300 drop-shadow-md flex-shrink-0" />
+                    <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
+                  </div>
+                  <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400/30 to-amber-400/20 border border-yellow-400/50 backdrop-blur-md shadow-[0_4px_16px_rgba(250,204,21,0.15)]">
+                    <Star className="h-3.5 w-3.5 text-yellow-300 fill-yellow-300 drop-shadow-md" />
                   </div>
                 </div>
               </div>
