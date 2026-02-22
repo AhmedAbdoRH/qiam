@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2 } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, CheckCircle2 } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -478,6 +478,19 @@ export function SelfDialogueChat() {
             return <div key={msg.id} className="h-10" />;
           }
 
+          // Render milestone message
+          if (msg.message.startsWith('__MILESTONE__')) {
+            const milestoneTitle = msg.message.replace('__MILESTONE__', '');
+            return (
+              <div key={msg.id} className="flex justify-center py-4">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 backdrop-blur-md">
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  <span className="text-sm font-medium text-green-300">{milestoneTitle}</span>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <React.Fragment key={msg.id}>
               {showAutoSpacer && <div className="h-10" />}
@@ -881,6 +894,37 @@ export function SelfDialogueChat() {
     }
   };
 
+  const insertMilestone = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const milestoneMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__MILESTONE__جماع مقدس',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: currentChatMode
+    };
+    setMessages(prev => [...prev, milestoneMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__MILESTONE__جماع مقدس',
+        created_at: milestoneMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: currentChatMode
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+      toast.success('تم إضافة الإنجاز بنجاح!');
+    } catch { 
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+      toast.error('فشل إضافة الإنجاز');
+    }
+  };
+
   const handleSendButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     // Skip if long-press just fired
@@ -1113,6 +1157,19 @@ export function SelfDialogueChat() {
                 </div>
 
                 <div className="flex items-center gap-1">
+                  {!showArchive && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertMilestone}
+                      className="h-7 px-2 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1"
+                      title="إضافة علامة إنجاز"
+                    >
+                      <CheckCircle2 className="h-3 w-3" />
+                      إنجاز
+                    </Button>
+                  )}
+
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && !showArchive && (
                     <Button
                       variant="ghost"
