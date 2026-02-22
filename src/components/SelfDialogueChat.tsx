@@ -651,39 +651,37 @@ export function SelfDialogueChat() {
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (window.confirm('هل تريد حذف هذه الرسالة نهائياً؟')) {
-      const messageToDelete = messages.find(m => m.id === messageId);
-      setMessages(prev => prev.filter(m => m.id !== messageId));
+    const messageToDelete = messages.find(m => m.id === messageId);
+    setMessages(prev => prev.filter(m => m.id !== messageId));
 
-      // Remove from local storage if pending
-      if (PENDING_MESSAGES_KEY) {
-        const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
-        if (stored) {
-          const pending = JSON.parse(stored);
-          const filtered = pending.filter((m: any) => m.id !== messageId);
-          if (filtered.length < pending.length) {
-            if (filtered.length > 0) {
-              localStorage.setItem(PENDING_MESSAGES_KEY, JSON.stringify(filtered));
-            } else {
-              localStorage.removeItem(PENDING_MESSAGES_KEY);
-            }
+    // Remove from local storage if pending
+    if (PENDING_MESSAGES_KEY) {
+      const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
+      if (stored) {
+        const pending = JSON.parse(stored);
+        const filtered = pending.filter((m: any) => m.id !== messageId);
+        if (filtered.length < pending.length) {
+          if (filtered.length > 0) {
+            localStorage.setItem(PENDING_MESSAGES_KEY, JSON.stringify(filtered));
+          } else {
+            localStorage.removeItem(PENDING_MESSAGES_KEY);
           }
         }
       }
+    }
 
-      // Only try to delete from Supabase if it wasn't just a local pending message
-      if (messageToDelete && messageToDelete.status === 'synced') {
-        try {
-          const { error } = await supabase
-            .from('self_dialogue_messages')
-            .delete()
-            .eq('id', messageId);
-          if (error) throw error;
-        } catch (error) {
-          console.error('Error deleting message:', error);
-          toast.error('حدث خطأ أثناء حذف الرسالة من الكلاود');
-          loadMessages();
-        }
+    // Only try to delete from Supabase if it wasn't just a local pending message
+    if (messageToDelete && messageToDelete.status === 'synced') {
+      try {
+        const { error } = await supabase
+          .from('self_dialogue_messages')
+          .delete()
+          .eq('id', messageId);
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error deleting message:', error);
+        toast.error('حدث خطأ أثناء حذف الرسالة من الكلاود');
+        loadMessages();
       }
     }
   };
