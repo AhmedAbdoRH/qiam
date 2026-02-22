@@ -486,7 +486,6 @@ export function SelfDialogueChat() {
                 <div className="relative flex items-center gap-2">
                   <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 rounded-xl blur-md" />
                   <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/15 border border-amber-400/40 backdrop-blur-md">
-                    <Trophy className="h-4 w-4 text-amber-300 drop-shadow-md flex-shrink-0" />
                     <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
                   </div>
                   <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400/30 to-amber-400/20 border border-yellow-400/50 backdrop-blur-md shadow-[0_4px_16px_rgba(250,204,21,0.15)]">
@@ -1169,7 +1168,6 @@ export function SelfDialogueChat() {
                       className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="إضافة علامة إنجاز"
                     >
-                      <Trophy className="h-3 w-3" />
                       جماع مقدس
                     </Button>
                   )}
