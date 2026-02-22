@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, CheckCircle2 } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -482,10 +482,13 @@ export function SelfDialogueChat() {
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneTitle = msg.message.replace('__MILESTONE__', '');
             return (
-              <div key={msg.id} className="flex justify-center py-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 backdrop-blur-md">
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <span className="text-sm font-medium text-green-300">{milestoneTitle}</span>
+              <div key={msg.id} className="flex justify-center py-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/30 via-yellow-500/20 to-amber-500/30 rounded-2xl blur-xl" />
+                  <div className="relative flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-br from-amber-500/25 via-yellow-500/15 to-orange-500/20 border border-amber-400/50 backdrop-blur-lg shadow-[0_8px_32px_rgba(217,119,6,0.2)]">
+                    <Trophy className="h-5 w-5 text-amber-300 drop-shadow-lg" />
+                    <span className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -1162,11 +1165,11 @@ export function SelfDialogueChat() {
                       variant="ghost"
                       size="sm"
                       onClick={insertMilestone}
-                      className="h-7 px-2 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1"
+                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="إضافة علامة إنجاز"
                     >
-                      <CheckCircle2 className="h-3 w-3" />
-                      إنجاز
+                      <Trophy className="h-3 w-3" />
+                      جماع مقدس
                     </Button>
                   )}
 
