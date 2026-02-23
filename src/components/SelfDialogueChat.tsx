@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star, Palette } from 'lucide-react';
 import { Input } from './ui/input';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,7 +89,8 @@ const MessageBubble = React.memo(function MessageBubble({
   onMouseDown,
   onMouseUp,
   formatTime,
-  isRecent
+  isRecent,
+  themeClasses
 }: {
   msg: DialogueMessage;
   onCopy: (message: string) => void;
@@ -97,6 +98,7 @@ const MessageBubble = React.memo(function MessageBubble({
   onMouseUp: () => void;
   formatTime: (date: string) => string;
   isRecent: boolean;
+  themeClasses: any;
 }) {
   return (
     <div className={`flex ${isRecent ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
@@ -110,20 +112,20 @@ const MessageBubble = React.memo(function MessageBubble({
         onTouchEnd={onMouseUp}
       >
         <div
-          className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-            ? 'bg-blue-500/20 text-blue-50 rounded-bl-sm border border-blue-400/30'
-            : 'bg-pink-500/20 text-pink-50 rounded-br-sm border border-pink-400/30'
+          className={`inline-block p-2 rounded-2xl break-words backdrop-blur-md ${msg.sender === 'me'
+            ? `${themeClasses.meSenderBubble} rounded-bl-sm`
+            : `${themeClasses.myselfSenderBubble} rounded-br-sm`
             }`}
         >
           <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
         </div>
         <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
           {msg.sender === 'me' ? (
-            <User className="h-2 w-2 text-blue-400/30" />
+            <User className={`h-2 w-2 ${themeClasses.meSenderIcon}`} />
           ) : (
-            <Heart className="h-2 w-2 text-pink-400/30" />
+            <Heart className={`h-2 w-2 ${themeClasses.myselfSenderIcon}`} />
           )}
-          <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
+          <span className={`text-[7px] ${msg.sender === 'me' ? themeClasses.meTextColor : themeClasses.myselfTextColor}`}>
             {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
           </span>
           {msg.status === 'pending' && (
@@ -164,6 +166,137 @@ interface AnimaCapability {
 // Global sequence counter to ensure message ordering even within same millisecond
 let globalMessageSeq = 0;
 
+// Themes configuration - 7 rainbow colors + 1 formal white theme
+// Function to get gem color based on theme
+const getThemeGemColor = (theme: keyof typeof CHAT_THEMES) => {
+  const gemColorMap: Record<keyof typeof CHAT_THEMES, string> = {
+    formal: 'text-gray-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    blue: 'text-blue-400',
+    indigo: 'text-indigo-400',
+    violet: 'text-violet-400'
+  };
+  return gemColorMap[theme] || 'text-gray-400';
+};
+
+const CHAT_THEMES = {
+  formal: {
+    name: 'الرسمي',
+    sendButtonBg: 'bg-gray-400/30',
+    sendButtonBorder: 'border-gray-400/30',
+    sendButtonHover: 'hover:bg-gray-400/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(156,163,175,0.2)]',
+    meSenderBubble: 'bg-gray-400/20 text-gray-50 border-gray-400/30 shadow-[inset_0_1px_12px_rgba(156,163,175,0.2)]',
+    myselfSenderBubble: 'bg-gray-400/20 text-gray-50 border-gray-400/30 shadow-[inset_0_1px_12px_rgba(156,163,175,0.2)]',
+    meSenderIcon: 'text-gray-400/30',
+    myselfSenderIcon: 'text-gray-400/30',
+    meTextColor: 'text-gray-400/15',
+    myselfTextColor: 'text-gray-400/15',
+    accentColor: 'text-gray-400'
+  },
+  red: {
+    name: 'أحمر',
+    sendButtonBg: 'bg-red-500/30',
+    sendButtonBorder: 'border-red-400/30',
+    sendButtonHover: 'hover:bg-red-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(239,68,68,0.2)]',
+    meSenderBubble: 'bg-red-500/20 text-red-50 border-red-400/30 shadow-[inset_0_1px_12px_rgba(239,68,68,0.2)]',
+    myselfSenderBubble: 'bg-red-500/20 text-red-50 border-red-400/30 shadow-[inset_0_1px_12px_rgba(239,68,68,0.2)]',
+    meSenderIcon: 'text-red-400/30',
+    myselfSenderIcon: 'text-red-400/30',
+    meTextColor: 'text-red-400/15',
+    myselfTextColor: 'text-red-400/15',
+    accentColor: 'text-red-400'
+  },
+  orange: {
+    name: 'برتقالي',
+    sendButtonBg: 'bg-orange-500/30',
+    sendButtonBorder: 'border-orange-400/30',
+    sendButtonHover: 'hover:bg-orange-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(249,115,22,0.2)]',
+    meSenderBubble: 'bg-orange-500/20 text-orange-50 border-orange-400/30 shadow-[inset_0_1px_12px_rgba(249,115,22,0.2)]',
+    myselfSenderBubble: 'bg-orange-500/20 text-orange-50 border-orange-400/30 shadow-[inset_0_1px_12px_rgba(249,115,22,0.2)]',
+    meSenderIcon: 'text-orange-400/30',
+    myselfSenderIcon: 'text-orange-400/30',
+    meTextColor: 'text-orange-400/15',
+    myselfTextColor: 'text-orange-400/15',
+    accentColor: 'text-orange-400'
+  },
+  yellow: {
+    name: 'أصفر',
+    sendButtonBg: 'bg-yellow-500/30',
+    sendButtonBorder: 'border-yellow-400/30',
+    sendButtonHover: 'hover:bg-yellow-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(234,179,8,0.2)]',
+    meSenderBubble: 'bg-yellow-500/20 text-yellow-50 border-yellow-400/30 shadow-[inset_0_1px_12px_rgba(234,179,8,0.2)]',
+    myselfSenderBubble: 'bg-yellow-500/20 text-yellow-50 border-yellow-400/30 shadow-[inset_0_1px_12px_rgba(234,179,8,0.2)]',
+    meSenderIcon: 'text-yellow-400/30',
+    myselfSenderIcon: 'text-yellow-400/30',
+    meTextColor: 'text-yellow-400/15',
+    myselfTextColor: 'text-yellow-400/15',
+    accentColor: 'text-yellow-400'
+  },
+  green: {
+    name: 'أخضر',
+    sendButtonBg: 'bg-green-500/30',
+    sendButtonBorder: 'border-green-400/30',
+    sendButtonHover: 'hover:bg-green-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(34,197,94,0.2)]',
+    meSenderBubble: 'bg-green-500/20 text-green-50 border-green-400/30 shadow-[inset_0_1px_12px_rgba(34,197,94,0.2)]',
+    myselfSenderBubble: 'bg-green-500/20 text-green-50 border-green-400/30 shadow-[inset_0_1px_12px_rgba(34,197,94,0.2)]',
+    meSenderIcon: 'text-green-400/30',
+    myselfSenderIcon: 'text-green-400/30',
+    meTextColor: 'text-green-400/15',
+    myselfTextColor: 'text-green-400/15',
+    accentColor: 'text-green-400'
+  },
+  blue: {
+    name: 'أزرق',
+    sendButtonBg: 'bg-blue-500/30',
+    sendButtonBorder: 'border-blue-400/30',
+    sendButtonHover: 'hover:bg-blue-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)]',
+    meSenderBubble: 'bg-blue-500/20 text-blue-50 border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]',
+    myselfSenderBubble: 'bg-blue-500/20 text-blue-50 border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]',
+    meSenderIcon: 'text-blue-400/30',
+    myselfSenderIcon: 'text-blue-400/30',
+    meTextColor: 'text-blue-400/15',
+    myselfTextColor: 'text-blue-400/15',
+    accentColor: 'text-blue-400'
+  },
+  indigo: {
+    name: 'نيلي',
+    sendButtonBg: 'bg-indigo-500/30',
+    sendButtonBorder: 'border-indigo-400/30',
+    sendButtonHover: 'hover:bg-indigo-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(99,102,241,0.2)]',
+    meSenderBubble: 'bg-indigo-500/20 text-indigo-50 border-indigo-400/30 shadow-[inset_0_1px_12px_rgba(99,102,241,0.2)]',
+    myselfSenderBubble: 'bg-indigo-500/20 text-indigo-50 border-indigo-400/30 shadow-[inset_0_1px_12px_rgba(99,102,241,0.2)]',
+    meSenderIcon: 'text-indigo-400/30',
+    myselfSenderIcon: 'text-indigo-400/30',
+    meTextColor: 'text-indigo-400/15',
+    myselfTextColor: 'text-indigo-400/15',
+    accentColor: 'text-indigo-400'
+  },
+  violet: {
+    name: 'بنفسجي',
+    sendButtonBg: 'bg-violet-500/30',
+    sendButtonBorder: 'border-violet-400/30',
+    sendButtonHover: 'hover:bg-violet-500/40',
+    sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(168,85,247,0.2)]',
+    meSenderBubble: 'bg-violet-500/20 text-violet-50 border-violet-400/30 shadow-[inset_0_1px_12px_rgba(168,85,247,0.2)]',
+    myselfSenderBubble: 'bg-violet-500/20 text-violet-50 border-violet-400/30 shadow-[inset_0_1px_12px_rgba(168,85,247,0.2)]',
+    meSenderIcon: 'text-violet-400/30',
+    myselfSenderIcon: 'text-violet-400/30',
+    meTextColor: 'text-violet-400/15',
+    myselfTextColor: 'text-violet-400/15',
+    accentColor: 'text-violet-400'
+  }
+};
+
 export function SelfDialogueChat() {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
@@ -187,6 +320,7 @@ export function SelfDialogueChat() {
   const [capabilities, setCapabilities] = useState<AnimaCapability[]>([]);
   const [newCapabilityText, setNewCapabilityText] = useState('');
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<keyof typeof CHAT_THEMES>('formal');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -199,6 +333,20 @@ export function SelfDialogueChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const PENDING_MESSAGES_KEY = useMemo(() => user ? `pending_dialogue_messages_${user.id}` : null, [user]);
+  const THEME_STORAGE_KEY = 'chat_theme_preference';
+
+  // Load saved theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as keyof typeof CHAT_THEMES | null;
+    if (savedTheme && CHAT_THEMES[savedTheme]) {
+      setCurrentTheme(savedTheme);
+    }
+  }, []);
+
+  // Save theme when it changes
+  useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+  }, [currentTheme]);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('ar-SA', {
@@ -513,22 +661,34 @@ export function SelfDialogueChat() {
                   onTouchEnd={handleMouseUp}
                 >
                   <div
-                    className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-                      ? 'bg-blue-500/20 backdrop-blur-md text-blue-50 rounded-bl-sm border border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]'
-                      : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
+                    className={`inline-block p-2 rounded-2xl break-words backdrop-blur-md ${msg.sender === 'me'
+                      ? `${CHAT_THEMES[currentTheme].meSenderBubble} rounded-bl-sm`
+                      : `${CHAT_THEMES[currentTheme].myselfSenderBubble} rounded-br-sm`
                       }`}
                   >
                     <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
                   </div>
                   <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                     {msg.sender === 'me' ? (
-                      <User className="h-2 w-2 text-blue-400/30" />
+                      <User className={`h-2 w-2 ${CHAT_THEMES[currentTheme].meSenderIcon}`} />
                     ) : (
-                      <Heart className="h-2 w-2 text-pink-400/30" />
+                      <Heart className={`h-2 w-2 ${CHAT_THEMES[currentTheme].myselfSenderIcon}`} />
                     )}
-                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-blue-400/15' : 'text-pink-400/15'}`}>
+                    <span className={`text-[7px] ${msg.sender === 'me' ? CHAT_THEMES[currentTheme].meTextColor : CHAT_THEMES[currentTheme].myselfTextColor}`}>
                       {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
                     </span>
+                    {msg.sender === 'myself' && (
+                      <svg width="8" height="8" viewBox="0 0 20 20" className={`ml-1 ${getThemeGemColor(currentTheme)}`} style={{ opacity: 0.6 }}>
+                        <defs>
+                          <linearGradient id={`gem-gradient-${msg.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="1"/>
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0.5"/>
+                          </linearGradient>
+                        </defs>
+                        <polygon points="10,2 15,8 12,15 8,15 5,8" fill={`url(#gem-gradient-${msg.id})`} stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.7"/>
+                      </svg>
+                    )}
+                    
 
                     {/* Status Indicator */}
                     {msg.status === 'pending' && (
@@ -549,7 +709,7 @@ export function SelfDialogueChat() {
         <div ref={messagesEndRef} />
       </div>
     );
-  }, [messages, archivedMessages, showArchive, archiveSessions, selectedSessionId, handleMouseDown, handleMouseUp]);
+  }, [messages, archivedMessages, showArchive, archiveSessions, selectedSessionId, handleMouseDown, handleMouseUp, currentTheme]);
 
   // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
@@ -679,7 +839,7 @@ export function SelfDialogueChat() {
         if (error) throw error;
       } catch (error) {
         console.error('Error deleting message:', error);
-        toast.error('حدث خطأ أثناء حذف الرسالة من الكلاود');
+        toast.error('حدث خطأ أثناء حذف ال��سالة من الكلاود');
         loadMessages();
       }
     }
@@ -1161,15 +1321,77 @@ export function SelfDialogueChat() {
 
                 <div className="flex items-center gap-1">
                   {!showArchive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertMilestone}
-                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
-                      title="إضافة علامة إنجاز"
-                    >
-                      جماع مقدس
-                    </Button>
+                    <>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-[10px] text-white/50 hover:text-white hover:bg-white/10 gap-1"
+                            title="تغيير سمة الدردشة"
+                          >
+                            <Palette className="h-3 w-3" />
+                            السمات
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          className="w-56 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+                          side="bottom"
+                          align="end"
+                        >
+                          <div className="flex flex-col gap-2">
+                            <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
+                              أنماط الدردشة
+                            </p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {Object.entries(CHAT_THEMES).map(([themeKey, theme]) => (
+                                <button
+                                  key={themeKey}
+                                  onClick={() => setCurrentTheme(themeKey as keyof typeof CHAT_THEMES)}
+                                  className={`relative p-3 rounded-lg transition-all ${
+                                    currentTheme === themeKey
+                                      ? 'ring-2 ring-white/60'
+                                      : 'ring-1 ring-white/10 hover:ring-white/30'
+                                  }`}
+                                  style={{
+                                    backgroundColor: themeKey === 'formal' 
+                                      ? 'rgba(107, 114, 128, 0.2)' 
+                                      : themeKey === 'red' 
+                                      ? 'rgba(239, 68, 68, 0.2)'
+                                      : themeKey === 'orange'
+                                      ? 'rgba(249, 115, 22, 0.2)'
+                                      : themeKey === 'yellow'
+                                      ? 'rgba(234, 179, 8, 0.2)'
+                                      : themeKey === 'green'
+                                      ? 'rgba(34, 197, 94, 0.2)'
+                                      : themeKey === 'blue'
+                                      ? 'rgba(59, 130, 246, 0.2)'
+                                      : themeKey === 'indigo'
+                                      ? 'rgba(99, 102, 241, 0.2)'
+                                      : 'rgba(168, 85, 247, 0.2)'
+                                  }}
+                                  title={theme.name}
+                                >
+                                  <div className="text-[10px] text-white/70 text-center truncate">
+                                    {theme.name}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertMilestone}
+                        className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                        title="إضافة علامة إنجاز"
+                      >
+                        جماع مقدس
+                      </Button>
+                    </>
                   )}
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && !showArchive && (
@@ -1495,9 +1717,7 @@ export function SelfDialogueChat() {
                           }
                         }}
                         className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${inputValue.trim()
-                          ? currentSender === 'me'
-                            ? 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
-                            : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white'
+                          ? `${CHAT_THEMES[currentTheme].sendButtonBg} ${CHAT_THEMES[currentTheme].sendButtonHover} border ${CHAT_THEMES[currentTheme].sendButtonBorder} ${CHAT_THEMES[currentTheme].sendButtonShadow} text-white`
                           : 'bg-black hover:bg-gray-900 border border-white/20 text-white'
                           }`}
                       >
