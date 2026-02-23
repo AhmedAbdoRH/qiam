@@ -105,125 +105,117 @@ interface AnimaCapability {
 // Global sequence counter to ensure message ordering even within same millisecond
 let globalMessageSeq = 0;
 
-// Themes configuration - 7 rainbow colors mapped to Anima roles + 1 formal theme
-// ألوان الطيف السبعة مرتبطة بأدوار الأنيما
-// رسائل "أنا" دائماً محايدة — الألوان تؤثر فقط على رسائل الأنيما وزر الإرسال
-
-// الستايل المحايد الثابت لرسائل "أنا"
-const ME_NEUTRAL_BUBBLE = 'bg-white/8 text-white/80 border-white/10 shadow-[inset_0_1px_12px_rgba(255,255,255,0.04)]';
-const ME_NEUTRAL_ICON = 'text-white/20';
-const ME_NEUTRAL_TEXT = 'text-white/15';
-
+// Themes configuration - 7 rainbow colors + 1 formal white theme
 const CHAT_THEMES = {
   formal: {
-    name: 'الأنيما',
+    name: 'الرسمي',
     sendButtonBg: 'bg-gray-400/30',
     sendButtonBorder: 'border-gray-400/30',
     sendButtonHover: 'hover:bg-gray-400/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(156,163,175,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-gray-400/20 text-gray-50 border-gray-400/30 shadow-[inset_0_1px_12px_rgba(156,163,175,0.2)]',
     myselfSenderBubble: 'bg-gray-400/20 text-gray-50 border-gray-400/30 shadow-[inset_0_1px_12px_rgba(156,163,175,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-gray-400/30',
     myselfSenderIcon: 'text-gray-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-gray-400/15',
     myselfTextColor: 'text-gray-400/15',
     accentColor: 'text-gray-400'
   },
   red: {
-    name: 'الرفيقة العاطفية',
+    name: 'أحمر',
     sendButtonBg: 'bg-red-500/30',
     sendButtonBorder: 'border-red-400/30',
     sendButtonHover: 'hover:bg-red-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(239,68,68,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-red-500/20 text-red-50 border-red-400/30 shadow-[inset_0_1px_12px_rgba(239,68,68,0.2)]',
     myselfSenderBubble: 'bg-red-500/20 text-red-50 border-red-400/30 shadow-[inset_0_1px_12px_rgba(239,68,68,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-red-400/30',
     myselfSenderIcon: 'text-red-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-red-400/15',
     myselfTextColor: 'text-red-400/15',
     accentColor: 'text-red-400'
   },
   orange: {
-    name: 'ملكة القداسة والجمال',
+    name: 'برتقالي',
     sendButtonBg: 'bg-orange-500/30',
     sendButtonBorder: 'border-orange-400/30',
     sendButtonHover: 'hover:bg-orange-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(249,115,22,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-orange-500/20 text-orange-50 border-orange-400/30 shadow-[inset_0_1px_12px_rgba(249,115,22,0.2)]',
     myselfSenderBubble: 'bg-orange-500/20 text-orange-50 border-orange-400/30 shadow-[inset_0_1px_12px_rgba(249,115,22,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-orange-400/30',
     myselfSenderIcon: 'text-orange-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-orange-400/15',
     myselfTextColor: 'text-orange-400/15',
     accentColor: 'text-orange-400'
   },
   yellow: {
-    name: 'روح البهجة',
+    name: 'أصفر',
     sendButtonBg: 'bg-yellow-500/30',
     sendButtonBorder: 'border-yellow-400/30',
     sendButtonHover: 'hover:bg-yellow-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(234,179,8,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-yellow-500/20 text-yellow-50 border-yellow-400/30 shadow-[inset_0_1px_12px_rgba(234,179,8,0.2)]',
     myselfSenderBubble: 'bg-yellow-500/20 text-yellow-50 border-yellow-400/30 shadow-[inset_0_1px_12px_rgba(234,179,8,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-yellow-400/30',
     myselfSenderIcon: 'text-yellow-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-yellow-400/15',
     myselfTextColor: 'text-yellow-400/15',
     accentColor: 'text-yellow-400'
   },
   green: {
-    name: 'أمينة العافية',
+    name: 'أخضر',
     sendButtonBg: 'bg-green-500/30',
     sendButtonBorder: 'border-green-400/30',
     sendButtonHover: 'hover:bg-green-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(34,197,94,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-green-500/20 text-green-50 border-green-400/30 shadow-[inset_0_1px_12px_rgba(34,197,94,0.2)]',
     myselfSenderBubble: 'bg-green-500/20 text-green-50 border-green-400/30 shadow-[inset_0_1px_12px_rgba(34,197,94,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-green-400/30',
     myselfSenderIcon: 'text-green-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-green-400/15',
     myselfTextColor: 'text-green-400/15',
     accentColor: 'text-green-400'
   },
   blue: {
-    name: 'مديرة الأعمال',
+    name: 'أزرق',
     sendButtonBg: 'bg-blue-500/30',
     sendButtonBorder: 'border-blue-400/30',
     sendButtonHover: 'hover:bg-blue-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-blue-500/20 text-blue-50 border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]',
     myselfSenderBubble: 'bg-blue-500/20 text-blue-50 border-blue-400/30 shadow-[inset_0_1px_12px_rgba(59,130,246,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-blue-400/30',
     myselfSenderIcon: 'text-blue-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-blue-400/15',
     myselfTextColor: 'text-blue-400/15',
     accentColor: 'text-blue-400'
   },
   indigo: {
-    name: 'المهيئة الأولى',
+    name: 'نيلي',
     sendButtonBg: 'bg-indigo-500/30',
     sendButtonBorder: 'border-indigo-400/30',
     sendButtonHover: 'hover:bg-indigo-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(99,102,241,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-indigo-500/20 text-indigo-50 border-indigo-400/30 shadow-[inset_0_1px_12px_rgba(99,102,241,0.2)]',
     myselfSenderBubble: 'bg-indigo-500/20 text-indigo-50 border-indigo-400/30 shadow-[inset_0_1px_12px_rgba(99,102,241,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-indigo-400/30',
     myselfSenderIcon: 'text-indigo-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-indigo-400/15',
     myselfTextColor: 'text-indigo-400/15',
     accentColor: 'text-indigo-400'
   },
   violet: {
-    name: 'أميرة الريحان',
+    name: 'بنفسجي',
     sendButtonBg: 'bg-violet-500/30',
     sendButtonBorder: 'border-violet-400/30',
     sendButtonHover: 'hover:bg-violet-500/40',
     sendButtonShadow: 'shadow-[inset_0_1px_10px_rgba(168,85,247,0.2)]',
-    meSenderBubble: ME_NEUTRAL_BUBBLE,
+    meSenderBubble: 'bg-violet-500/20 text-violet-50 border-violet-400/30 shadow-[inset_0_1px_12px_rgba(168,85,247,0.2)]',
     myselfSenderBubble: 'bg-violet-500/20 text-violet-50 border-violet-400/30 shadow-[inset_0_1px_12px_rgba(168,85,247,0.2)]',
-    meSenderIcon: ME_NEUTRAL_ICON,
+    meSenderIcon: 'text-violet-400/30',
     myselfSenderIcon: 'text-violet-400/30',
-    meTextColor: ME_NEUTRAL_TEXT,
+    meTextColor: 'text-violet-400/15',
     myselfTextColor: 'text-violet-400/15',
     accentColor: 'text-violet-400'
   }
@@ -242,148 +234,6 @@ const getThemeGemColor = (theme: keyof typeof CHAT_THEMES) => {
     violet: 'text-violet-400'
   };
   return gemColorMap[theme] || 'text-gray-400';
-};
-
-// ترتيب الأنماط للتبديل الدوري
-const THEME_KEYS = ['formal', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'] as const;
-
-// ألوان الأنماط للأزرار (inline style)
-const THEME_ACCENT_COLORS: Record<keyof typeof CHAT_THEMES, string> = {
-  formal: 'rgba(156,163,175,0.7)',
-  red: 'rgba(239,68,68,0.8)',
-  orange: 'rgba(249,115,22,0.8)',
-  yellow: 'rgba(234,179,8,0.8)',
-  green: 'rgba(34,197,94,0.8)',
-  blue: 'rgba(59,130,246,0.8)',
-  indigo: 'rgba(99,102,241,0.8)',
-  violet: 'rgba(168,85,247,0.8)',
-};
-
-const THEME_BG_COLORS: Record<keyof typeof CHAT_THEMES, string> = {
-  formal: 'rgba(107,114,128,0.2)',
-  red: 'rgba(239,68,68,0.2)',
-  orange: 'rgba(249,115,22,0.2)',
-  yellow: 'rgba(234,179,8,0.2)',
-  green: 'rgba(34,197,94,0.2)',
-  blue: 'rgba(59,130,246,0.2)',
-  indigo: 'rgba(99,102,241,0.2)',
-  violet: 'rgba(168,85,247,0.2)',
-};
-
-// ألوان الزمردة لكل نمط - القيم الخام للـ SVG
-const THEME_GEM_COLORS: Record<keyof typeof CHAT_THEMES, { glow: string; primary: string; dark: string; highlight: string }> = {
-  formal:  { glow: '#c0c0c0', primary: '#8a8a8a', dark: '#1a1a1a', highlight: '#f0f0f0' },
-  red:     { glow: '#ff4444', primary: '#cc2222', dark: '#220000', highlight: '#ffe0e0' },
-  orange:  { glow: '#ff8800', primary: '#cc6600', dark: '#221100', highlight: '#fff0d0' },
-  yellow:  { glow: '#ffdd00', primary: '#ccaa00', dark: '#221a00', highlight: '#fffff0' },
-  green:   { glow: '#00ff66', primary: '#00b34a', dark: '#00220d', highlight: '#e6fff0' },
-  blue:    { glow: '#4488ff', primary: '#2255cc', dark: '#001122', highlight: '#e0eeff' },
-  indigo:  { glow: '#8866ff', primary: '#5533cc', dark: '#110022', highlight: '#ece0ff' },
-  violet:  { glow: '#cc44ff', primary: '#9922cc', dark: '#1a0022', highlight: '#f5e0ff' },
-};
-
-// كومبوننت الزمردة المصغرة — تُعيد SVG مضغوط بألوان النمط
-const MiniEmerald: React.FC<{ theme: keyof typeof CHAT_THEMES; size?: number }> = ({ theme, size = 18 }) => {
-  const c = THEME_GEM_COLORS[theme];
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ filter: `drop-shadow(0 0 4px ${c.glow}88)`, flexShrink: 0 }}
-    >
-      <defs>
-        <radialGradient id={`mg-core-${theme}`} cx="50%" cy="45%" r="55%">
-          <stop offset="0%"  stopColor={c.glow}    stopOpacity="1"/>
-          <stop offset="45%" stopColor={c.primary}  stopOpacity="0.9"/>
-          <stop offset="100%" stopColor={c.dark}    stopOpacity="1"/>
-        </radialGradient>
-        <linearGradient id={`mg-lt-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor={c.highlight} stopOpacity="0.85"/>
-          <stop offset="100%" stopColor={c.primary}   stopOpacity="0.1"/>
-        </linearGradient>
-        <linearGradient id={`mg-dk-${theme}`} x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#000000" stopOpacity="0.7"/>
-          <stop offset="100%" stopColor={c.dark}  stopOpacity="0.2"/>
-        </linearGradient>
-        {/* إطار ذهبي مبسط */}
-        <linearGradient id={`mg-gold-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#fdf3a9"/>
-          <stop offset="30%"  stopColor="#d4af37"/>
-          <stop offset="65%"  stopColor="#8a6311"/>
-          <stop offset="100%" stopColor="#d4af37"/>
-        </linearGradient>
-      </defs>
-
-      {/* توهج خلفي */}
-      <circle cx="50" cy="50" r="36" fill={c.glow} opacity="0.18"
-        style={{ filter: 'blur(6px)' }}/>
-
-      {/* الإطار الذهبي الخارجي */}
-      <polygon
-        points="33,10 67,10 90,33 90,67 67,90 33,90 10,67 10,33"
-        fill="none"
-        stroke={`url(#mg-gold-${theme})`}
-        strokeWidth="5"
-        strokeLinejoin="round"
-      />
-
-      {/* قاعدة الحجر */}
-      <polygon
-        points="34,12 66,12 88,34 88,66 66,88 34,88 12,66 12,34"
-        fill={`url(#mg-core-${theme})`}
-        strokeLinejoin="round"
-      />
-
-      {/* الوجه العلوي - فاتح */}
-      <polygon points="34,12 66,12 58,30 42,30"
-        fill={`url(#mg-lt-${theme})`} opacity="0.9"/>
-
-      {/* الوجه العلوي الأيمن */}
-      <polygon points="66,12 88,34 72,42 58,30"
-        fill={c.primary} fillOpacity="0.5"/>
-
-      {/* الوجه الأيمن - داكن */}
-      <polygon points="88,34 88,66 72,58 72,42"
-        fill={`url(#mg-dk-${theme})`}/>
-
-      {/* الوجه السفلي الأيمن */}
-      <polygon points="88,66 66,88 58,70 72,58"
-        fill={c.dark} fillOpacity="0.85"/>
-
-      {/* الوجه السفلي */}
-      <polygon points="66,88 34,88 42,70 58,70"
-        fill={`url(#mg-dk-${theme})`}/>
-
-      {/* الوجه السفلي الأيسر */}
-      <polygon points="34,88 12,66 28,58 42,70"
-        fill={c.dark} fillOpacity="0.7"/>
-
-      {/* الوجه الأيسر */}
-      <polygon points="12,66 12,34 28,42 28,58"
-        fill={c.primary} fillOpacity="0.35"/>
-
-      {/* الوجه العلوي الأيسر - فاتح */}
-      <polygon points="12,34 34,12 42,30 28,42"
-        fill={`url(#mg-lt-${theme})`} opacity="0.75"/>
-
-      {/* الطاولة المركزية */}
-      <polygon
-        points="42,30 58,30 72,42 72,58 58,70 42,70 28,58 28,42"
-        fill={c.glow}
-        fillOpacity="0.12"
-        stroke={c.highlight}
-        strokeWidth="1.2"
-        strokeOpacity="0.65"
-        strokeLinejoin="round"
-      />
-
-      {/* لمعة ضوء */}
-      <path d={`M 20,20 Q 26,15 34,18 Q 22,26 20,20 Z`}
-        fill="#ffffff" opacity="0.7"/>
-    </svg>
-  );
 };
 
 export function SelfDialogueChat() {
@@ -418,24 +268,14 @@ export function SelfDialogueChat() {
   const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const sendLongPressFiredRef = useRef(false);
-  const themeCycleLongPressRef = useRef<NodeJS.Timeout | null>(null);
-  const themeCycleLongPressFiredRef = useRef(false);
-  const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const PENDING_MESSAGES_KEY = useMemo(() => user ? `pending_dialogue_messages_${user.id}` : null, [user]);
   const THEME_STORAGE_KEY = 'chat_theme_preference';
 
-  // تفعيل لوحة المفاتيح تلقائياً عند ظهور شاشة PIN
+  // Load saved theme on mount
   useEffect(() => {
-    if (showPinInput && isOpen) {
-      // تأخير قصير لضمان عمل الـ focus على الموبايل بعد اكتمال render الـ Dialog
-      const t1 = setTimeout(() => pinInputRef.current?.focus(), 100);
-      const t2 = setTimeout(() => pinInputRef.current?.focus(), 400);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-  }, [showPinInput, isOpen]);
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as keyof typeof CHAT_THEMES | null;
     if (savedTheme && CHAT_THEMES[savedTheme]) {
       setCurrentTheme(savedTheme);
@@ -730,39 +570,7 @@ export function SelfDialogueChat() {
             const milestoneTitle = msg.message.replace('__MILESTONE__', '');
             return (
               <div key={msg.id} className="flex justify-center py-3">
-                <div
-                  className="relative flex items-center gap-2 cursor-pointer select-none active:scale-95 transition-transform"
-                  onMouseDown={() => {
-                    milestoneLongPressRef.current = setTimeout(() => {
-                      handleDeleteMessage(msg.id);
-                      milestoneLongPressRef.current = null;
-                    }, 600);
-                  }}
-                  onMouseUp={() => {
-                    if (milestoneLongPressRef.current) {
-                      clearTimeout(milestoneLongPressRef.current);
-                      milestoneLongPressRef.current = null;
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    if (milestoneLongPressRef.current) {
-                      clearTimeout(milestoneLongPressRef.current);
-                      milestoneLongPressRef.current = null;
-                    }
-                  }}
-                  onTouchStart={() => {
-                    milestoneLongPressRef.current = setTimeout(() => {
-                      handleDeleteMessage(msg.id);
-                      milestoneLongPressRef.current = null;
-                    }, 600);
-                  }}
-                  onTouchEnd={() => {
-                    if (milestoneLongPressRef.current) {
-                      clearTimeout(milestoneLongPressRef.current);
-                      milestoneLongPressRef.current = null;
-                    }
-                  }}
-                >
+                <div className="relative flex items-center gap-2">
                   <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 rounded-xl blur-md" />
                   <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/15 border border-amber-400/40 backdrop-blur-md">
                     <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
@@ -1334,13 +1142,6 @@ export function SelfDialogueChat() {
     }
   };
 
-  // دالة التبديل الدوري بين الأنماط
-  const cycleTheme = () => {
-    const currentIndex = THEME_KEYS.indexOf(currentTheme as typeof THEME_KEYS[number]);
-    const nextIndex = (currentIndex + 1) % THEME_KEYS.length;
-    setCurrentTheme(THEME_KEYS[nextIndex]);
-  };
-
   return (
     <>
       {/* Inject Styles */}
@@ -1465,43 +1266,56 @@ export function SelfDialogueChat() {
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-[10px] text-white/50 hover:text-white hover:bg-white/10 gap-1"
-                            title="تغيير نمط الدردشة"
+                            title="تغيير سمة الدردشة"
                           >
                             <Palette className="h-3 w-3" />
-                            الأنماط
+                            السمات
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent 
-                          className="w-52 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+                          className="w-56 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
                           side="bottom"
                           align="end"
                         >
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-2">
                             <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                              الأنماط
+                              أنماط الدردشة
                             </p>
-                            {Object.entries(CHAT_THEMES).map(([themeKey, theme]) => (
-                              <button
-                                key={themeKey}
-                                onClick={() => setCurrentTheme(themeKey as keyof typeof CHAT_THEMES)}
-                                className={`relative flex items-center gap-2.5 w-full px-3 py-2 rounded-lg transition-all text-right ${
-                                  currentTheme === themeKey
-                                    ? 'ring-1 ring-white/40'
-                                    : 'hover:bg-white/5'
-                                }`}
-                                style={{
-                                  backgroundColor: currentTheme === themeKey
-                                    ? THEME_BG_COLORS[themeKey as keyof typeof CHAT_THEMES]
-                                    : undefined
-                                }}
-                              >
-                                <MiniEmerald theme={themeKey as keyof typeof CHAT_THEMES} size={20} />
-                                <span className="text-[11px] text-white/80 flex-1">{theme.name}</span>
-                                {currentTheme === themeKey && (
-                                  <div className="w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
-                                )}
-                              </button>
-                            ))}
+                            <div className="grid grid-cols-4 gap-2">
+                              {Object.entries(CHAT_THEMES).map(([themeKey, theme]) => (
+                                <button
+                                  key={themeKey}
+                                  onClick={() => setCurrentTheme(themeKey as keyof typeof CHAT_THEMES)}
+                                  className={`relative p-3 rounded-lg transition-all ${
+                                    currentTheme === themeKey
+                                      ? 'ring-2 ring-white/60'
+                                      : 'ring-1 ring-white/10 hover:ring-white/30'
+                                  }`}
+                                  style={{
+                                    backgroundColor: themeKey === 'formal' 
+                                      ? 'rgba(107, 114, 128, 0.2)' 
+                                      : themeKey === 'red' 
+                                      ? 'rgba(239, 68, 68, 0.2)'
+                                      : themeKey === 'orange'
+                                      ? 'rgba(249, 115, 22, 0.2)'
+                                      : themeKey === 'yellow'
+                                      ? 'rgba(234, 179, 8, 0.2)'
+                                      : themeKey === 'green'
+                                      ? 'rgba(34, 197, 94, 0.2)'
+                                      : themeKey === 'blue'
+                                      ? 'rgba(59, 130, 246, 0.2)'
+                                      : themeKey === 'indigo'
+                                      ? 'rgba(99, 102, 241, 0.2)'
+                                      : 'rgba(168, 85, 247, 0.2)'
+                                  }}
+                                  title={theme.name}
+                                >
+                                  <div className="text-[10px] text-white/70 text-center truncate">
+                                    {theme.name}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </PopoverContent>
                       </Popover>
@@ -1625,7 +1439,7 @@ export function SelfDialogueChat() {
                       {/* Main Toggle Switch - زجاجي */}
                       <div dir="ltr" className="relative flex items-center justify-center bg-white/5 backdrop-blur-md rounded-full p-0.5 w-[140px] border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
 
-                        {/* الخلفية المتحركة - زجاجية ثابتة بالوان البينك والأزرق */}
+                        {/* الخلفية المتحركة - زجاجية */}
                         <div
                           className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 backdrop-blur-md ${currentSender === 'myself'
                             ? 'left-0.5 bg-pink-500/40 border border-pink-400/40 shadow-[inset_0_1px_10px_rgba(236,72,153,0.3),0_0_15px_rgba(236,72,153,0.2)]'
@@ -1671,7 +1485,7 @@ export function SelfDialogueChat() {
                                 }
                               }}
                               className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
-                                ? 'text-pink-300 font-bold drop-shadow-md'
+                                ? 'text-white font-bold drop-shadow-md'
                                 : 'text-gray-400 font-medium hover:text-gray-200'
                                 }`}
                             >
@@ -1778,58 +1592,7 @@ export function SelfDialogueChat() {
                         </button>
                       </div>
 
-                      {/* زر تبديل النمط الدوري */}
-                      <button
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          themeCycleLongPressFiredRef.current = false;
-                          themeCycleLongPressRef.current = setTimeout(() => {
-                            themeCycleLongPressFiredRef.current = true;
-                            setCurrentTheme('formal');
-                            themeCycleLongPressRef.current = null;
-                          }, 600);
-                        }}
-                        onMouseUp={() => {
-                          if (themeCycleLongPressRef.current) {
-                            clearTimeout(themeCycleLongPressRef.current);
-                            themeCycleLongPressRef.current = null;
-                            if (!themeCycleLongPressFiredRef.current) cycleTheme();
-                          }
-                          themeCycleLongPressFiredRef.current = false;
-                        }}
-                        onMouseLeave={() => {
-                          if (themeCycleLongPressRef.current) {
-                            clearTimeout(themeCycleLongPressRef.current);
-                            themeCycleLongPressRef.current = null;
-                          }
-                        }}
-                        onTouchStart={() => {
-                          themeCycleLongPressFiredRef.current = false;
-                          themeCycleLongPressRef.current = setTimeout(() => {
-                            themeCycleLongPressFiredRef.current = true;
-                            setCurrentTheme('formal');
-                            themeCycleLongPressRef.current = null;
-                          }, 600);
-                        }}
-                        onTouchEnd={() => {
-                          if (themeCycleLongPressRef.current) {
-                            clearTimeout(themeCycleLongPressRef.current);
-                            themeCycleLongPressRef.current = null;
-                            if (!themeCycleLongPressFiredRef.current) cycleTheme();
-                          }
-                          themeCycleLongPressFiredRef.current = false;
-                        }}
-                        className="relative flex items-center justify-center gap-1 h-6 px-1.5 rounded-full backdrop-blur-md border transition-all duration-500 text-[9px] font-medium max-w-[80px]"
-                        style={{
-                          backgroundColor: THEME_BG_COLORS[currentTheme],
-                          borderColor: THEME_ACCENT_COLORS[currentTheme].replace('0.8)', '0.3)'),
-                          color: THEME_ACCENT_COLORS[currentTheme],
-                        }}
-                        title="اضغط للنمط التالي • اضغط مطولاً للرجوع للأصل"
-                      >
-                        <MiniEmerald theme={currentTheme} size={16} />
-                        <span className="truncate leading-none">{CHAT_THEMES[currentTheme].name}</span>
-                      </button>
+                      {/* Spacer */}
                       <div className="w-6" />
                     </div>
 
@@ -1892,9 +1655,7 @@ export function SelfDialogueChat() {
                           }
                         }}
                         className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${inputValue.trim()
-                          ? currentSender === 'myself'
-                            ? 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white'
-                            : 'bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 shadow-[inset_0_1px_10px_rgba(59,130,246,0.2)] text-white'
+                          ? `${CHAT_THEMES[currentTheme].sendButtonBg} ${CHAT_THEMES[currentTheme].sendButtonHover} border ${CHAT_THEMES[currentTheme].sendButtonBorder} ${CHAT_THEMES[currentTheme].sendButtonShadow} text-white`
                           : 'bg-black hover:bg-gray-900 border border-white/20 text-white'
                           }`}
                       >
