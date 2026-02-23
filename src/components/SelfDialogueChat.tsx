@@ -82,67 +82,6 @@ const styles = `
 
   `;
 
-// Memoized message component for better performance
-const MessageBubble = React.memo(function MessageBubble({
-  msg,
-  onCopy,
-  onMouseDown,
-  onMouseUp,
-  formatTime,
-  isRecent,
-  themeClasses
-}: {
-  msg: DialogueMessage;
-  onCopy: (message: string) => void;
-  onMouseDown: (id: string) => void;
-  onMouseUp: () => void;
-  formatTime: (date: string) => string;
-  isRecent: boolean;
-  themeClasses: any;
-}) {
-  return (
-    <div className={`flex ${isRecent ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-      <div
-        className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
-        onClick={() => onCopy(msg.message)}
-        onMouseDown={() => onMouseDown(msg.id)}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onTouchStart={() => onMouseDown(msg.id)}
-        onTouchEnd={onMouseUp}
-      >
-        <div
-          className={`inline-block p-2 rounded-2xl break-words backdrop-blur-md ${msg.sender === 'me'
-            ? `${themeClasses.meSenderBubble} rounded-bl-sm`
-            : `${themeClasses.myselfSenderBubble} rounded-br-sm`
-            }`}
-        >
-          <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
-        </div>
-        <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-          {msg.sender === 'me' ? (
-            <User className={`h-2 w-2 ${themeClasses.meSenderIcon}`} />
-          ) : (
-            <Heart className={`h-2 w-2 ${themeClasses.myselfSenderIcon}`} />
-          )}
-          <span className={`text-[7px] ${msg.sender === 'me' ? themeClasses.meTextColor : themeClasses.myselfTextColor}`}>
-            {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
-          </span>
-          {msg.status === 'pending' && (
-            <RefreshCw className="h-2 w-2 text-blue-400/40 animate-spin ml-0.5" />
-          )}
-          {msg.status === 'error' && (
-            <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
-          )}
-          {msg.status === 'synced' && (
-            <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
-
 interface DialogueMessage {
   id: string;
   sender: 'me' | 'myself';
@@ -167,21 +106,6 @@ interface AnimaCapability {
 let globalMessageSeq = 0;
 
 // Themes configuration - 7 rainbow colors + 1 formal white theme
-// Function to get gem color based on theme
-const getThemeGemColor = (theme: keyof typeof CHAT_THEMES) => {
-  const gemColorMap: Record<keyof typeof CHAT_THEMES, string> = {
-    formal: 'text-gray-400',
-    red: 'text-red-400',
-    orange: 'text-orange-400',
-    yellow: 'text-yellow-400',
-    green: 'text-green-400',
-    blue: 'text-blue-400',
-    indigo: 'text-indigo-400',
-    violet: 'text-violet-400'
-  };
-  return gemColorMap[theme] || 'text-gray-400';
-};
-
 const CHAT_THEMES = {
   formal: {
     name: 'الرسمي',
@@ -295,6 +219,21 @@ const CHAT_THEMES = {
     myselfTextColor: 'text-violet-400/15',
     accentColor: 'text-violet-400'
   }
+};
+
+// Function to get gem color based on theme
+const getThemeGemColor = (theme: keyof typeof CHAT_THEMES) => {
+  const gemColorMap: Record<keyof typeof CHAT_THEMES, string> = {
+    formal: 'text-gray-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    blue: 'text-blue-400',
+    indigo: 'text-indigo-400',
+    violet: 'text-violet-400'
+  };
+  return gemColorMap[theme] || 'text-gray-400';
 };
 
 export function SelfDialogueChat() {
@@ -677,7 +616,7 @@ export function SelfDialogueChat() {
                     <span className={`text-[7px] ${msg.sender === 'me' ? CHAT_THEMES[currentTheme].meTextColor : CHAT_THEMES[currentTheme].myselfTextColor}`}>
                       {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
                     </span>
-                    {msg.sender === 'myself' && (
+                    {msg.sender !== 'me' && (
                       <svg width="8" height="8" viewBox="0 0 20 20" className={`ml-1 ${getThemeGemColor(currentTheme)}`} style={{ opacity: 0.6 }}>
                         <defs>
                           <linearGradient id={`gem-gradient-${msg.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -688,7 +627,6 @@ export function SelfDialogueChat() {
                         <polygon points="10,2 15,8 12,15 8,15 5,8" fill={`url(#gem-gradient-${msg.id})`} stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.7"/>
                       </svg>
                     )}
-                    
 
                     {/* Status Indicator */}
                     {msg.status === 'pending' && (
