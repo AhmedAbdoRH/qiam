@@ -167,6 +167,21 @@ interface AnimaCapability {
 let globalMessageSeq = 0;
 
 // Themes configuration - 7 rainbow colors + 1 formal white theme
+// Function to get gem color based on theme
+const getThemeGemColor = (theme: keyof typeof CHAT_THEMES) => {
+  const gemColorMap: Record<keyof typeof CHAT_THEMES, string> = {
+    formal: 'text-gray-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    blue: 'text-blue-400',
+    indigo: 'text-indigo-400',
+    violet: 'text-violet-400'
+  };
+  return gemColorMap[theme] || 'text-gray-400';
+};
+
 const CHAT_THEMES = {
   formal: {
     name: 'الرسمي',
@@ -662,6 +677,18 @@ export function SelfDialogueChat() {
                     <span className={`text-[7px] ${msg.sender === 'me' ? CHAT_THEMES[currentTheme].meTextColor : CHAT_THEMES[currentTheme].myselfTextColor}`}>
                       {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
                     </span>
+                    {msg.sender === 'myself' && (
+                      <svg width="8" height="8" viewBox="0 0 20 20" className={`ml-1 ${getThemeGemColor(currentTheme)}`} style={{ opacity: 0.6 }}>
+                        <defs>
+                          <linearGradient id={`gem-gradient-${msg.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="1"/>
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0.5"/>
+                          </linearGradient>
+                        </defs>
+                        <polygon points="10,2 15,8 12,15 8,15 5,8" fill={`url(#gem-gradient-${msg.id})`} stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.7"/>
+                      </svg>
+                    )}
+                    
 
                     {/* Status Indicator */}
                     {msg.status === 'pending' && (
@@ -812,7 +839,7 @@ export function SelfDialogueChat() {
         if (error) throw error;
       } catch (error) {
         console.error('Error deleting message:', error);
-        toast.error('حدث خطأ أثناء حذف الرسالة من الكلاود');
+        toast.error('حدث خطأ أثناء حذف ال��سالة من الكلاود');
         loadMessages();
       }
     }
