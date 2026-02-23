@@ -306,9 +306,13 @@ export function SelfDialogueChat() {
 
   useEffect(() => {
     if (isOpen && user) {
-      loadMessages(currentChatMode);
-      syncPendingMessages();
-      setTimeout(() => inputRef.current?.focus(), 100);
+      if (showPinInput) {
+        setTimeout(() => pinInputRef.current?.focus(), 100);
+      } else {
+        loadMessages(currentChatMode);
+        syncPendingMessages();
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
     }
 
     // Listen for online status to sync
@@ -318,7 +322,7 @@ export function SelfDialogueChat() {
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [isOpen, user, syncPendingMessages, currentChatMode]);
+  }, [isOpen, user, syncPendingMessages, currentChatMode, showPinInput]);
 
 
   // Load capabilities for current mode
