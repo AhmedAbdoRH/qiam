@@ -293,14 +293,14 @@ export function SelfDialogueChat() {
   useEffect(() => {
     if (isOpen && showPinInput) {
       // Multiple attempts to handle Dialog animation delay on mobile
-      const t1 = setTimeout(() => pinInputRef.current?.focus(), 100);
-      const t2 = setTimeout(() => pinInputRef.current?.focus(), 300);
-      const t3 = setTimeout(() => pinInputRef.current?.focus(), 600);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-      };
+      const attempts = [50, 150, 300, 500, 800, 1200];
+      const timers = attempts.map(delay => setTimeout(() => {
+        if (pinInputRef.current) {
+          pinInputRef.current.focus();
+          pinInputRef.current.click();
+        }
+      }, delay));
+      return () => timers.forEach(clearTimeout);
     }
   }, [isOpen, showPinInput]);
 
@@ -1149,7 +1149,7 @@ export function SelfDialogueChat() {
         >
           {showPinInput ? (
             // PIN Entry Screen
-            <div className="flex flex-col items-center justify-center h-full p-8">
+            <div className="flex flex-col items-center justify-center h-full p-8" onClick={() => pinInputRef.current?.focus()}>
               <Lock className="h-16 w-16 text-white/30 mb-6" />
               <h2 className="text-lg font-medium text-white/80 mb-2">محادثة محمية</h2>
               <p className="text-sm text-white/50 mb-6 text-center">أدخل الرقم السري للوصول</p>
