@@ -192,7 +192,9 @@ export function SelfDialogueChat() {
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('anima');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestoneRating, setMilestoneRating] = useState(5);
-  const [milestoneNotes, setMilestoneNotes] = useState('العاطفة : \nالراحة : \nالاستمتاع : ');
+  const [milestoneNotes, setMilestoneNotes] = useState('راحة وأمان : \nلذة واستمتاع : \nعاطفة واتصال : ');
+  const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const milestoneLongPressFiredRef = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -536,19 +538,23 @@ export function SelfDialogueChat() {
             const b = rating <= 5 ? 30 : Math.round(30 + (rating - 5) * (55 - 30) / 5);
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
             return (
-              <div key={msg.id} className="flex justify-center py-3">
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onMouseLeave={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
                 <div className="relative flex flex-col items-center gap-1">
                   <div className="absolute -inset-1 rounded-xl blur-md" style={{ background: `${ratingColor}22` }} />
-                  <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border" style={{ borderColor: `${ratingColor}66`, background: `${ratingColor}15` }}>
+                  <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border" dir="rtl" style={{ borderColor: `${ratingColor}66`, background: `${ratingColor}15` }}>
+                    <Star className="h-3.5 w-3.5 drop-shadow-md flex-shrink-0" style={{ color: ratingColor, fill: ratingColor }} />
                     <span className="text-sm font-semibold" style={{ color: ratingColor }}>{milestoneTitle}</span>
-                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
+                    <span className="text-[9px] font-bold min-w-[22px] h-[22px] flex items-center justify-center rounded-full flex-shrink-0" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
                   </div>
                   {notes && (
                     <div className="relative text-[10px] text-white/40 mt-1 text-center whitespace-pre-wrap max-w-[200px]" style={{ unicodeBidi: 'plaintext' }}>{notes}</div>
                   )}
-                  <div className="relative flex items-center justify-center w-6 h-6 rounded-full border backdrop-blur-md" style={{ borderColor: `${ratingColor}80`, background: `${ratingColor}30`, boxShadow: `0 4px 16px ${ratingColor}25` }}>
-                    <Star className="h-3.5 w-3.5 drop-shadow-md" style={{ color: ratingColor, fill: ratingColor }} />
-                  </div>
                 </div>
               </div>
             );
@@ -959,7 +965,7 @@ export function SelfDialogueChat() {
 
   const openMilestoneDialog = () => {
     setMilestoneRating(5);
-    setMilestoneNotes('العاطفة : \nالراحة : \nالاستمتاع : ');
+    setMilestoneNotes('راحة وأمان : \nلذة واستمتاع : \nعاطفة واتصال : ');
     setShowMilestoneDialog(true);
   };
 
