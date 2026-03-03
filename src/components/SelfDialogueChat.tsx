@@ -636,8 +636,8 @@ export function SelfDialogueChat() {
     requestAnimationFrame(scrollToBottom);
 
     // Also scroll after a short delay to be absolutely sure (especially on mobile/slow devices)
-    const timeout = setTimeout(scrollToBottom, 100);
-    const timeout2 = setTimeout(scrollToBottom, 300);
+    const timeout = setTimeout(scrollToBottom, 50);
+    const timeout2 = setTimeout(scrollToBottom, 150);
 
     return () => {
       clearTimeout(timeout);
@@ -700,7 +700,9 @@ export function SelfDialogueChat() {
         // Fallback to id comparison for database messages
         return a.id.localeCompare(b.id);
       });
-      setMessages(allMessages);
+      // Keep only last 20 messages for better performance
+      const displayMessages = allMessages.slice(-20);
+      setMessages(displayMessages);
 
       if (allMessages.length > 0) {
         setSessionTitle(allMessages[0].session_title || 'حوار مع الأنيما');
