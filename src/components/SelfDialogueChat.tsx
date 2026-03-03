@@ -5,6 +5,7 @@ import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star } from 'lucide-react';
 import { Input } from './ui/input';
+import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -189,6 +190,9 @@ export function SelfDialogueChat() {
   const [newCapabilityText, setNewCapabilityText] = useState('');
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('anima');
+  const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
+  const [milestoneRating, setMilestoneRating] = useState(5);
+  const [milestoneNotes, setMilestoneNotes] = useState('العاطفة : \nالراحة : \nالاستمتاع : ');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -521,16 +525,29 @@ export function SelfDialogueChat() {
 
           // Render milestone message
           if (msg.message.startsWith('__MILESTONE__')) {
-            const milestoneTitle = msg.message.replace('__MILESTONE__', '');
+            const milestoneBody = msg.message.replace('__MILESTONE__', '');
+            const parts = milestoneBody.split('|');
+            const milestoneTitle = parts[0] || 'جماع مقدس';
+            const rating = parts.length > 1 ? parseFloat(parts[1]) : 5;
+            const notes = parts.length > 2 ? parts[2] : '';
+            // Color interpolation: 0=red, 5=orange, 10=golden
+            const r = rating <= 5 ? 220 : Math.round(220 + (rating - 5) * (212 - 220) / 5);
+            const g = rating <= 5 ? Math.round(30 + rating * (140 - 30) / 5) : Math.round(140 + (rating - 5) * (175 - 140) / 5);
+            const b = rating <= 5 ? 30 : Math.round(30 + (rating - 5) * (55 - 30) / 5);
+            const ratingColor = `rgb(${r}, ${g}, ${b})`;
             return (
               <div key={msg.id} className="flex justify-center py-3">
-                <div className="relative flex items-center gap-2">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 rounded-xl blur-md" />
-                  <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/15 border border-amber-400/40 backdrop-blur-md">
-                    <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">{milestoneTitle}</span>
+                <div className="relative flex flex-col items-center gap-1">
+                  <div className="absolute -inset-1 rounded-xl blur-md" style={{ background: `${ratingColor}22` }} />
+                  <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border" style={{ borderColor: `${ratingColor}66`, background: `${ratingColor}15` }}>
+                    <span className="text-sm font-semibold" style={{ color: ratingColor }}>{milestoneTitle}</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
                   </div>
-                  <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400/30 to-amber-400/20 border border-yellow-400/50 backdrop-blur-md shadow-[0_4px_16px_rgba(250,204,21,0.15)]">
-                    <Star className="h-3.5 w-3.5 text-yellow-300 fill-yellow-300 drop-shadow-md" />
+                  {notes && (
+                    <div className="relative text-[10px] text-white/40 mt-1 text-center whitespace-pre-wrap max-w-[200px]" style={{ unicodeBidi: 'plaintext' }}>{notes}</div>
+                  )}
+                  <div className="relative flex items-center justify-center w-6 h-6 rounded-full border backdrop-blur-md" style={{ borderColor: `${ratingColor}80`, background: `${ratingColor}30`, boxShadow: `0 4px 16px ${ratingColor}25` }}>
+                    <Star className="h-3.5 w-3.5 drop-shadow-md" style={{ color: ratingColor, fill: ratingColor }} />
                   </div>
                 </div>
               </div>
@@ -940,25 +957,33 @@ export function SelfDialogueChat() {
     }
   };
 
+  const openMilestoneDialog = () => {
+    setMilestoneRating(5);
+    setMilestoneNotes('العاطفة : \nالراحة : \nالاستمتاع : ');
+    setShowMilestoneDialog(true);
+  };
+
   const insertMilestone = async () => {
     if (!user) return;
     const tempId = crypto.randomUUID();
     globalMessageSeq++;
+    const milestoneContent = `__MILESTONE__جماع مقدس|${milestoneRating}|${milestoneNotes}`;
     const milestoneMessage: DialogueMessage = {
       id: tempId,
       sender: 'me',
-      message: '__MILESTONE__جماع مقدس',
+      message: milestoneContent,
       created_at: new Date().toISOString(),
       status: 'pending',
       localSeq: globalMessageSeq,
       chat_mode: 'self'
     };
     setMessages(prev => [...prev, milestoneMessage]);
+    setShowMilestoneDialog(false);
     try {
       await supabase.from('self_dialogue_messages').insert({
         user_id: user.id,
         sender: 'me',
-        message: '__MILESTONE__جماع مقدس',
+        message: milestoneContent,
         created_at: milestoneMessage.created_at,
         session_title: sessionTitle || null,
         chat_mode: 'self'
@@ -1157,7 +1182,6 @@ export function SelfDialogueChat() {
                 className={`w-24 text-center text-2xl tracking-[0.5em] bg-white/10 border-white/20 text-white placeholder:text-white/30 ${pinError ? 'border-red-500 shake-animation' : ''
                   }`}
                 placeholder="••"
-                autoFocus
               />
 
               <p className="text-xs text-white/30 mt-4">أدخل رقمين</p>
@@ -1213,12 +1237,74 @@ export function SelfDialogueChat() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={insertMilestone}
+                      onClick={openMilestoneDialog}
                       className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="إضافة علامة إنجاز"
                     >
                       جماع مقدس
                     </Button>
+                  )}
+
+                  {/* Milestone Rating Dialog */}
+                  {showMilestoneDialog && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneDialog(false)}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[340px] flex flex-col gap-5" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-center text-sm font-semibold text-white/80">تقييم الجماع المقدس</h3>
+                        
+                        {/* Slider */}
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between text-[10px] text-white/40">
+                            <span>١٠</span>
+                            <span>٠</span>
+                          </div>
+                          <Slider
+                            value={[milestoneRating]}
+                            onValueChange={([v]) => setMilestoneRating(v)}
+                            min={0}
+                            max={10}
+                            step={0.5}
+                            className="w-full"
+                            rangeClassName={(() => {
+                              const r = milestoneRating;
+                              if (r <= 3) return 'bg-red-500';
+                              if (r <= 5) return 'bg-orange-500';
+                              if (r <= 7) return 'bg-yellow-500';
+                              return 'bg-yellow-400';
+                            })()}
+                          />
+                          <div className="text-center text-2xl font-bold" style={{
+                            color: milestoneRating <= 3 ? '#dc2626' : milestoneRating <= 5 ? '#ea580c' : milestoneRating <= 7 ? '#eab308' : '#d4a520'
+                          }}>
+                            {milestoneRating}
+                          </div>
+                        </div>
+
+                        {/* Notes */}
+                        <Textarea
+                          value={milestoneNotes}
+                          onChange={e => setMilestoneNotes(e.target.value)}
+                          className="bg-white/5 border-white/15 text-white text-xs min-h-[80px] resize-none"
+                          dir="rtl"
+                          rows={3}
+                        />
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={insertMilestone}
+                            className="flex-1 h-9 text-xs bg-amber-500/30 hover:bg-amber-500/40 border border-amber-400/30 text-amber-200"
+                          >
+                            حفظ
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setShowMilestoneDialog(false)}
+                            className="h-9 text-xs text-white/50 hover:text-white"
+                          >
+                            إلغاء
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && !showArchive && (
