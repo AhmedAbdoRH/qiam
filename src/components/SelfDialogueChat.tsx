@@ -113,7 +113,7 @@ const MessageBubble = React.memo(function MessageBubble({
         <div
           className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
             ? 'bg-[#626FC4]/20 text-[#C8CCEC] rounded-bl-sm border border-[#626FC4]/30'
-            : 'bg-pink-500/20 text-pink-50 rounded-br-sm border border-pink-400/30'
+            : 'bg-[#7B5230]/20 text-[#D4A520] rounded-br-sm border border-[#7B5230]/30'
             }`}
         >
           <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
@@ -122,10 +122,10 @@ const MessageBubble = React.memo(function MessageBubble({
           {msg.sender === 'me' ? (
             <User className="h-2 w-2 text-[#626FC4]/40" />
           ) : (
-            <Heart className="h-2 w-2 text-pink-400/30" />
+            <Heart className="h-2 w-2 text-[#7B5230]/40" />
           )}
-          <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-pink-400/15'}`}>
-            {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
+          <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-[#7B5230]/50'}`}>
+            {msg.sender === 'me' ? 'أنا' : 'الراعية الحنون'} • {formatTime(msg.created_at)}
           </span>
           {msg.status === 'pending' && (
             <RefreshCw className="h-2 w-2 text-[#626FC4]/50 animate-spin ml-0.5" />
@@ -154,7 +154,7 @@ interface DialogueMessage {
 }
 
 // chat_mode doubles as persona marker:
-// 'self' = me sender | 'anima' = anima persona | 'nurturing' = nurturing persona
+// 'self' = me sender | 'anima' = legacy persona | 'nurturing' = nurturing persona
 type ChatMode = 'self' | 'anima' | 'nurturing';
 
 interface AnimaCapability {
@@ -189,7 +189,6 @@ export function SelfDialogueChat() {
   const [capabilities, setCapabilities] = useState<AnimaCapability[]>([]);
   const [newCapabilityText, setNewCapabilityText] = useState('');
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
-  const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('anima');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestoneRating, setMilestoneRating] = useState(5);
   const [milestoneNotes, setMilestoneNotes] = useState('راحة وأمان : \nلذة واستمتاع : \nعاطفة واتصال : ');
@@ -200,7 +199,6 @@ export function SelfDialogueChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
-  const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const sendLongPressFiredRef = useRef(false);
 
@@ -208,7 +206,7 @@ export function SelfDialogueChat() {
 
   const PENDING_MESSAGES_KEY = useMemo(() => user ? `pending_dialogue_messages_${user.id}` : null, [user]);
 
-  const isNurturing = animaPersona === 'nurturing';
+  const isNurturing = true;
 
   // Colors for each persona
   const animaColors = {
@@ -594,10 +592,10 @@ export function SelfDialogueChat() {
                     {msg.sender === 'me' ? (
                       <User className="h-2 w-2 text-[#626FC4]/40" />
                     ) : (
-                      <Heart className={`h-2 w-2 ${msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/40' : 'text-pink-400/30'}`} />
+                      <Heart className="h-2 w-2 text-[#7B5230]/40" />
                     )}
-                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/50' : 'text-pink-400/15'}`}>
-                      {msg.sender === 'me' ? 'أنا' : (msg.chat_mode === 'nurturing' ? 'الراعية' : 'الأنيما')} • {formatTime(msg.created_at)}
+                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-[#7B5230]/50'}`}>
+                      {msg.sender === 'me' ? 'أنا' : 'الراعية الحنون'} • {formatTime(msg.created_at)}
                     </span>
 
                     {/* Status Indicator */}
@@ -705,7 +703,7 @@ export function SelfDialogueChat() {
       setMessages(displayMessages);
 
       if (allMessages.length > 0) {
-        setSessionTitle(allMessages[0].session_title || 'حوار مع الأنيما');
+        setSessionTitle(allMessages[0].session_title || 'حوار مع الراعية الحنون');
         const lastSender = allMessages[allMessages.length - 1].sender as 'me' | 'myself';
         if (isAutoSwitch) {
           setCurrentSender(lastSender === 'me' ? 'myself' : 'me');
@@ -1040,7 +1038,7 @@ export function SelfDialogueChat() {
     const tempId = crypto.randomUUID();
     const senderForThisMessage = currentSender;
     const chatModeForMsg: ChatMode = senderForThisMessage === 'myself'
-      ? (animaPersona === 'nurturing' ? 'nurturing' : 'anima')
+      ? 'nurturing'
       : 'self';
     globalMessageSeq++;
     const newMessage: DialogueMessage = {
@@ -1232,7 +1230,7 @@ export function SelfDialogueChat() {
                       onClick={() => !showArchive || selectedSessionId ? setIsEditingTitle(true) : null}
                     >
                       <DialogTitle className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-                        {showArchive && !selectedSessionId ? 'أرشيف المحادثات' : (sessionTitle || 'حوار مع الأنيما')}
+                        {showArchive && !selectedSessionId ? 'أرشيف المحادثات' : (sessionTitle || 'حوار مع الراعية الحنون')}
                       </DialogTitle>
                       {(!showArchive || selectedSessionId) && (
                         <Edit2 className="h-3 w-3 text-white/20 group-hover:text-white/50 transition-colors" />
@@ -1376,7 +1374,7 @@ export function SelfDialogueChat() {
                 </div>
 
                 <DialogDescription className="sr-only">
-                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"الأنيما".
+                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"الراعية الحنون".
                 </DialogDescription>
               </DialogHeader>
 
@@ -1434,7 +1432,7 @@ export function SelfDialogueChat() {
                             }`}
                         />
 
-                        {/* زر الوضع الحالي (أمومتي/أنوثتي) */}
+                        {/* زر الوضع الحالي (الراعية الحنون) */}
                         <Popover open={showCapabilitiesMenu} onOpenChange={setShowCapabilitiesMenu}>
                           <PopoverTrigger asChild>
                             <button
@@ -1444,44 +1442,14 @@ export function SelfDialogueChat() {
                               }}
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                modeButtonLongPressRef.current = setTimeout(() => {
-                                  modeButtonLongPressRef.current = null;
-                                  setAnimaPersona(prev => prev === 'anima' ? 'nurturing' : 'anima');
-                                  toast.success(animaPersona === 'anima' ? '🌿 وضع الراعية الحنون' : '✨ وضع الأنيما');
-                                }, 500);
                               }}
-                              onMouseUp={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
-                              onMouseLeave={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
-                              onTouchStart={(e) => {
-                                modeButtonLongPressRef.current = setTimeout(() => {
-                                  modeButtonLongPressRef.current = null;
-                                  setAnimaPersona(prev => prev === 'anima' ? 'nurturing' : 'anima');
-                                  toast.success(animaPersona === 'anima' ? '🌿 وضع الراعية الحنون' : '✨ وضع الأنيما');
-                                }, 500);
-                              }}
-                              onTouchEnd={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
-                              className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
+                                                            className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
                                 ? 'text-white font-bold drop-shadow-md'
                                 : 'text-gray-400 font-medium hover:text-gray-200'
                                 }`}
                             >
                               <Heart className="h-3 w-3" />
-                              {isNurturing ? 'الراعية' : 'الأنيما'}
+                              الراعية الحنون
                             </button>
                           </PopoverTrigger>
                           <PopoverContent 
@@ -1491,7 +1459,7 @@ export function SelfDialogueChat() {
                           >
                             <div className="flex flex-col gap-2 h-full">
                               <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                                إمكانات الأنيما
+                                إمكانات الراعية الحنون
                               </p>
                               
                               {/* Capabilities List */}
@@ -1590,7 +1558,7 @@ export function SelfDialogueChat() {
                     <div className="flex flex-col gap-2">
                       <Textarea
                         ref={inputRef}
-                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : isNurturing ? 'اكتب كـ "الراعية الحنون"...' : 'اكتب كـ "الأنيما"...'}
+                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : 'اكتب كـ "الراعية الحنون"...'}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => {
