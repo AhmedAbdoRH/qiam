@@ -103,6 +103,11 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
   // Load values from database
   const loadValuesData = useCallback(async () => {
     if (!user) return;
@@ -327,7 +332,7 @@ const Index = () => {
 {/* Sign out button in footer */}
       <div className="flex justify-center mt-8">
         <Button
-          onClick={signOut}
+          onClick={handleSignOut}
           variant="ghost"
           size="sm"
           className="gap-2"
