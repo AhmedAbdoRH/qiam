@@ -112,23 +112,23 @@ const MessageBubble = React.memo(function MessageBubble({
       >
         <div
           className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-            ? 'bg-[#626FC4]/20 text-[#C8CCEC] rounded-bl-sm border border-[#626FC4]/30'
-            : 'bg-[#7B5230]/20 text-[#D4A520] rounded-br-sm border border-[#7B5230]/30'
+            ? 'bg-[#7E8AF0]/35 text-[#F3F5FF] rounded-bl-sm border border-[#AAB2FF]/55'
+            : 'bg-[#9A6A3E]/35 text-[#FFE8AA] rounded-br-sm border border-[#C28A57]/55'
             }`}
         >
           <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
         </div>
         <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
           {msg.sender === 'me' ? (
-            <User className="h-2 w-2 text-[#626FC4]/40" />
+            <User className="h-2 w-2 text-[#C7CDFF]/90" />
           ) : (
-            <Heart className="h-2 w-2 text-[#7B5230]/40" />
+            <Heart className="h-2 w-2 text-[#F4D7B8]/90" />
           )}
-          <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-[#7B5230]/50'}`}>
+          <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#C7CDFF]/85' : 'text-[#F4D7B8]/85'}`}>
             {msg.sender === 'me' ? 'أنا' : 'الراعية الحنون'} • {formatTime(msg.created_at)}
           </span>
           {msg.status === 'pending' && (
-            <RefreshCw className="h-2 w-2 text-[#626FC4]/50 animate-spin ml-0.5" />
+            <RefreshCw className="h-2 w-2 text-[#C7CDFF]/90 animate-spin ml-0.5" />
           )}
           {msg.status === 'error' && (
             <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
@@ -210,12 +210,12 @@ export function SelfDialogueChat() {
 
   // Colors for each persona
   const animaColors = {
-    msgBg:     isNurturing ? 'bg-[#7B5230]/20 backdrop-blur-md' : 'bg-pink-500/20 backdrop-blur-md',
-    msgText:   isNurturing ? 'text-[#D4A520]' : 'text-pink-50',
-    msgBorder: isNurturing ? 'border-[#7B5230]/30' : 'border-pink-400/30',
+    msgBg:     isNurturing ? 'bg-[#9A6A3E]/35 backdrop-blur-md' : 'bg-pink-500/20 backdrop-blur-md',
+    msgText:   isNurturing ? 'text-[#FFE8AA]' : 'text-pink-50',
+    msgBorder: isNurturing ? 'border-[#C28A57]/55' : 'border-pink-400/30',
     msgShadow: isNurturing ? 'shadow-[inset_0_1px_12px_rgba(123,82,48,0.2)]' : 'shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]',
-    iconColor: isNurturing ? 'text-[#7B5230]/40' : 'text-pink-400/30',
-    timeColor: isNurturing ? 'text-[#7B5230]/30' : 'text-pink-400/15',
+    iconColor: isNurturing ? 'text-[#F4D7B8]/90' : 'text-pink-400/30',
+    timeColor: isNurturing ? 'text-[#F4D7B8]/85' : 'text-pink-400/15',
     toggleActiveBg: isNurturing
       ? 'bg-[#7B5230]/40 border border-[#9B6840]/40 shadow-[inset_0_1px_10px_rgba(123,82,48,0.3),0_0_15px_rgba(123,82,48,0.2)]'
       : 'bg-pink-500/40 border border-pink-400/40 shadow-[inset_0_1px_10px_rgba(236,72,153,0.3),0_0_15px_rgba(236,72,153,0.2)]',
@@ -223,10 +223,10 @@ export function SelfDialogueChat() {
       ? 'focus:border-[#9B6840]/50 focus:ring-1 focus:ring-[#9B6840]/20 focus:shadow-[inset_0_2px_12px_rgba(123,82,48,0.15)]'
       : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20 focus:shadow-[inset_0_2px_12px_rgba(236,72,153,0.15)]',
     sendBtn: isNurturing
-      ? 'bg-[#7B5230]/30 hover:bg-[#7B5230]/40 border border-[#9B6840]/30 shadow-[inset_0_1px_10px_rgba(123,82,48,0.2)] text-[#D4A520]'
+      ? 'bg-[#9A6A3E]/45 hover:bg-[#A67446]/60 border border-[#C28A57]/55 shadow-[inset_0_1px_10px_rgba(154,106,62,0.3)] text-[#FFE8AA]'
       : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white',
     capabilitiesBtn: isNurturing
-      ? 'bg-[#7B5230]/20 text-[#D4A520] hover:bg-[#7B5230]/30'
+      ? 'bg-[#9A6A3E]/35 text-[#FFE8AA] hover:bg-[#A67446]/45'
       : 'bg-pink-500/20 text-pink-300 hover:bg-pink-500/30',
   };
 
@@ -580,27 +580,25 @@ export function SelfDialogueChat() {
                 >
                   <div
                     className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-                      ? 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] rounded-bl-sm border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]'
-                      : msg.chat_mode === 'nurturing'
-                        ? 'bg-[#7B5230]/20 backdrop-blur-md text-[#D4A520] rounded-br-sm border border-[#7B5230]/30 shadow-[inset_0_1px_12px_rgba(123,82,48,0.2)]'
-                        : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
+                      ? 'bg-[#7E8AF0]/35 backdrop-blur-md text-[#F3F5FF] rounded-bl-sm border border-[#AAB2FF]/55 shadow-[inset_0_1px_12px_rgba(126,138,240,0.25)]'
+                      : 'bg-[#9A6A3E]/35 backdrop-blur-md text-[#FFE8AA] rounded-br-sm border border-[#C28A57]/55 shadow-[inset_0_1px_12px_rgba(154,106,62,0.25)]'
                       }`}
                   >
                     <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
                   </div>
                   <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
                     {msg.sender === 'me' ? (
-                      <User className="h-2 w-2 text-[#626FC4]/40" />
+                      <User className="h-2 w-2 text-[#C7CDFF]/90" />
                     ) : (
-                      <Heart className="h-2 w-2 text-[#7B5230]/40" />
+                      <Heart className="h-2 w-2 text-[#F4D7B8]/90" />
                     )}
-                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-[#7B5230]/50'}`}>
+                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#C7CDFF]/85' : 'text-[#F4D7B8]/85'}`}>
                       {msg.sender === 'me' ? 'أنا' : 'الراعية الحنون'} • {formatTime(msg.created_at)}
                     </span>
 
                     {/* Status Indicator */}
                     {msg.status === 'pending' && (
-                      <RefreshCw className="h-2 w-2 text-[#626FC4]/50 animate-spin ml-0.5" />
+                      <RefreshCw className="h-2 w-2 text-[#C7CDFF]/90 animate-spin ml-0.5" />
                     )}
                     {msg.status === 'error' && (
                       <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
@@ -1568,8 +1566,8 @@ export function SelfDialogueChat() {
                           }
                         }}
                         className={`w-full min-h-[40px] max-h-[100px] rounded-xl resize-none transition-all duration-1000 shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)] ${inputValue.trim()
-                          ? 'bg-black text-white border-white/20'
-                          : 'bg-white/5 text-white border-white/10'
+                          ? 'bg-[#111318] text-white border-white/35'
+                          : 'bg-white/10 text-white border-white/20'
                           } ${currentSender === 'me'
                             ? 'focus:border-[#626FC4]/50 focus:ring-1 focus:ring-[#626FC4]/20 focus:shadow-[inset_0_2px_12px_rgba(98,111,196,0.15)]'
                             : animaColors.inputFocus
@@ -1615,9 +1613,9 @@ export function SelfDialogueChat() {
                         }}
                         className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${inputValue.trim()
                           ? currentSender === 'me'
-                            ? 'bg-[#626FC4]/30 hover:bg-[#626FC4]/40 border border-[#626FC4]/30 shadow-[inset_0_1px_10px_rgba(98,111,196,0.2)] text-white'
+                            ? 'bg-[#6F7DFF]/45 hover:bg-[#7C89FF]/60 border border-[#AAB2FF]/60 shadow-[inset_0_1px_10px_rgba(126,138,240,0.3)] text-white'
                             : animaColors.sendBtn
-                          : 'bg-black hover:bg-gray-900 border border-white/20 text-white'
+                          : 'bg-[#1A1D24] hover:bg-[#252A34] border border-white/30 text-white'
                           }`}
                       >
                         {inputValue.trim() ? (
