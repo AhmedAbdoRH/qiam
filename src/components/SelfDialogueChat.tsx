@@ -206,28 +206,11 @@ export function SelfDialogueChat() {
 
   const PENDING_MESSAGES_KEY = useMemo(() => user ? `pending_dialogue_messages_${user.id}` : null, [user]);
 
-  const isNurturing = true;
-
-  // Colors for each persona
-  const animaColors = {
-    msgBg:     isNurturing ? 'bg-[#9A6A3E]/35 backdrop-blur-md' : 'bg-pink-500/20 backdrop-blur-md',
-    msgText:   isNurturing ? 'text-[#FFE8AA]' : 'text-pink-50',
-    msgBorder: isNurturing ? 'border-[#C28A57]/55' : 'border-pink-400/30',
-    msgShadow: isNurturing ? 'shadow-[inset_0_1px_12px_rgba(123,82,48,0.2)]' : 'shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]',
-    iconColor: isNurturing ? 'text-[#F4D7B8]/90' : 'text-pink-400/30',
-    timeColor: isNurturing ? 'text-[#F4D7B8]/85' : 'text-pink-400/15',
-    toggleActiveBg: isNurturing
-      ? 'bg-[#7B5230]/40 border border-[#9B6840]/40 shadow-[inset_0_1px_10px_rgba(123,82,48,0.3),0_0_15px_rgba(123,82,48,0.2)]'
-      : 'bg-pink-500/40 border border-pink-400/40 shadow-[inset_0_1px_10px_rgba(236,72,153,0.3),0_0_15px_rgba(236,72,153,0.2)]',
-    inputFocus: isNurturing
-      ? 'focus:border-[#9B6840]/50 focus:ring-1 focus:ring-[#9B6840]/20 focus:shadow-[inset_0_2px_12px_rgba(123,82,48,0.15)]'
-      : 'focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/20 focus:shadow-[inset_0_2px_12px_rgba(236,72,153,0.15)]',
-    sendBtn: isNurturing
-      ? 'bg-[#9A6A3E]/45 hover:bg-[#A67446]/60 border border-[#C28A57]/55 shadow-[inset_0_1px_10px_rgba(154,106,62,0.3)] text-[#FFE8AA]'
-      : 'bg-pink-500/30 hover:bg-pink-500/40 border border-pink-400/30 shadow-[inset_0_1px_10px_rgba(236,72,153,0.2)] text-white',
-    capabilitiesBtn: isNurturing
-      ? 'bg-[#9A6A3E]/35 text-[#FFE8AA] hover:bg-[#A67446]/45'
-      : 'bg-pink-500/20 text-pink-300 hover:bg-pink-500/30',
+  const nurturingColors = {
+    toggleActiveBg: 'bg-[#7B5230]/40 border border-[#9B6840]/40 shadow-[inset_0_1px_10px_rgba(123,82,48,0.3),0_0_15px_rgba(123,82,48,0.2)]',
+    inputFocus: 'focus:border-[#9B6840]/50 focus:ring-1 focus:ring-[#9B6840]/20 focus:shadow-[inset_0_2px_12px_rgba(123,82,48,0.15)]',
+    sendBtn: 'bg-[#9A6A3E]/45 hover:bg-[#A67446]/60 border border-[#C28A57]/55 shadow-[inset_0_1px_10px_rgba(154,106,62,0.3)] text-[#FFE8AA]',
+    capabilitiesBtn: 'bg-[#9A6A3E]/35 text-[#FFE8AA] hover:bg-[#A67446]/45',
   };
 
   const formatTime = (dateString: string) => {
@@ -1425,7 +1408,7 @@ export function SelfDialogueChat() {
                         {/* الخلفية المتحركة - زجاجية */}
                         <div
                           className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 backdrop-blur-md ${currentSender === 'myself'
-                            ? `left-0.5 ${animaColors.toggleActiveBg}`
+                            ? `left-0.5 ${nurturingColors.toggleActiveBg}`
                             : 'left-[calc(50%+2px)] bg-[#626FC4]/40 border border-[#626FC4]/40 shadow-[inset_0_1px_10px_rgba(98,111,196,0.3),0_0_15px_rgba(98,111,196,0.2)]'
                             }`}
                         />
@@ -1523,7 +1506,7 @@ export function SelfDialogueChat() {
                                 <button
                                   onClick={handleAddCapability}
                                   disabled={!newCapabilityText.trim()}
-                                  className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
+                                  className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${nurturingColors.capabilitiesBtn}`}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                 </button>
@@ -1570,7 +1553,7 @@ export function SelfDialogueChat() {
                           : 'bg-white/10 text-white border-white/20'
                           } ${currentSender === 'me'
                             ? 'focus:border-[#626FC4]/50 focus:ring-1 focus:ring-[#626FC4]/20 focus:shadow-[inset_0_2px_12px_rgba(98,111,196,0.15)]'
-                            : animaColors.inputFocus
+                            : nurturingColors.inputFocus
                           }`}
                         rows={1}
                       />
@@ -1614,7 +1597,7 @@ export function SelfDialogueChat() {
                         className={`w-full rounded-xl h-12 backdrop-blur-md transition-all duration-1000 font-semibold text-base ${inputValue.trim()
                           ? currentSender === 'me'
                             ? 'bg-[#6F7DFF]/45 hover:bg-[#7C89FF]/60 border border-[#AAB2FF]/60 shadow-[inset_0_1px_10px_rgba(126,138,240,0.3)] text-white'
-                            : animaColors.sendBtn
+                            : nurturingColors.sendBtn
                           : 'bg-[#1A1D24] hover:bg-[#252A34] border border-white/30 text-white'
                           }`}
                       >
