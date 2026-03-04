@@ -189,7 +189,7 @@ export function SelfDialogueChat() {
   const [capabilities, setCapabilities] = useState<AnimaCapability[]>([]);
   const [newCapabilityText, setNewCapabilityText] = useState('');
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
-  const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('anima');
+  const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('nurturing');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestonePleasure, setMilestonePleasure] = useState(5);
   const [milestoneSaturation, setMilestoneSaturation] = useState(5);
@@ -600,7 +600,7 @@ export function SelfDialogueChat() {
                       <Heart className={`h-2 w-2 ${msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/40' : 'text-pink-400/30'}`} />
                     )}
                     <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/50' : 'text-pink-400/15'}`}>
-                      {msg.sender === 'me' ? 'أنا' : (msg.chat_mode === 'nurturing' ? 'الراعية' : 'الأنيما')} • {formatTime(msg.created_at)}
+                      {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
                     </span>
 
                     {/* Status Indicator */}
@@ -973,8 +973,11 @@ export function SelfDialogueChat() {
   };
 
   const openMilestoneDialog = () => {
-    setMilestoneRating(5);
-    setMilestoneNotes('راحة وأمان : \nلذة واستمتاع : \nعاطفة واتصال : ');
+    setMilestonePleasure(5);
+    setMilestoneSaturation(5);
+    setMilestoneComfort(5);
+    setMilestoneAfterglow(false);
+    setMilestoneSacred(false);
     setShowMilestoneDialog(true);
   };
 
@@ -1499,46 +1502,14 @@ export function SelfDialogueChat() {
                                 e.preventDefault();
                                 handleManualSwitch('myself');
                               }}
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                modeButtonLongPressRef.current = setTimeout(() => {
-                                  modeButtonLongPressRef.current = null;
-                                  setAnimaPersona(prev => prev === 'anima' ? 'nurturing' : 'anima');
-                                  toast.success(animaPersona === 'anima' ? '🌿 وضع الراعية الحنون' : '✨ وضع الأنيما');
-                                }, 500);
-                              }}
-                              onMouseUp={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
-                              onMouseLeave={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
-                              onTouchStart={(e) => {
-                                modeButtonLongPressRef.current = setTimeout(() => {
-                                  modeButtonLongPressRef.current = null;
-                                  setAnimaPersona(prev => prev === 'anima' ? 'nurturing' : 'anima');
-                                  toast.success(animaPersona === 'anima' ? '🌿 وضع الراعية الحنون' : '✨ وضع الأنيما');
-                                }, 500);
-                              }}
-                              onTouchEnd={() => {
-                                if (modeButtonLongPressRef.current) {
-                                  clearTimeout(modeButtonLongPressRef.current);
-                                  modeButtonLongPressRef.current = null;
-                                }
-                              }}
+                              onMouseDown={(e) => e.preventDefault()}
                               className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
                                 ? 'text-white font-bold drop-shadow-md'
                                 : 'text-gray-400 font-medium hover:text-gray-200'
                                 }`}
                             >
                               <Heart className="h-3 w-3" />
-                              {isNurturing ? 'الراعية' : 'الأنيما'}
+                              الأنيما
                             </button>
                           </PopoverTrigger>
                           <PopoverContent 
