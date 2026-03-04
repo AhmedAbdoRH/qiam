@@ -191,8 +191,11 @@ export function SelfDialogueChat() {
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('anima');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
-  const [milestoneRating, setMilestoneRating] = useState(5);
-  const [milestoneNotes, setMilestoneNotes] = useState('راحة وأمان : \nلذة واستمتاع : \nعاطفة واتصال : ');
+  const [milestonePleasure, setMilestonePleasure] = useState(5);
+  const [milestoneSaturation, setMilestoneSaturation] = useState(5);
+  const [milestoneComfort, setMilestoneComfort] = useState(5);
+  const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
+  const [milestoneSacred, setMilestoneSacred] = useState(false);
   const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
@@ -979,7 +982,12 @@ export function SelfDialogueChat() {
     if (!user) return;
     const tempId = crypto.randomUUID();
     globalMessageSeq++;
-    const milestoneContent = `__MILESTONE__جماع مقدس|${milestoneRating}|${milestoneNotes}`;
+    // Calculate final rating: 8 points from sliders + 2 points from checkboxes = 10 points total
+    const sliderTotal = (milestonePleasure + milestoneSaturation + milestoneComfort) / 3;
+    const checkboxPoints = (milestoneAfterglow ? 1 : 0) + (milestoneSacred ? 1 : 0);
+    const finalRating = Math.round((sliderTotal * 0.8 + checkboxPoints * 5) / 10 * 100) / 100;
+    const milestoneName = milestoneSacred ? 'جماع مقدس' : 'جماع طبيعي';
+    const milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneAfterglow ? 'Afterglow' : ''}|${milestoneSacred ? 'Sacred' : ''}`;
     const milestoneMessage: DialogueMessage = {
       id: tempId,
       sender: 'me',
@@ -991,6 +999,11 @@ export function SelfDialogueChat() {
     };
     setMessages(prev => [...prev, milestoneMessage]);
     setShowMilestoneDialog(false);
+    setMilestonePleasure(5);
+    setMilestoneSaturation(5);
+    setMilestoneComfort(5);
+    setMilestoneAfterglow(false);
+    setMilestoneSacred(false);
     try {
       await supabase.from('self_dialogue_messages').insert({
         user_id: user.id,
@@ -1260,45 +1273,89 @@ export function SelfDialogueChat() {
                   {/* Milestone Rating Dialog */}
                   {showMilestoneDialog && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneDialog(false)}>
-                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[340px] flex flex-col gap-5" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-center text-sm font-semibold text-white/80">تقييم الجماع المقدس</h3>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-center text-sm font-semibold text-white/80">تقييم الجماع</h3>
                         
-                        {/* Slider */}
-                        <div className="flex flex-col gap-3">
-                          <div className="flex justify-between text-[10px] text-white/40">
-                            <span>١٠</span>
-                            <span>٠</span>
+                        {/* Pleasure Slider */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-white/60">ممتع</span>
+                            <span className="text-xs font-semibold text-amber-300">{milestonePleasure}</span>
                           </div>
                           <Slider
-                            value={[milestoneRating]}
-                            onValueChange={([v]) => setMilestoneRating(v)}
+                            value={[milestonePleasure]}
+                            onValueChange={([v]) => setMilestonePleasure(v)}
                             min={0}
                             max={10}
-                            step={0.5}
+                            step={1}
                             className="w-full"
-                            rangeClassName={(() => {
-                              const r = milestoneRating;
-                              if (r <= 3) return 'bg-red-500';
-                              if (r <= 5) return 'bg-orange-500';
-                              if (r <= 7) return 'bg-yellow-500';
-                              return 'bg-yellow-400';
-                            })()}
+                            rangeClassName="bg-amber-500"
                           />
-                          <div className="text-center text-2xl font-bold" style={{
-                            color: milestoneRating <= 3 ? '#dc2626' : milestoneRating <= 5 ? '#ea580c' : milestoneRating <= 7 ? '#eab308' : '#d4a520'
-                          }}>
-                            {milestoneRating}
-                          </div>
                         </div>
 
-                        {/* Notes */}
-                        <Textarea
-                          value={milestoneNotes}
-                          onChange={e => setMilestoneNotes(e.target.value)}
-                          className="bg-white/5 border-white/15 text-white text-xs min-h-[80px] resize-none"
-                          dir="rtl"
-                          rows={3}
-                        />
+                        {/* Saturation Slider */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-white/60">مشبع وعاطفي</span>
+                            <span className="text-xs font-semibold text-rose-300">{milestoneSaturation}</span>
+                          </div>
+                          <Slider
+                            value={[milestoneSaturation]}
+                            onValueChange={([v]) => setMilestoneSaturation(v)}
+                            min={0}
+                            max={10}
+                            step={1}
+                            className="w-full"
+                            rangeClassName="bg-rose-500"
+                          />
+                        </div>
+
+                        {/* Comfort Slider */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-white/60">مريح</span>
+                            <span className="text-xs font-semibold text-cyan-300">{milestoneComfort}</span>
+                          </div>
+                          <Slider
+                            value={[milestoneComfort]}
+                            onValueChange={([v]) => setMilestoneComfort(v)}
+                            min={0}
+                            max={10}
+                            step={1}
+                            className="w-full"
+                            rangeClassName="bg-cyan-500"
+                          />
+                        </div>
+
+                        {/* Checkboxes */}
+                        <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={milestoneAfterglow}
+                              onChange={(e) => setMilestoneAfterglow(e.target.checked)}
+                              className="w-4 h-4 rounded border-white/30 bg-white/5"
+                            />
+                            <span className="text-xs text-white/70">Afterglow</span>
+                          </label>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={milestoneSacred}
+                              onChange={(e) => setMilestoneSacred(e.target.checked)}
+                              className="w-4 h-4 rounded border-white/30 bg-white/5"
+                            />
+                            <span className="text-xs text-white/70">مقدس</span>
+                          </label>
+                        </div>
+
+                        {/* Final Rating Display */}
+                        <div className="text-center py-3 bg-white/5 rounded-lg border border-white/10">
+                          <div className="text-xs text-white/50 mb-1">التقييم النهائي</div>
+                          <div className="text-2xl font-bold text-amber-300">
+                            {(((milestonePleasure + milestoneSaturation + milestoneComfort) / 3 * 0.8 + ((milestoneAfterglow ? 1 : 0) + (milestoneSacred ? 1 : 0)) * 5) / 10).toFixed(1)}
+                          </div>
+                        </div>
 
                         <div className="flex gap-2">
                           <Button
