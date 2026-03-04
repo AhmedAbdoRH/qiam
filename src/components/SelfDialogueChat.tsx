@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Archive, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star, Table2, Copy } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -191,11 +191,14 @@ export function SelfDialogueChat() {
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('nurturing');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
+  const [milestoneIntention, setMilestoneIntention] = useState('');
+  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
   const [milestonePleasure, setMilestonePleasure] = useState(5);
   const [milestoneSaturation, setMilestoneSaturation] = useState(5);
   const [milestoneComfort, setMilestoneComfort] = useState(5);
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
+  const [showMilestoneTable, setShowMilestoneTable] = useState(false);
   const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
@@ -538,12 +541,21 @@ export function SelfDialogueChat() {
             const parts = milestoneBody.split('|');
             const milestoneTitle = parts[0] || 'جماع مقدس';
             const rating = parts.length > 1 ? parseFloat(parts[1]) : 5;
-            const notes = parts.length > 2 ? parts[2] : '';
+            const pleasure = parts.length > 2 ? parts[2] : '';
+            const saturation = parts.length > 3 ? parts[3] : '';
+            const comfort = parts.length > 4 ? parts[4] : '';
+            const intentionAch = parts.length > 5 ? parts[5] : '';
+            const afterglow = parts.length > 6 ? parts[6] === '1' : false;
+            const sacred = parts.length > 7 ? parts[7] === '1' : false;
+            const intention = parts.length > 8 ? parts[8] : '';
             // Color interpolation: 0=red, 5=orange, 10=golden
             const r = rating <= 5 ? 220 : Math.round(220 + (rating - 5) * (212 - 220) / 5);
             const g = rating <= 5 ? Math.round(30 + rating * (140 - 30) / 5) : Math.round(140 + (rating - 5) * (175 - 140) / 5);
             const b = rating <= 5 ? 30 : Math.round(30 + (rating - 5) * (55 - 30) / 5);
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
+            const milestoneDate = new Date(msg.created_at);
+            const dateStr = milestoneDate.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeStr = milestoneDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3"
                 onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
@@ -559,8 +571,17 @@ export function SelfDialogueChat() {
                     <span className="text-sm font-semibold" style={{ color: ratingColor }}>{milestoneTitle}</span>
                     <span className="text-[9px] font-bold min-w-[22px] h-[22px] flex items-center justify-center rounded-full flex-shrink-0" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
                   </div>
-                  {notes && (
-                    <div className="relative text-[10px] text-white/40 mt-1 text-center whitespace-pre-wrap max-w-[200px]" style={{ unicodeBidi: 'plaintext' }}>{notes}</div>
+                  <div className="relative text-[8px] text-white/30 mt-0.5">{dateStr} • {timeStr}</div>
+                  <div className="relative flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-[8px] text-white/35 mt-0.5 max-w-[240px]" dir="rtl">
+                    {pleasure && <span>ممتع:{pleasure}</span>}
+                    {saturation && <span>مشبع:{saturation}</span>}
+                    {comfort && <span>مريح:{comfort}</span>}
+                    {intentionAch && <span>نية:{intentionAch}</span>}
+                    {afterglow && <span>✨Afterglow</span>}
+                    {sacred && <span>🕊مقدس</span>}
+                  </div>
+                  {intention && (
+                    <div className="relative text-[9px] text-white/40 mt-0.5 text-center max-w-[200px]" dir="rtl" style={{ unicodeBidi: 'plaintext' }}>«{intention}»</div>
                   )}
                 </div>
               </div>
@@ -973,6 +994,8 @@ export function SelfDialogueChat() {
   };
 
   const openMilestoneDialog = () => {
+    setMilestoneIntention('');
+    setMilestoneIntentionAchievement(5);
     setMilestonePleasure(5);
     setMilestoneSaturation(5);
     setMilestoneComfort(5);
@@ -981,16 +1004,22 @@ export function SelfDialogueChat() {
     setShowMilestoneDialog(true);
   };
 
+  const calculateMilestoneRating = (pleasure: number, saturation: number, comfort: number, intentionAch: number, afterglow: boolean, sacred: boolean) => {
+    // Each slider (0-10) contributes 2 points: (slider/10)*2
+    const sliderPoints = (pleasure / 10 * 2) + (saturation / 10 * 2) + (comfort / 10 * 2) + (intentionAch / 10 * 2);
+    // Each checkbox contributes 1 point
+    const checkboxPoints = (afterglow ? 1 : 0) + (sacred ? 1 : 0);
+    return Math.round((sliderPoints + checkboxPoints) * 10) / 10;
+  };
+
   const insertMilestone = async () => {
     if (!user) return;
     const tempId = crypto.randomUUID();
     globalMessageSeq++;
-    // Calculate final rating: 8 points from sliders + 2 points from checkboxes = 10 points total
-    const sliderTotal = (milestonePleasure + milestoneSaturation + milestoneComfort) / 3;
-    const checkboxPoints = (milestoneAfterglow ? 1 : 0) + (milestoneSacred ? 1 : 0);
-    const finalRating = Math.round((sliderTotal * 0.8 + checkboxPoints * 5) / 10 * 100) / 100;
+    const finalRating = calculateMilestoneRating(milestonePleasure, milestoneSaturation, milestoneComfort, milestoneIntentionAchievement, milestoneAfterglow, milestoneSacred);
     const milestoneName = milestoneSacred ? 'جماع مقدس' : 'جماع طبيعي';
-    const milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneAfterglow ? 'Afterglow' : ''}|${milestoneSacred ? 'Sacred' : ''}`;
+    // Format: __MILESTONE__title|rating|pleasure|saturation|comfort|intentionAch|afterglow|sacred|intention
+    const milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestonePleasure}|${milestoneSaturation}|${milestoneComfort}|${milestoneIntentionAchievement}|${milestoneAfterglow ? '1' : '0'}|${milestoneSacred ? '1' : '0'}|${milestoneIntention}`;
     const milestoneMessage: DialogueMessage = {
       id: tempId,
       sender: 'me',
@@ -1002,6 +1031,8 @@ export function SelfDialogueChat() {
     };
     setMessages(prev => [...prev, milestoneMessage]);
     setShowMilestoneDialog(false);
+    setMilestoneIntention('');
+    setMilestoneIntentionAchievement(5);
     setMilestonePleasure(5);
     setMilestoneSaturation(5);
     setMilestoneComfort(5);
@@ -1022,6 +1053,52 @@ export function SelfDialogueChat() {
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
       toast.error('فشل إضافة الإنجاز');
     }
+  };
+
+  // Get all milestone messages for the table view
+  const milestoneMessages = useMemo(() => {
+    const allMsgs = showArchive ? archivedMessages : messages;
+    return allMsgs.filter(m => m.message.startsWith('__MILESTONE__'));
+  }, [messages, archivedMessages, showArchive]);
+
+  const exportMilestonesCSV = () => {
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'ممتع', 'مشبع', 'مريح', 'تحقيق النية', 'Afterglow', 'مقدس', 'نية الجماع']];
+    milestoneMessages.forEach(m => {
+      const content = m.message.replace('__MILESTONE__', '');
+      const parts = content.split('|');
+      const date = new Date(m.created_at);
+      const dateStr = date.toLocaleDateString('ar-SA');
+      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      rows.push([
+        dateStr, timeStr,
+        parts[0] || '', parts[1] || '',
+        parts[2] || '', parts[3] || '', parts[4] || '', parts[5] || '',
+        parts[6] === '1' ? 'نعم' : 'لا', parts[7] === '1' ? 'نعم' : 'لا',
+        parts[8] || ''
+      ]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'milestones.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('تم تصدير البيانات');
+  };
+
+  const copyMilestoneData = (msg: DialogueMessage) => {
+    const content = msg.message.replace('__MILESTONE__', '');
+    const parts = content.split('|');
+    const date = new Date(msg.created_at);
+    const text = `${parts[0] || ''} - ${date.toLocaleDateString('ar-SA')} ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+التقييم: ${parts[1] || ''}
+ممتع: ${parts[2] || ''} | مشبع: ${parts[3] || ''} | مريح: ${parts[4] || ''} | تحقيق النية: ${parts[5] || ''}
+Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1' ? 'نعم' : 'لا'}
+نية: ${parts[8] || '-'}`;
+    navigator.clipboard.writeText(text);
+    toast.success('تم نسخ البيانات');
   };
 
   const handleSendButtonClick = (e: React.MouseEvent) => {
@@ -1273,12 +1350,107 @@ export function SelfDialogueChat() {
                     </Button>
                   )}
 
+                  {/* Milestone Table Button */}
+                  {milestoneMessages.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowMilestoneTable(true)}
+                      className="h-7 px-2 text-[10px] text-amber-400/60 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      title="جدول الجماعات"
+                    >
+                      <Table2 className="h-3 w-3" />
+                    </Button>
+                  )}
+
+                  {/* Milestone Table View */}
+                  {showMilestoneTable && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneTable(false)}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[80vh] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات</h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={exportMilestonesCSV}
+                            className="h-7 px-2 text-[10px] text-amber-300 hover:bg-amber-500/10 gap-1"
+                          >
+                            <Download className="h-3 w-3" />
+                            CSV
+                          </Button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 space-y-2">
+                          {milestoneMessages.map(m => {
+                            const content = m.message.replace('__MILESTONE__', '');
+                            const p = content.split('|');
+                            const date = new Date(m.created_at);
+                            return (
+                              <div key={m.id} className="bg-white/5 rounded-lg p-3 border border-white/10 text-right" dir="rtl">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-semibold text-amber-300">{p[0]}</span>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{p[1]}</span>
+                                    <button onClick={() => copyMilestoneData(m)} className="p-1 text-white/30 hover:text-white/60">
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="text-[9px] text-white/40 mb-1">
+                                  {date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' })} • {date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[9px] text-white/50">
+                                  {p[2] && <span>ممتع: {p[2]}</span>}
+                                  {p[3] && <span>مشبع: {p[3]}</span>}
+                                  {p[4] && <span>مريح: {p[4]}</span>}
+                                  {p[5] && <span>نية: {p[5]}</span>}
+                                  {p[6] === '1' && <span>✨Afterglow</span>}
+                                  {p[7] === '1' && <span>🕊مقدس</span>}
+                                </div>
+                                {p[8] && <div className="text-[9px] text-white/40 mt-1">«{p[8]}»</div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <Button variant="ghost" onClick={() => setShowMilestoneTable(false)} className="h-8 text-xs text-white/50 hover:text-white">إغلاق</Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Milestone Rating Dialog */}
                   {showMilestoneDialog && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneDialog(false)}>
-                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <h3 className="text-center text-sm font-semibold text-white/80">تقييم الجماع</h3>
                         
+                        {/* Intention Notes */}
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs text-white/60">نية الجماع</span>
+                          <Input
+                            value={milestoneIntention}
+                            onChange={(e) => setMilestoneIntention(e.target.value)}
+                            placeholder="اكتب نيتك..."
+                            className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
+                            dir="rtl"
+                          />
+                        </div>
+
+                        {/* Intention Achievement Slider */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-white/60">تحقيق النية</span>
+                            <span className="text-xs font-semibold text-purple-300">{milestoneIntentionAchievement}</span>
+                          </div>
+                          <Slider
+                            value={[milestoneIntentionAchievement]}
+                            onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
+                            min={0}
+                            max={10}
+                            step={1}
+                            className="w-full"
+                            rangeClassName="bg-purple-500"
+                          />
+                        </div>
+
                         {/* Pleasure Slider */}
                         <div className="flex flex-col gap-2">
                           <div className="flex justify-between items-center">
@@ -1354,10 +1526,11 @@ export function SelfDialogueChat() {
 
                         {/* Final Rating Display */}
                         <div className="text-center py-3 bg-white/5 rounded-lg border border-white/10">
-                          <div className="text-xs text-white/50 mb-1">التقييم النهائي</div>
+                          <div className="text-xs text-white/50 mb-1">التقييم النهائي (من ١٠)</div>
                           <div className="text-2xl font-bold text-amber-300">
-                            {(((milestonePleasure + milestoneSaturation + milestoneComfort) / 3 * 0.8 + ((milestoneAfterglow ? 1 : 0) + (milestoneSacred ? 1 : 0)) * 5) / 10).toFixed(1)}
+                            {calculateMilestoneRating(milestonePleasure, milestoneSaturation, milestoneComfort, milestoneIntentionAchievement, milestoneAfterglow, milestoneSacred).toFixed(1)}
                           </div>
+                          <div className="text-[9px] text-white/30 mt-1">٤ أشرطة × ٢ نقاط + ٢ خانات × ١ نقطة</div>
                         </div>
 
                         <div className="flex gap-2">
