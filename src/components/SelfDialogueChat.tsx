@@ -770,6 +770,7 @@ export function SelfDialogueChat() {
   const handleDeleteMessage = async (messageId: string) => {
     const messageToDelete = messages.find(m => m.id === messageId);
     setMessages(prev => prev.filter(m => m.id !== messageId));
+    setAllMessages(prev => prev.filter(m => m.id !== messageId));
 
     // Remove from local storage if pending
     if (PENDING_MESSAGES_KEY) {
