@@ -925,6 +925,7 @@ export function SelfDialogueChat() {
       chat_mode: 'self'
     };
     setMessages(prev => [...prev, milestoneMessage]);
+    setAllMessages(prev => [...prev, milestoneMessage]);
     setShowMilestoneDialog(false);
     setMilestoneIntention('');
     setMilestoneNotes('');
