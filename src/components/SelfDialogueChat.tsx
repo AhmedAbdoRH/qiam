@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star, Table2, Copy, Crown, Flame } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -189,9 +189,8 @@ export function SelfDialogueChat() {
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal'>('normal');
   const [milestoneNotes, setMilestoneNotes] = useState('');
-   const [displayCount, setDisplayCount] = useState(20);
-   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
-   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showTodayOnly, setShowTodayOnly] = useState(true);
+  const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
   const [milestoneIntention, setMilestoneIntention] = useState('');
   const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
   const [milestonePleasure, setMilestonePleasure] = useState(5);
@@ -256,13 +255,11 @@ export function SelfDialogueChat() {
     return messageDate >= todayStart && messageDate < tomorrowStart;
   };
 
-  // Display messages: last N from allMessages
-  const displayedMessages = useMemo(() => {
-    if (allMessages.length <= displayCount) return allMessages;
-    return allMessages.slice(-displayCount);
-  }, [allMessages, displayCount]);
-
-  const hasMoreMessages = allMessages.length > displayCount;
+  // Filter messages for today only
+  const todayMessages = useMemo(() => {
+    if (!showTodayOnly) return allMessages;
+    return allMessages.filter(msg => isFromToday(msg.created_at));
+  }, [allMessages, showTodayOnly]);
 
   // Get today's conversation for copying
   const getTodayConversation = () => {
@@ -509,17 +506,12 @@ export function SelfDialogueChat() {
   };
 
   const messageItems = useMemo(() => {
-    const targetMessages = displayedMessages;
+    const targetMessages = todayMessages;
 
     if (targetMessages.length === 0) return null;
 
     return (
       <div className="flex flex-col gap-3 p-4">
-        {hasMoreMessages && (
-          <div className="flex justify-center py-2">
-            <span className="text-[9px] text-white/25">{isLoadingMore ? 'جاري التحميل...' : '⬆ مرر لأعلى لعرض رسائل أقدم'}</span>
-          </div>
-        )}
         {targetMessages.map((msg, index) => {
           const shouldAnimate = targetMessages.length - index <= 5;
           
@@ -672,31 +664,7 @@ export function SelfDialogueChat() {
         <div ref={messagesEndRef} />
       </div>
     );
-  }, [displayedMessages, handleMouseDown, handleMouseUp]);
-
-  // Scroll-to-top handler: load more older messages
-  useEffect(() => {
-    if (!isOpen) return;
-    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!scrollContainer) return;
-
-    const handleScroll = () => {
-      if (scrollContainer.scrollTop < 50 && hasMoreMessages && !isLoadingMore) {
-        setIsLoadingMore(true);
-        const prevHeight = scrollContainer.scrollHeight;
-        setDisplayCount(prev => prev + 20);
-        // Preserve scroll position after loading
-        requestAnimationFrame(() => {
-          const newHeight = scrollContainer.scrollHeight;
-          scrollContainer.scrollTop = newHeight - prevHeight;
-          setIsLoadingMore(false);
-        });
-      }
-    };
-
-    scrollContainer.addEventListener('scroll', handleScroll);
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [isOpen, hasMoreMessages, isLoadingMore]);
+  }, [todayMessages, handleMouseDown, handleMouseUp]);
 
   // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
@@ -1244,6 +1212,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       title="إضافة جماع مقدس"
                     >
                       <Flame className="h-3 w-3" />
+                      جماع مقدس
                     </Button>
                     
                     <Button
@@ -1253,7 +1222,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1"
                       title="إضافة جماع قلبي"
                     >
-                      <HeartHandshake className="h-3 w-3" />
+                      جماع قلبي
                     </Button>
                     
                     <Button
@@ -1263,7 +1232,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
                       title="إضافة جماع خيالي"
                     >
-                      <Brain className="h-3 w-3" />
+                      جماع خيالي
                     </Button>
                     
                     <Button
@@ -1273,7 +1242,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
                       title="إضافة جماع عادي"
                     >
-                      <Zap className="h-3 w-3" />
+                      جماع عادي
                     </Button>
 
                   {/* Milestone Table Button */}
@@ -1289,13 +1258,32 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     </Button>
                   )}
 
-                  {/* Loading indicator for older messages */}
-                  {hasMoreMessages && (
-                    <span className="text-[9px] text-white/30 px-2">↑ مرر لأعلى لتحميل المزيد</span>
-                  )}
+                  {/* Today Only Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowTodayOnly(!showTodayOnly)}
+                    className={`h-7 px-2 text-[10px] gap-1 ${showTodayOnly 
+                      ? 'text-green-400 hover:text-green-300 bg-green-500/10' 
+                      : 'text-white/50 hover:text-white hover:bg-white/10'
+                    }`}
+                    title={showTodayOnly ? "عرض كل الرسائل" : "عرض رسائل اليوم فقط"}
+                  >
+                    {showTodayOnly ? (
+                      <>
+                        <List className="h-3 w-3" />
+                        كل الرسائل
+                      </>
+                    ) : (
+                      <>
+                        <List className="h-3 w-3" />
+                        اليوم فقط
+                      </>
+                    )}
+                  </Button>
 
                   {/* Copy Today's Conversation */}
-                  {displayedMessages.length > 0 && (
+                  {todayMessages.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
