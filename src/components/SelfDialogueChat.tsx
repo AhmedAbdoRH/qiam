@@ -664,7 +664,7 @@ export function SelfDialogueChat() {
         <div ref={messagesEndRef} />
       </div>
     );
-  }, [messages, handleMouseDown, handleMouseUp]);
+  }, [todayMessages, handleMouseDown, handleMouseUp]);
 
   // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
