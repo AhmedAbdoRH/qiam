@@ -935,17 +935,10 @@ export function SelfDialogueChat() {
     let finalRating: number;
     let milestoneContent: string;
     
-    if (milestoneType === 'sacred') {
-      // For sacred type, use the complex rating calculation
-      finalRating = calculateMilestoneRating(milestonePleasure, milestoneSaturation, milestoneComfort, milestoneIntentionAchievement, milestoneAfterglow, milestoneSacred);
-      // Format: __MILESTONE__title|rating|pleasure|saturation|comfort|intentionAch|afterglow|sacred|type|intention
-      milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestonePleasure}|${milestoneSaturation}|${milestoneComfort}|${milestoneIntentionAchievement}|${milestoneAfterglow ? '1' : '0'}|${milestoneSacred ? '1' : '0'}|${milestoneType}|${milestoneIntention}`;
-    } else {
-      // For non-sacred types, use simple decimal rating
-      finalRating = milestoneIntentionAchievement;
-      // Format: __MILESTONE__title|rating|notes|type|intention
-      milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
-    }
+    // For all types, use simple decimal rating
+    finalRating = milestoneIntentionAchievement;
+    // Format: __MILESTONE__title|rating|notes|type|intention
+    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
     
     const milestoneMessage: DialogueMessage = {
       id: tempId,
@@ -1371,166 +1364,49 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                                    milestoneType === 'imaginary' ? 'الجماع الخيالي' : 'الجماع العادي'}
                         </h3>
                         
-                        {/* Conditional Content Based on Type */}
-                        {milestoneType === 'sacred' ? (
-                          // Sacred type - full rating interface
-                          <>
-                            {/* Intention Notes */}
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-xs text-white/60">نية الجماع</span>
-                              <Input
-                                value={milestoneIntention}
-                                onChange={(e) => setMilestoneIntention(e.target.value)}
-                                placeholder="اكتب نيتك..."
-                                className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
-                                dir="rtl"
-                              />
-                            </div>
+                        {/* Simple Interface for All Types */}
+                        <>
+                          {/* Intention Notes */}
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-xs text-white/60">نية الجماع</span>
+                            <Input
+                              value={milestoneIntention}
+                              onChange={(e) => setMilestoneIntention(e.target.value)}
+                              placeholder="اكتب نيتك..."
+                              className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
+                              dir="rtl"
+                            />
+                          </div>
 
-                            {/* Intention Achievement Slider */}
-                            <div className="flex flex-col gap-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-white/60">تحقيق النية</span>
-                                <span className="text-xs font-semibold text-purple-300">{milestoneIntentionAchievement}</span>
-                              </div>
-                              <Slider
-                                value={[milestoneIntentionAchievement]}
-                                onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
-                                min={0}
-                                max={10}
-                                step={1}
-                                className="w-full"
-                                rangeClassName="bg-purple-500"
-                              />
+                          {/* Simple Rating Slider */}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-white/60">التقييم (من ٠ إلى ١٠)</span>
+                              <span className="xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
                             </div>
+                            <Slider
+                              value={[milestoneIntentionAchievement]}
+                              onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
+                              min={0}
+                              max={10}
+                              step={0.1}
+                              className="w-full"
+                              rangeClassName="bg-white"
+                            />
+                          </div>
 
-                            {/* Pleasure Slider */}
-                            <div className="flex flex-col gap-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-white/60">ممتع</span>
-                                <span className="text-xs font-semibold text-amber-300">{milestonePleasure}</span>
-                              </div>
-                              <Slider
-                                value={[milestonePleasure]}
-                                onValueChange={([v]) => setMilestonePleasure(v)}
-                                min={0}
-                                max={10}
-                                step={1}
-                                className="w-full"
-                                rangeClassName="bg-amber-500"
-                              />
-                            </div>
-
-                            {/* Saturation Slider */}
-                            <div className="flex flex-col gap-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-white/60">مشبع وعاطفي</span>
-                                <span className="text-xs font-semibold text-rose-300">{milestoneSaturation}</span>
-                              </div>
-                              <Slider
-                                value={[milestoneSaturation]}
-                                onValueChange={([v]) => setMilestoneSaturation(v)}
-                                min={0}
-                                max={10}
-                                step={1}
-                                className="w-full"
-                                rangeClassName="bg-rose-500"
-                              />
-                            </div>
-
-                            {/* Comfort Slider */}
-                            <div className="flex flex-col gap-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-white/60">مريح</span>
-                                <span className="text-xs font-semibold text-cyan-300">{milestoneComfort}</span>
-                              </div>
-                              <Slider
-                                value={[milestoneComfort]}
-                                onValueChange={([v]) => setMilestoneComfort(v)}
-                                min={0}
-                                max={10}
-                                step={1}
-                                className="w-full"
-                                rangeClassName="bg-cyan-500"
-                              />
-                            </div>
-
-                            {/* Checkboxes */}
-                            <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                              <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={milestoneAfterglow}
-                                  onChange={(e) => setMilestoneAfterglow(e.target.checked)}
-                                  className="w-4 h-4 rounded border-white/30 bg-white/5"
-                                />
-                                <span className="text-xs text-white/70">Afterglow</span>
-                              </label>
-                              <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={milestoneSacred}
-                                  onChange={(e) => setMilestoneSacred(e.target.checked)}
-                                  className="w-4 h-4 rounded border-white/30 bg-white/5"
-                                />
-                                <span className="text-xs text-white/70">مقدس</span>
-                              </label>
-                            </div>
-
-                            {/* Final Rating Display */}
-                            <div className="text-center py-3 bg-white/5 rounded-lg border border-white/10">
-                              <div className="text-xs text-white/50 mb-1">التقييم النهائي (من ١٠)</div>
-                              <div className="text-2xl font-bold text-amber-300">
-                                {calculateMilestoneRating(milestonePleasure, milestoneSaturation, milestoneComfort, milestoneIntentionAchievement, milestoneAfterglow, milestoneSacred).toFixed(1)}
-                              </div>
-                              <div className="text-[9px] text-white/30 mt-1">٤ أشرطة × ٢ نقاط + ٢ خانات × ١ نقطة</div>
-                            </div>
-                          </>
-                        ) : (
-                          // Non-sacred types - simple interface
-                          <>
-                            {/* Intention Notes */}
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-xs text-white/60">نية الجماع</span>
-                              <Input
-                                value={milestoneIntention}
-                                onChange={(e) => setMilestoneIntention(e.target.value)}
-                                placeholder="اكتب نيتك..."
-                                className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
-                                dir="rtl"
-                              />
-                            </div>
-
-                            {/* Simple Rating Slider */}
-                            <div className="flex flex-col gap-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-white/60">التقييم (من ٠ إلى ١٠)</span>
-                                <span className="text-xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
-                              </div>
-                              <Slider
-                                value={[milestoneIntentionAchievement]}
-                                onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
-                                min={0}
-                                max={10}
-                                step={0.1}
-                                className="w-full"
-                                rangeClassName="bg-white"
-                              />
-                            </div>
-
-                            {/* Notes Field */}
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-xs text-white/60">ملحوظات</span>
-                              <textarea
-                                value={milestoneNotes}
-                                onChange={(e) => setMilestoneNotes(e.target.value)}
-                                placeholder="اكتب أي ملاحظات..."
-                                className="h-16 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25 resize-none"
-                                dir="rtl"
-                              />
-                            </div>
-                          </>
-                        )}
+                          {/* Notes Field */}
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-xs text-white/60">ملحوظات</span>
+                            <textarea
+                              value={milestoneNotes}
+                              onChange={(e) => setMilestoneNotes(e.target.value)}
+                              placeholder="اكتب أي ملاحظات..."
+                              className="h-16 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25 resize-none"
+                              dir="rtl"
+                            />
+                          </div>
+                        </>
 
                         <div className="flex gap-2">
                           <Button
