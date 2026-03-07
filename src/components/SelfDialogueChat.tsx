@@ -1284,32 +1284,13 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     </Button>
                   )}
 
-                  {/* Today Only Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowTodayOnly(!showTodayOnly)}
-                    className={`h-7 px-2 text-[10px] gap-1 ${showTodayOnly 
-                      ? 'text-green-400 hover:text-green-300 bg-green-500/10' 
-                      : 'text-white/50 hover:text-white hover:bg-white/10'
-                    }`}
-                    title={showTodayOnly ? "عرض كل الرسائل" : "عرض رسائل اليوم فقط"}
-                  >
-                    {showTodayOnly ? (
-                      <>
-                        <List className="h-3 w-3" />
-                        كل الرسائل
-                      </>
-                    ) : (
-                      <>
-                        <List className="h-3 w-3" />
-                        اليوم فقط
-                      </>
-                    )}
-                  </Button>
+                  {/* Loading indicator for older messages */}
+                  {hasMoreMessages && (
+                    <span className="text-[9px] text-white/30 px-2">↑ مرر لأعلى لتحميل المزيد</span>
+                  )}
 
                   {/* Copy Today's Conversation */}
-                  {todayMessages.length > 0 && (
+                  {displayedMessages.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
