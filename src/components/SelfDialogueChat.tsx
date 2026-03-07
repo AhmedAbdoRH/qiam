@@ -667,7 +667,31 @@ export function SelfDialogueChat() {
         <div ref={messagesEndRef} />
       </div>
     );
-  }, [todayMessages, handleMouseDown, handleMouseUp]);
+  }, [displayedMessages, handleMouseDown, handleMouseUp]);
+
+  // Scroll-to-top handler: load more older messages
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      if (scrollContainer.scrollTop < 50 && hasMoreMessages && !isLoadingMore) {
+        setIsLoadingMore(true);
+        const prevHeight = scrollContainer.scrollHeight;
+        setDisplayCount(prev => prev + 20);
+        // Preserve scroll position after loading
+        requestAnimationFrame(() => {
+          const newHeight = scrollContainer.scrollHeight;
+          scrollContainer.scrollTop = newHeight - prevHeight;
+          setIsLoadingMore(false);
+        });
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [isOpen, hasMoreMessages, isLoadingMore]);
 
   // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
