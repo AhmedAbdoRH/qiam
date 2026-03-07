@@ -274,23 +274,10 @@ export function SelfDialogueChat() {
     return header + conversation;
   };
 
-  // Get last 20 messages for copying
-  const getRecentConversation = () => {
-    const recentMsgs = allMessages.filter(msg => !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__')).slice(-20);
-    const conversation = recentMsgs.map(msg => {
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
-      const time = formatTime(msg.created_at);
-      return `[${time}] ${senderName}: ${msg.message}`;
-    }).join('\n\n');
-    
-    const header = `آخر 20 رسالة\n` + '='.repeat(30) + '\n\n';
-    return header + conversation;
-  };
-
   const copyTodayConversation = () => {
-    const conversation = getRecentConversation();
+    const conversation = getTodayConversation();
     navigator.clipboard.writeText(conversation).then(() => {
-      toast.success('تم نسخ آخر 20 رسالة');
+      toast.success('تم نسخ محادثة اليوم');
     }).catch(err => {
       console.error('Failed to copy conversation: ', err);
       toast.error('فشل نسخ المحادثة');
@@ -1274,24 +1261,12 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      if (showTodayOnly) {
-                        // When switching to all messages, scroll to top and load
-                        setShowTodayOnly(false);
-                        // Scroll to top of messages container
-                        const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
-                        if (scrollContainer) {
-                          scrollContainer.scrollTop = 0;
-                        }
-                      } else {
-                        setShowTodayOnly(true);
-                      }
-                    }}
+                    onClick={() => setShowTodayOnly(!showTodayOnly)}
                     className={`h-7 px-2 text-[10px] gap-1 ${showTodayOnly 
                       ? 'text-green-400 hover:text-green-300 bg-green-500/10' 
                       : 'text-white/50 hover:text-white hover:bg-white/10'
                     }`}
-                    title={showTodayOnly ? "عرض كل الرسائل مع التمرير للاعلى" : "عرض رسائل اليوم فقط"}
+                    title={showTodayOnly ? "عرض كل الرسائل" : "عرض رسائل اليوم فقط"}
                   >
                     {showTodayOnly ? (
                       <>
@@ -1313,10 +1288,10 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       size="sm"
                       onClick={copyTodayConversation}
                       className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="نسخ آخر 20 رسالة"
+                      title="نسخ محادثة اليوم"
                     >
                       <Copy className="h-3 w-3" />
-                      نسخ 20 رسالة
+                      نسخ المحادثة
                     </Button>
                   )}
 
