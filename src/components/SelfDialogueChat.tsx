@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star, Table2, Copy } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, List, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -274,10 +274,23 @@ export function SelfDialogueChat() {
     return header + conversation;
   };
 
+  // Get last 20 messages for copying
+  const getRecentConversation = () => {
+    const recentMsgs = allMessages.filter(msg => !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__')).slice(-20);
+    const conversation = recentMsgs.map(msg => {
+      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
+      const time = formatTime(msg.created_at);
+      return `[${time}] ${senderName}: ${msg.message}`;
+    }).join('\n\n');
+    
+    const header = `آخر 20 رسالة\n` + '='.repeat(30) + '\n\n';
+    return header + conversation;
+  };
+
   const copyTodayConversation = () => {
-    const conversation = getTodayConversation();
+    const conversation = getRecentConversation();
     navigator.clipboard.writeText(conversation).then(() => {
-      toast.success('تم نسخ محادثة اليوم');
+      toast.success('تم نسخ آخر 20 رسالة');
     }).catch(err => {
       console.error('Failed to copy conversation: ', err);
       toast.error('فشل نسخ المحادثة');
@@ -1198,36 +1211,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
             <>
               <DialogHeader className="p-4 border-b border-white/10 flex-shrink-0 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
-                  {isEditingTitle ? (
-                    <div className="flex items-center gap-2 w-full max-w-[200px]">
-                      <Input
-                        value={sessionTitle}
-                        onChange={(e) => setSessionTitle(e.target.value)}
-                        className="h-7 text-xs bg-white/10 border-white/20 text-white"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleUpdateSessionTitle(sessionTitle);
-                            setIsEditingTitle(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          handleUpdateSessionTitle(sessionTitle);
-                          setIsEditingTitle(false);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      className="flex items-center gap-2 cursor-pointer group"
-                      onClick={() => setIsEditingTitle(true)}
-                    >
-                      <DialogTitle className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
-                        {sessionTitle || 'حوار مع الأنيما'}
-                      </DialogTitle>
-                      <Edit2 className="h-3 w-3 text-white/20 group-hover:text-white/50 transition-colors" />
-                    </div>
-                  )}
                   {isSyncing && (
                     <Loader2 className="h-3 w-3 text-[#626FC4] animate-spin" />
                   )}
@@ -1241,7 +1224,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="إضافة جماع مقدس"
                     >
-                      جماع مقدس
+                      <Flame className="h-3 w-3" />
                     </Button>
                     
                     <Button
@@ -1251,7 +1234,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1"
                       title="إضافة جماع قلبي"
                     >
-                      جماع قلبي
+                      <HeartHandshake className="h-3 w-3" />
                     </Button>
                     
                     <Button
@@ -1261,7 +1244,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
                       title="إضافة جماع خيالي"
                     >
-                      جماع خيالي
+                      <Brain className="h-3 w-3" />
                     </Button>
                     
                     <Button
@@ -1271,7 +1254,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
                       title="إضافة جماع عادي"
                     >
-                      جماع عادي
+                      <Zap className="h-3 w-3" />
                     </Button>
 
                   {/* Milestone Table Button */}
@@ -1291,12 +1274,24 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowTodayOnly(!showTodayOnly)}
+                    onClick={() => {
+                      if (showTodayOnly) {
+                        // When switching to all messages, scroll to top and load
+                        setShowTodayOnly(false);
+                        // Scroll to top of messages container
+                        const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+                        if (scrollContainer) {
+                          scrollContainer.scrollTop = 0;
+                        }
+                      } else {
+                        setShowTodayOnly(true);
+                      }
+                    }}
                     className={`h-7 px-2 text-[10px] gap-1 ${showTodayOnly 
                       ? 'text-green-400 hover:text-green-300 bg-green-500/10' 
                       : 'text-white/50 hover:text-white hover:bg-white/10'
                     }`}
-                    title={showTodayOnly ? "عرض كل الرسائل" : "عرض رسائل اليوم فقط"}
+                    title={showTodayOnly ? "عرض كل الرسائل مع التمرير للاعلى" : "عرض رسائل اليوم فقط"}
                   >
                     {showTodayOnly ? (
                       <>
@@ -1318,10 +1313,10 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       size="sm"
                       onClick={copyTodayConversation}
                       className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="نسخ محادثة اليوم"
+                      title="نسخ آخر 20 رسالة"
                     >
                       <Copy className="h-3 w-3" />
-                      نسخ المحادثة
+                      نسخ 20 رسالة
                     </Button>
                   )}
 
