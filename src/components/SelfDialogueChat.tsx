@@ -509,7 +509,7 @@ export function SelfDialogueChat() {
   };
 
   const messageItems = useMemo(() => {
-    const targetMessages = todayMessages;
+    const targetMessages = displayedMessages;
 
     if (targetMessages.length === 0) return null;
 
