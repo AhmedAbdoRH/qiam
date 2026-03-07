@@ -664,7 +664,7 @@ export function SelfDialogueChat() {
         <div ref={messagesEndRef} />
       </div>
     );
-  }, [messages, handleMouseDown, handleMouseUp]);
+  }, [todayMessages, handleMouseDown, handleMouseUp]);
 
   // Optimized scroll handler - only scroll when messages change or view shifts
   useEffect(() => {
@@ -770,6 +770,7 @@ export function SelfDialogueChat() {
   const handleDeleteMessage = async (messageId: string) => {
     const messageToDelete = messages.find(m => m.id === messageId);
     setMessages(prev => prev.filter(m => m.id !== messageId));
+    setAllMessages(prev => prev.filter(m => m.id !== messageId));
 
     // Remove from local storage if pending
     if (PENDING_MESSAGES_KEY) {
@@ -924,6 +925,7 @@ export function SelfDialogueChat() {
       chat_mode: 'self'
     };
     setMessages(prev => [...prev, milestoneMessage]);
+    setAllMessages(prev => [...prev, milestoneMessage]);
     setShowMilestoneDialog(false);
     setMilestoneIntention('');
     setMilestoneNotes('');
@@ -1043,6 +1045,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
 
     // Update UI immediately - just append, don't re-sort
     setMessages(prev => [...prev, newMessage]);
+    setAllMessages(prev => [...prev, newMessage]);
 
     // Save to local storage as pending
     if (PENDING_MESSAGES_KEY) {
