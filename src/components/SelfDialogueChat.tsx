@@ -263,7 +263,7 @@ export function SelfDialogueChat() {
 
   // Get today's conversation for copying
   const getTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at));
+    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__'));
     const conversation = todayMsgs.map(msg => {
       const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       const time = formatTime(msg.created_at);
@@ -275,42 +275,13 @@ export function SelfDialogueChat() {
   };
 
   const copyTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at));
-    
-    if (todayMsgs.length === 0) {
-      toast.error('لا توجد رسائل اليوم لنسخها');
-      return;
-    }
-    
-    const conversation = todayMsgs.map(msg => {
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
-      const time = formatTime(msg.created_at);
-      return `[${time}] ${senderName}: ${msg.message}`;
-    }).join('\n\n');
-    
-    const header = `محادثة اليوم (${new Date().toLocaleDateString('ar-SA')})\n` + '='.repeat(30) + '\n\n';
-    const fullText = header + conversation;
-    
-    // Create temporary textarea and copy
-    const textArea = document.createElement('textarea');
-    textArea.value = fullText;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.select();
-    
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        toast.success('تم نسخ محادثة اليوم');
-      } else {
-        toast.error('فشل النسخ - الرجاء تحديد النص ونسخه يدوياً (Ctrl+C)');
-      }
-    } catch (error) {
-      toast.error('فشل النسخ - الرجاء تحديد النص ونسخه يدوياً (Ctrl+C)');
-    }
-    
-    document.body.removeChild(textArea);
+    const conversation = getTodayConversation();
+    navigator.clipboard.writeText(conversation).then(() => {
+      toast.success('تم نسخ محادثة اليوم');
+    }).catch(err => {
+      console.error('Failed to copy conversation: ', err);
+      toast.error('فشل نسخ المحادثة');
+    });
   };
 
   const syncPendingMessages = useCallback(async () => {

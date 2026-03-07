@@ -10,10 +10,37 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
+      anima_capabilities: {
+        Row: {
+          capability_text: string
+          chat_mode: string
+          created_at: string
+          id: string
+          order_index: number
+          user_id: string
+        }
+        Insert: {
+          capability_text: string
+          chat_mode?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          user_id: string
+        }
+        Update: {
+          capability_text?: string
+          chat_mode?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       behavioral_values: {
         Row: {
           balance_percentage: number | null
@@ -92,45 +119,37 @@ export type Database = {
       divine_names: {
         Row: {
           created_at: string | null
-          dhikr_count: number | null
-          dhikr_notes: string | null
           divine_name: string
           id: string
           notes: string | null
           progress: number | null
           updated_at: string | null
           user_id: string
-          verses_link: string | null
         }
         Insert: {
           created_at?: string | null
-          dhikr_count?: number | null
-          dhikr_notes?: string | null
           divine_name: string
           id?: string
           notes?: string | null
           progress?: number | null
           updated_at?: string | null
           user_id: string
-          verses_link?: string | null
         }
         Update: {
           created_at?: string | null
-          dhikr_count?: number | null
-          dhikr_notes?: string | null
           divine_name?: string
           id?: string
           notes?: string | null
           progress?: number | null
           updated_at?: string | null
           user_id?: string
-          verses_link?: string | null
         }
         Relationships: []
       }
       self_dialogue_messages: {
         Row: {
           archive_session_id: string | null
+          chat_mode: string
           created_at: string
           id: string
           is_archived: boolean | null
@@ -141,6 +160,7 @@ export type Database = {
         }
         Insert: {
           archive_session_id?: string | null
+          chat_mode?: string
           created_at?: string
           id?: string
           is_archived?: boolean | null
@@ -151,6 +171,7 @@ export type Database = {
         }
         Update: {
           archive_session_id?: string | null
+          chat_mode?: string
           created_at?: string
           id?: string
           is_archived?: boolean | null
