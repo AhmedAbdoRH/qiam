@@ -1044,6 +1044,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
 
     // Update UI immediately - just append, don't re-sort
     setMessages(prev => [...prev, newMessage]);
+    setAllMessages(prev => [...prev, newMessage]);
 
     // Save to local storage as pending
     if (PENDING_MESSAGES_KEY) {
