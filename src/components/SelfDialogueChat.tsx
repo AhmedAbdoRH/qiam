@@ -256,11 +256,13 @@ export function SelfDialogueChat() {
     return messageDate >= todayStart && messageDate < tomorrowStart;
   };
 
-  // Filter messages for today only
-  const todayMessages = useMemo(() => {
-    if (!showTodayOnly) return allMessages;
-    return allMessages.filter(msg => isFromToday(msg.created_at));
-  }, [allMessages, showTodayOnly]);
+  // Display messages: last N from allMessages
+  const displayedMessages = useMemo(() => {
+    if (allMessages.length <= displayCount) return allMessages;
+    return allMessages.slice(-displayCount);
+  }, [allMessages, displayCount]);
+
+  const hasMoreMessages = allMessages.length > displayCount;
 
   // Get today's conversation for copying
   const getTodayConversation = () => {
