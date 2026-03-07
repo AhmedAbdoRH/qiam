@@ -515,6 +515,11 @@ export function SelfDialogueChat() {
 
     return (
       <div className="flex flex-col gap-3 p-4">
+        {hasMoreMessages && (
+          <div className="flex justify-center py-2">
+            <span className="text-[9px] text-white/25">{isLoadingMore ? 'جاري التحميل...' : '⬆ مرر لأعلى لعرض رسائل أقدم'}</span>
+          </div>
+        )}
         {targetMessages.map((msg, index) => {
           const shouldAnimate = targetMessages.length - index <= 5;
           
