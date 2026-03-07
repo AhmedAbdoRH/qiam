@@ -189,8 +189,9 @@ export function SelfDialogueChat() {
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal'>('normal');
   const [milestoneNotes, setMilestoneNotes] = useState('');
-  const [showTodayOnly, setShowTodayOnly] = useState(true);
-  const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
+   const [displayCount, setDisplayCount] = useState(20);
+   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
+   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [milestoneIntention, setMilestoneIntention] = useState('');
   const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
   const [milestonePleasure, setMilestonePleasure] = useState(5);
