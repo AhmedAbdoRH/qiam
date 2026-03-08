@@ -190,6 +190,7 @@ const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { times
 });
 
 
+interface DialogueMessage {
   id: string;
   sender: 'me' | 'myself';
   message: string;
