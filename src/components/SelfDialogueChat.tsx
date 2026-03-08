@@ -314,7 +314,7 @@ export function SelfDialogueChat() {
 
   // Get today's conversation for copying
   const getTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__'));
+    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__') && msg.message !== '__KISS__');
     const conversation = todayMsgs.map(msg => {
       const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       const time = formatTime(msg.created_at);
