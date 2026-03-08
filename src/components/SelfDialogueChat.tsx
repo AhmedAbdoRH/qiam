@@ -312,12 +312,31 @@ export function SelfDialogueChat() {
 
   const hasMoreMessages = allMessages.length > displayCount;
 
-  // Get today's conversation for copying
+  // Get today's conversation for copying (includes milestones and kisses)
   const getTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__') && msg.message !== '__KISS__');
+    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__SPACER__'));
     const conversation = todayMsgs.map(msg => {
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       const time = formatTime(msg.created_at);
+      
+      if (msg.message === '__KISS__') {
+        return `[${time}] 💋 بوس حميمي`;
+      }
+      
+      if (msg.message.startsWith('__MILESTONE__')) {
+        const content = msg.message.replace('__MILESTONE__', '');
+        const parts = content.split('|');
+        const title = parts[0] || '';
+        const rating = parts[1] || '';
+        const isSacredFmt = parts.length > 8;
+        const notes = isSacredFmt ? '' : (parts[2] || '');
+        const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+        let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
+        if (intention) line += ` | نية: ${intention}`;
+        if (notes) line += ` | ملاحظات: ${notes}`;
+        return line;
+      }
+      
+      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
