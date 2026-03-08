@@ -1096,19 +1096,26 @@ export function SelfDialogueChat() {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'ممتع', 'مشبع', 'مريح', 'تحقيق النية', 'Afterglow', 'مقدس', 'نوع الجماع', 'نية الجماع']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'نية الجماع', 'ملحوظات']];
     milestoneMessages.forEach(m => {
-      const content = m.message.replace('__MILESTONE__', '');
-      const parts = content.split('|');
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      
+      if (m.message === '__KISS__') {
+        rows.push([dateStr, timeStr, 'بوس حميمي', '-', '-', '-']);
+        return;
+      }
+      
+      const content = m.message.replace('__MILESTONE__', '');
+      const parts = content.split('|');
+      const isSacredFmt = parts.length > 8;
+      const notes = isSacredFmt ? '' : (parts[2] || '');
+      const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
       rows.push([
         dateStr, timeStr,
         parts[0] || '', parts[1] || '',
-        parts[2] || '', parts[3] || '', parts[4] || '', parts[5] || '',
-        parts[6] === '1' ? 'نعم' : 'لا', parts[7] === '1' ? 'نعم' : 'لا',
-        parts[8] || 'normal', parts[9] || ''
+        intention, notes
       ]);
     });
     const csv = rows.map(r => r.join(',')).join('\n');
