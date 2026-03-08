@@ -559,6 +559,22 @@ export function SelfDialogueChat() {
             return <div key={msg.id} className="h-10" />;
           }
 
+          // Render kiss label
+          if (msg.message === '__KISS__') {
+            const kissDate = new Date(msg.created_at);
+            const kissTime = kissDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
+                <KissLabel timestamp={kissTime} isRecent={shouldAnimate} />
+              </div>
+            );
+          }
+
           // Render milestone message
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneBody = msg.message.replace('__MILESTONE__', '');
