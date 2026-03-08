@@ -1282,10 +1282,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     </Button>
                   )}
 
-                  {/* Loading indicator for older messages */}
-                  {hasMoreMessages && (
-                    <span className="text-[9px] text-white/30 px-2">↑ مرر لأعلى لتحميل المزيد</span>
-                  )}
 
                   {/* Copy Today's Conversation */}
                   {displayedMessages.length > 0 && (
