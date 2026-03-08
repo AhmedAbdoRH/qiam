@@ -166,7 +166,30 @@ const MessageBubble = React.memo(function MessageBubble({
   );
 });
 
-interface DialogueMessage {
+// Animated Kiss Label component
+const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { timestamp: string; isRecent: boolean }) {
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  return (
+    <div
+      className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
+      onClick={() => setIsAnimating(prev => !prev)}
+    >
+      <div className={`relative ${isAnimating ? '' : 'kiss-heart-static'}`}>
+        <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
+        <span className={`kiss-heart-2 absolute -top-4 right-3 text-[8px]`}>❤️</span>
+        <span className={`kiss-heart-3 absolute -top-3 -left-1 text-[9px]`}>💗</span>
+        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 shadow-[inset_0_1px_12px_rgba(244,63,94,0.2),0_0_20px_rgba(244,63,94,0.15)] ${isRecent ? 'kiss-animated' : ''} ${!isAnimating ? 'kiss-static' : ''}`}>
+          <span className="text-lg">💋</span>
+          <span className="text-sm font-semibold text-rose-300 mr-2">بوس حميمي</span>
+        </div>
+      </div>
+      <span className="text-[8px] text-white/30">{timestamp}</span>
+    </div>
+  );
+});
+
+
   id: string;
   sender: 'me' | 'myself';
   message: string;
