@@ -1071,9 +1071,9 @@ export function SelfDialogueChat() {
     }
   };
 
-  // Get all milestone messages for the table view
+  // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__'));
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__');
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
