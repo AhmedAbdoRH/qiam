@@ -1269,6 +1269,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       <Zap className="h-3 w-3" />
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertKissLabel}
+                      className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1"
+                      title="بوس حميمي"
+                    >
+                      💋
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
