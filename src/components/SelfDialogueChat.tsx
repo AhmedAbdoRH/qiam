@@ -81,6 +81,30 @@ const styles = `
     animation: dynamic-gradient 20s ease-in-out infinite;
   }
 
+  @keyframes kiss-float {
+    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    30% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+    50% { transform: scale(1) rotate(0deg); opacity: 1; }
+    70% { transform: scale(1.1) rotate(-3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes kiss-hearts {
+    0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+    20% { opacity: 1; transform: translateY(-8px) scale(1); }
+    80% { opacity: 0.6; transform: translateY(-16px) scale(0.8); }
+  }
+  .kiss-animated {
+    animation: kiss-float 0.8s ease-out forwards;
+  }
+  .kiss-animated.kiss-static {
+    animation: none;
+  }
+  .kiss-heart-1 { animation: kiss-hearts 1.5s ease-out infinite; }
+  .kiss-heart-2 { animation: kiss-hearts 1.5s ease-out 0.3s infinite; }
+  .kiss-heart-3 { animation: kiss-hearts 1.5s ease-out 0.6s infinite; }
+  .kiss-heart-static .kiss-heart-1,
+  .kiss-heart-static .kiss-heart-2,
+  .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
   `;
 
 // Memoized message component for better performance
@@ -141,6 +165,30 @@ const MessageBubble = React.memo(function MessageBubble({
     </div>
   );
 });
+
+// Animated Kiss Label component
+const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { timestamp: string; isRecent: boolean }) {
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  return (
+    <div
+      className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
+      onClick={() => setIsAnimating(prev => !prev)}
+    >
+      <div className={`relative ${isAnimating ? '' : 'kiss-heart-static'}`}>
+        <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
+        <span className={`kiss-heart-2 absolute -top-4 right-3 text-[8px]`}>❤️</span>
+        <span className={`kiss-heart-3 absolute -top-3 -left-1 text-[9px]`}>💗</span>
+        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 shadow-[inset_0_1px_12px_rgba(244,63,94,0.2),0_0_20px_rgba(244,63,94,0.15)] ${isRecent ? 'kiss-animated' : ''} ${!isAnimating ? 'kiss-static' : ''}`}>
+          <span className="text-lg">💋</span>
+          <span className="text-sm font-semibold text-rose-300 mr-2">بوس حميمي</span>
+        </div>
+      </div>
+      <span className="text-[8px] text-white/30">{timestamp}</span>
+    </div>
+  );
+});
+
 
 interface DialogueMessage {
   id: string;
@@ -266,7 +314,7 @@ export function SelfDialogueChat() {
 
   // Get today's conversation for copying
   const getTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__'));
+    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__') && msg.message !== '__KISS__');
     const conversation = todayMsgs.map(msg => {
       const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       const time = formatTime(msg.created_at);
@@ -533,6 +581,22 @@ export function SelfDialogueChat() {
           // Render spacer message
           if (msg.message === '__SPACER__') {
             return <div key={msg.id} className="h-10" />;
+          }
+
+          // Render kiss label
+          if (msg.message === '__KISS__') {
+            const kissDate = new Date(msg.created_at);
+            const kissTime = kissDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
+                <KissLabel timestamp={kissTime} isRecent={shouldAnimate} />
+              </div>
+            );
           }
 
           // Render milestone message
@@ -894,6 +958,36 @@ export function SelfDialogueChat() {
       });
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
     } catch { 
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
+  const insertKissLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const kissMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__KISS__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, kissMessage]);
+    setAllMessages(prev => [...prev, kissMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__KISS__',
+        created_at: kissMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
     }
   };
@@ -1269,6 +1363,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       <Zap className="h-3 w-3" />
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertKissLabel}
+                      className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1"
+                      title="بوس حميمي"
+                    >
+                      💋
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
@@ -1282,10 +1386,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     </Button>
                   )}
 
-                  {/* Loading indicator for older messages */}
-                  {hasMoreMessages && (
-                    <span className="text-[9px] text-white/30 px-2">↑ مرر لأعلى لتحميل المزيد</span>
-                  )}
 
                   {/* Copy Today's Conversation */}
                   {displayedMessages.length > 0 && (
