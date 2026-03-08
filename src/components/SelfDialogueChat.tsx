@@ -185,9 +185,9 @@ const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { times
         <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
         <span className={`kiss-heart-2 absolute -top-4 right-3 text-[8px]`}>❤️</span>
         <span className={`kiss-heart-3 absolute -top-3 -left-1 text-[9px]`}>💗</span>
-        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 shadow-[inset_0_1px_12px_rgba(244,63,94,0.2),0_0_20px_rgba(244,63,94,0.15)] ${isRecent ? 'kiss-animated' : ''} ${!isAnimating ? 'kiss-static' : ''}`}>
+        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 kiss-animated ${!isAnimating ? 'kiss-static' : ''}`}>
           <span className="text-lg">💋</span>
-          <span className="text-sm font-semibold text-rose-300 mr-2">بوس حميمي</span>
+          <span className="text-sm font-semibold text-rose-300 mr-2">جلسة بوس حميمي</span>
         </div>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
