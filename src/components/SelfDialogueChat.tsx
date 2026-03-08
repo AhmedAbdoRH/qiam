@@ -312,12 +312,31 @@ export function SelfDialogueChat() {
 
   const hasMoreMessages = allMessages.length > displayCount;
 
-  // Get today's conversation for copying
+  // Get today's conversation for copying (includes milestones and kisses)
   const getTodayConversation = () => {
-    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__MILESTONE__') && !msg.message.startsWith('__SPACER__') && msg.message !== '__KISS__');
+    const todayMsgs = allMessages.filter(msg => isFromToday(msg.created_at) && !msg.message.startsWith('__SPACER__'));
     const conversation = todayMsgs.map(msg => {
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       const time = formatTime(msg.created_at);
+      
+      if (msg.message === '__KISS__') {
+        return `[${time}] 💋 بوس حميمي`;
+      }
+      
+      if (msg.message.startsWith('__MILESTONE__')) {
+        const content = msg.message.replace('__MILESTONE__', '');
+        const parts = content.split('|');
+        const title = parts[0] || '';
+        const rating = parts[1] || '';
+        const isSacredFmt = parts.length > 8;
+        const notes = isSacredFmt ? '' : (parts[2] || '');
+        const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+        let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
+        if (intention) line += ` | نية: ${intention}`;
+        if (notes) line += ` | ملاحظات: ${notes}`;
+        return line;
+      }
+      
+      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
@@ -1071,25 +1090,32 @@ export function SelfDialogueChat() {
     }
   };
 
-  // Get all milestone messages for the table view
+  // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__'));
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__');
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'ممتع', 'مشبع', 'مريح', 'تحقيق النية', 'Afterglow', 'مقدس', 'نوع الجماع', 'نية الجماع']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'نية الجماع', 'ملحوظات']];
     milestoneMessages.forEach(m => {
-      const content = m.message.replace('__MILESTONE__', '');
-      const parts = content.split('|');
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      
+      if (m.message === '__KISS__') {
+        rows.push([dateStr, timeStr, 'بوس حميمي', '-', '-', '-']);
+        return;
+      }
+      
+      const content = m.message.replace('__MILESTONE__', '');
+      const parts = content.split('|');
+      const isSacredFmt = parts.length > 8;
+      const notes = isSacredFmt ? '' : (parts[2] || '');
+      const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
       rows.push([
         dateStr, timeStr,
         parts[0] || '', parts[1] || '',
-        parts[2] || '', parts[3] || '', parts[4] || '', parts[5] || '',
-        parts[6] === '1' ? 'نعم' : 'لا', parts[7] === '1' ? 'نعم' : 'لا',
-        parts[8] || 'normal', parts[9] || ''
+        intention, notes
       ]);
     });
     const csv = rows.map(r => r.join(',')).join('\n');
@@ -1406,7 +1432,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneTable(false)}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[80vh] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات</h3>
+                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1419,32 +1445,47 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                         </div>
                         <div className="overflow-y-auto flex-1 space-y-2">
                           {milestoneMessages.map(m => {
+                            const date = new Date(m.created_at);
+                            const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
+                            const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+                            // Kiss entry
+                            if (m.message === '__KISS__') {
+                              return (
+                                <div key={m.id} className="bg-rose-500/10 rounded-lg p-3 border border-rose-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-rose-300">💋 بوس حميمي</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Milestone entry - simplified: intention, rating, notes, date
                             const content = m.message.replace('__MILESTONE__', '');
                             const p = content.split('|');
-                            const date = new Date(m.created_at);
+                            const isSacredFmt = p.length > 8;
+                            const title = p[0] || '';
+                            const rating = p[1] || '';
+                            const notes = isSacredFmt ? '' : (p[2] || '');
+                            const intention = isSacredFmt ? (p[9] || '') : (p[4] || '');
                             return (
                               <div key={m.id} className="bg-white/5 rounded-lg p-3 border border-white/10 text-right" dir="rtl">
                                 <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-semibold text-amber-300">{p[0]}</span>
+                                  <span className="text-xs font-semibold text-amber-300">{title}</span>
                                   <div className="flex items-center gap-1">
-                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{p[1]}</span>
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
                                     <button onClick={() => copyMilestoneData(m)} className="p-1 text-white/30 hover:text-white/60">
                                       <Copy className="h-3 w-3" />
                                     </button>
                                   </div>
                                 </div>
-                                <div className="text-[9px] text-white/40 mb-1">
-                                  {date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' })} • {date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[9px] text-white/50">
-                                  {p[2] && <span>ممتع: {p[2]}</span>}
-                                  {p[3] && <span>مشبع: {p[3]}</span>}
-                                  {p[4] && <span>مريح: {p[4]}</span>}
-                                  {p[5] && <span>نية: {p[5]}</span>}
-                                  {p[6] === '1' && <span>✨Afterglow</span>}
-                                  {p[7] === '1' && <span>🕊مقدس</span>}
-                                </div>
-                                {p[8] && <div className="text-[9px] text-white/40 mt-1">«{p[8]}»</div>}
+                                <div className="text-[9px] text-white/40 mb-1">{dateStr} • {timeStr}</div>
+                                {intention && <div className="text-[9px] text-white/50 mb-0.5">نية: {intention}</div>}
+                                {notes && <div className="text-[9px] text-white/40">ملاحظات: {notes}</div>}
                               </div>
                             );
                           })}
