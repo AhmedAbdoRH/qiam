@@ -81,6 +81,30 @@ const styles = `
     animation: dynamic-gradient 20s ease-in-out infinite;
   }
 
+  @keyframes kiss-float {
+    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    30% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+    50% { transform: scale(1) rotate(0deg); opacity: 1; }
+    70% { transform: scale(1.1) rotate(-3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes kiss-hearts {
+    0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+    20% { opacity: 1; transform: translateY(-8px) scale(1); }
+    80% { opacity: 0.6; transform: translateY(-16px) scale(0.8); }
+  }
+  .kiss-animated {
+    animation: kiss-float 0.8s ease-out forwards;
+  }
+  .kiss-animated.kiss-static {
+    animation: none;
+  }
+  .kiss-heart-1 { animation: kiss-hearts 1.5s ease-out infinite; }
+  .kiss-heart-2 { animation: kiss-hearts 1.5s ease-out 0.3s infinite; }
+  .kiss-heart-3 { animation: kiss-hearts 1.5s ease-out 0.6s infinite; }
+  .kiss-heart-static .kiss-heart-1,
+  .kiss-heart-static .kiss-heart-2,
+  .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
   `;
 
 // Memoized message component for better performance
