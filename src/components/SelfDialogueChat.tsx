@@ -81,27 +81,33 @@ const styles = `
     animation: dynamic-gradient 20s ease-in-out infinite;
   }
 
-  @keyframes kiss-float {
-    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
-    30% { transform: scale(1.3) rotate(5deg); opacity: 1; }
-    50% { transform: scale(1) rotate(0deg); opacity: 1; }
-    70% { transform: scale(1.1) rotate(-3deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  @keyframes kiss-sway {
+    0% { transform: scale(0.92) rotate(-2deg) translateY(3px); opacity: 0.7; }
+    25% { transform: scale(1.04) rotate(1.5deg) translateY(-2px); opacity: 1; }
+    50% { transform: scale(0.96) rotate(-1deg) translateY(2px); opacity: 0.85; }
+    75% { transform: scale(1.02) rotate(2deg) translateY(-1px); opacity: 0.95; }
+    100% { transform: scale(0.92) rotate(-2deg) translateY(3px); opacity: 0.7; }
   }
   @keyframes kiss-hearts {
     0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
     20% { opacity: 1; transform: translateY(-8px) scale(1); }
     80% { opacity: 0.6; transform: translateY(-16px) scale(0.8); }
   }
+  @keyframes kiss-glow {
+    0%, 100% { box-shadow: inset 0 1px 12px rgba(244,63,94,0.15), 0 0 12px rgba(244,63,94,0.08); }
+    50% { box-shadow: inset 0 1px 16px rgba(244,63,94,0.3), 0 0 24px rgba(244,63,94,0.2); }
+  }
   .kiss-animated {
-    animation: kiss-float 0.8s ease-out forwards;
+    animation: kiss-sway 4s ease-in-out infinite, kiss-glow 4s ease-in-out infinite;
   }
   .kiss-animated.kiss-static {
     animation: none;
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
   }
-  .kiss-heart-1 { animation: kiss-hearts 1.5s ease-out infinite; }
-  .kiss-heart-2 { animation: kiss-hearts 1.5s ease-out 0.3s infinite; }
-  .kiss-heart-3 { animation: kiss-hearts 1.5s ease-out 0.6s infinite; }
+  .kiss-heart-1 { animation: kiss-hearts 2.5s ease-in-out infinite; }
+  .kiss-heart-2 { animation: kiss-hearts 2.5s ease-in-out 0.5s infinite; }
+  .kiss-heart-3 { animation: kiss-hearts 2.5s ease-in-out 1s infinite; }
   .kiss-heart-static .kiss-heart-1,
   .kiss-heart-static .kiss-heart-2,
   .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
@@ -179,9 +185,9 @@ const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { times
         <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
         <span className={`kiss-heart-2 absolute -top-4 right-3 text-[8px]`}>❤️</span>
         <span className={`kiss-heart-3 absolute -top-3 -left-1 text-[9px]`}>💗</span>
-        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 shadow-[inset_0_1px_12px_rgba(244,63,94,0.2),0_0_20px_rgba(244,63,94,0.15)] ${isRecent ? 'kiss-animated' : ''} ${!isAnimating ? 'kiss-static' : ''}`}>
+        <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 kiss-animated ${!isAnimating ? 'kiss-static' : ''}`}>
           <span className="text-lg">💋</span>
-          <span className="text-sm font-semibold text-rose-300 mr-2">بوس حميمي</span>
+          <span className="text-sm font-semibold text-rose-300 mr-2">جلسة بوس حميمي</span>
         </div>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
