@@ -111,6 +111,23 @@ const styles = `
   .kiss-heart-static .kiss-heart-1,
   .kiss-heart-static .kiss-heart-2,
   .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
+
+  @keyframes touch-sway {
+    0% { transform: rotate(-1.5deg) scale(0.98); }
+    50% { transform: rotate(1.5deg) scale(1.02); }
+    100% { transform: rotate(-1.5deg) scale(0.98); }
+  }
+  @keyframes touch-glow {
+    0%, 100% { box-shadow: inset 0 1px 10px rgba(168,85,247,0.12), 0 0 10px rgba(168,85,247,0.06); }
+    50% { box-shadow: inset 0 1px 14px rgba(168,85,247,0.25), 0 0 20px rgba(168,85,247,0.15); }
+  }
+  .touch-animated {
+    animation: touch-sway 6s ease-in-out infinite, touch-glow 6s ease-in-out infinite;
+  }
+  .touch-animated.touch-static {
+    animation: none;
+    transform: scale(1) rotate(0deg);
+  }
   `;
 
 // Memoized message component for better performance
