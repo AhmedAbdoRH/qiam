@@ -238,7 +238,7 @@ const TouchLabel = React.memo(function TouchLabel({ messageId, timestamp }: { me
       onClick={handleStop}
     >
       <div className={`touch-animated ${!isAnimating ? 'touch-static' : ''} px-5 py-2.5 rounded-2xl bg-purple-500/15 backdrop-blur-md border border-purple-400/25`}>
-        <span className="text-lg">🤲</span>
+        <span className="text-lg"> 🤚</span>
         <span className="text-sm font-semibold text-purple-300 mr-2">لمس حنون</span>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
