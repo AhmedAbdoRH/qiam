@@ -670,7 +670,7 @@ export function SelfDialogueChat() {
                 onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
                 onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
               >
-                <KissLabel timestamp={kissTime} isRecent={shouldAnimate} />
+                <KissLabel messageId={msg.id} timestamp={kissTime} />
               </div>
             );
           }
