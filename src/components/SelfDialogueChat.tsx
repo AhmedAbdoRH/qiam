@@ -1084,6 +1084,36 @@ export function SelfDialogueChat() {
     }
   };
 
+  const insertTouchLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const touchMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__TOUCH__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, touchMessage]);
+    setAllMessages(prev => [...prev, touchMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__TOUCH__',
+        created_at: touchMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
   const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
