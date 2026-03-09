@@ -675,6 +675,22 @@ export function SelfDialogueChat() {
             );
           }
 
+          // Render touch label
+          if (msg.message === '__TOUCH__') {
+            const touchDate = new Date(msg.created_at);
+            const touchTime = touchDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
+                <TouchLabel messageId={msg.id} timestamp={touchTime} />
+              </div>
+            );
+          }
+
           // Render milestone message
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneBody = msg.message.replace('__MILESTONE__', '');
