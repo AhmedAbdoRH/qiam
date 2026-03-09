@@ -189,14 +189,22 @@ const MessageBubble = React.memo(function MessageBubble({
   );
 });
 
-// Animated Kiss Label component
-const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { timestamp: string; isRecent: boolean }) {
-  const [isAnimating, setIsAnimating] = useState(true);
+// Animated Kiss Label component - stops permanently on tap
+const KissLabel = React.memo(function KissLabel({ messageId, timestamp }: { messageId: string; timestamp: string }) {
+  const storageKey = `kiss-stopped-${messageId}`;
+  const [isAnimating, setIsAnimating] = useState(() => !localStorage.getItem(storageKey));
+
+  const handleStop = () => {
+    if (isAnimating) {
+      localStorage.setItem(storageKey, '1');
+      setIsAnimating(false);
+    }
+  };
 
   return (
     <div
       className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
-      onClick={() => setIsAnimating(prev => !prev)}
+      onClick={handleStop}
     >
       <div className={`relative ${isAnimating ? '' : 'kiss-heart-static'}`}>
         <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
@@ -206,6 +214,32 @@ const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { times
           <span className="text-lg">💋</span>
           <span className="text-sm font-semibold text-rose-300 mr-2">جلسة بوس حميمي</span>
         </div>
+      </div>
+      <span className="text-[8px] text-white/30">{timestamp}</span>
+    </div>
+  );
+});
+
+// Animated Touch Label component - very slow sway, stops permanently on tap
+const TouchLabel = React.memo(function TouchLabel({ messageId, timestamp }: { messageId: string; timestamp: string }) {
+  const storageKey = `touch-stopped-${messageId}`;
+  const [isAnimating, setIsAnimating] = useState(() => !localStorage.getItem(storageKey));
+
+  const handleStop = () => {
+    if (isAnimating) {
+      localStorage.setItem(storageKey, '1');
+      setIsAnimating(false);
+    }
+  };
+
+  return (
+    <div
+      className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
+      onClick={handleStop}
+    >
+      <div className={`touch-animated ${!isAnimating ? 'touch-static' : ''} px-5 py-2.5 rounded-2xl bg-purple-500/15 backdrop-blur-md border border-purple-400/25`}>
+        <span className="text-lg">🤲</span>
+        <span className="text-sm font-semibold text-purple-300 mr-2">لمس حنون</span>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
     </div>
