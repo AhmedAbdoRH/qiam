@@ -1502,6 +1502,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       💋
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertTouchLabel}
+                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
+                      title="لمس حنون"
+                    >
+                      🤲
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
