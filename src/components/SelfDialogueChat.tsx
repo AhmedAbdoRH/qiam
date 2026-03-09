@@ -111,6 +111,23 @@ const styles = `
   .kiss-heart-static .kiss-heart-1,
   .kiss-heart-static .kiss-heart-2,
   .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
+
+  @keyframes touch-sway {
+    0% { transform: rotate(-1.5deg) scale(0.98); }
+    50% { transform: rotate(1.5deg) scale(1.02); }
+    100% { transform: rotate(-1.5deg) scale(0.98); }
+  }
+  @keyframes touch-glow {
+    0%, 100% { box-shadow: inset 0 1px 10px rgba(168,85,247,0.12), 0 0 10px rgba(168,85,247,0.06); }
+    50% { box-shadow: inset 0 1px 14px rgba(168,85,247,0.25), 0 0 20px rgba(168,85,247,0.15); }
+  }
+  .touch-animated {
+    animation: touch-sway 6s ease-in-out infinite, touch-glow 6s ease-in-out infinite;
+  }
+  .touch-animated.touch-static {
+    animation: none;
+    transform: scale(1) rotate(0deg);
+  }
   `;
 
 // Memoized message component for better performance
@@ -172,14 +189,22 @@ const MessageBubble = React.memo(function MessageBubble({
   );
 });
 
-// Animated Kiss Label component
-const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { timestamp: string; isRecent: boolean }) {
-  const [isAnimating, setIsAnimating] = useState(true);
+// Animated Kiss Label component - stops permanently on tap
+const KissLabel = React.memo(function KissLabel({ messageId, timestamp }: { messageId: string; timestamp: string }) {
+  const storageKey = `kiss-stopped-${messageId}`;
+  const [isAnimating, setIsAnimating] = useState(() => !localStorage.getItem(storageKey));
+
+  const handleStop = () => {
+    if (isAnimating) {
+      localStorage.setItem(storageKey, '1');
+      setIsAnimating(false);
+    }
+  };
 
   return (
     <div
       className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
-      onClick={() => setIsAnimating(prev => !prev)}
+      onClick={handleStop}
     >
       <div className={`relative ${isAnimating ? '' : 'kiss-heart-static'}`}>
         <span className={`kiss-heart-1 absolute -top-3 -right-2 text-[10px]`}>💕</span>
@@ -189,6 +214,32 @@ const KissLabel = React.memo(function KissLabel({ timestamp, isRecent }: { times
           <span className="text-lg">💋</span>
           <span className="text-sm font-semibold text-rose-300 mr-2">جلسة بوس حميمي</span>
         </div>
+      </div>
+      <span className="text-[8px] text-white/30">{timestamp}</span>
+    </div>
+  );
+});
+
+// Animated Touch Label component - very slow sway, stops permanently on tap
+const TouchLabel = React.memo(function TouchLabel({ messageId, timestamp }: { messageId: string; timestamp: string }) {
+  const storageKey = `touch-stopped-${messageId}`;
+  const [isAnimating, setIsAnimating] = useState(() => !localStorage.getItem(storageKey));
+
+  const handleStop = () => {
+    if (isAnimating) {
+      localStorage.setItem(storageKey, '1');
+      setIsAnimating(false);
+    }
+  };
+
+  return (
+    <div
+      className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
+      onClick={handleStop}
+    >
+      <div className={`touch-animated ${!isAnimating ? 'touch-static' : ''} px-5 py-2.5 rounded-2xl bg-purple-500/15 backdrop-blur-md border border-purple-400/25`}>
+        <span className="text-lg">🤲</span>
+        <span className="text-sm font-semibold text-purple-300 mr-2">لمس حنون</span>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
     </div>
@@ -325,7 +376,11 @@ export function SelfDialogueChat() {
       const time = formatTime(msg.created_at);
       
       if (msg.message === '__KISS__') {
-        return `[${time}] 💋 بوس حميمي`;
+        return `[${time}] 💋 جلسة بوس حميمي`;
+      }
+      
+      if (msg.message === '__TOUCH__') {
+        return `[${time}] 🤲 لمس حنون`;
       }
       
       if (msg.message.startsWith('__MILESTONE__')) {
@@ -619,7 +674,23 @@ export function SelfDialogueChat() {
                 onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
                 onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
               >
-                <KissLabel timestamp={kissTime} isRecent={shouldAnimate} />
+                <KissLabel messageId={msg.id} timestamp={kissTime} />
+              </div>
+            );
+          }
+
+          // Render touch label
+          if (msg.message === '__TOUCH__') {
+            const touchDate = new Date(msg.created_at);
+            const touchTime = touchDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
+                <TouchLabel messageId={msg.id} timestamp={touchTime} />
               </div>
             );
           }
@@ -1017,6 +1088,36 @@ export function SelfDialogueChat() {
     }
   };
 
+  const insertTouchLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const touchMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__TOUCH__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, touchMessage]);
+    setAllMessages(prev => [...prev, touchMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__TOUCH__',
+        created_at: touchMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
   const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
@@ -1098,7 +1199,7 @@ export function SelfDialogueChat() {
 
   // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__');
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__');
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
@@ -1109,7 +1210,12 @@ export function SelfDialogueChat() {
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'بوس حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'جلسة بوس حميمي', '-', '-', '-']);
+        return;
+      }
+      
+      if (m.message === '__TOUCH__') {
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
         return;
       }
       
@@ -1405,6 +1511,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       💋
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertTouchLabel}
+                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
+                      title="لمس حنون"
+                    >
+                      🤲
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
@@ -1438,7 +1554,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneTable(false)}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[80vh] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس</h3>
+                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس واللمس</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1462,6 +1578,21 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-semibold text-rose-300">💋 بوس حميمي</span>
                                     <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Touch entry
+                            if (m.message === '__TOUCH__') {
+                              return (
+                                <div key={m.id} className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-purple-300">🤲 لمس حنون</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
                                       <Copy className="h-3 w-3" />
                                     </button>
                                   </div>
