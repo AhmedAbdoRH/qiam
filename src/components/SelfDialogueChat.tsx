@@ -1586,6 +1586,21 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                               );
                             }
 
+                            // Touch entry
+                            if (m.message === '__TOUCH__') {
+                              return (
+                                <div key={m.id} className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-purple-300">🤲 لمس حنون</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
                             // Milestone entry - simplified: intention, rating, notes, date
                             const content = m.message.replace('__MILESTONE__', '');
                             const p = content.split('|');
