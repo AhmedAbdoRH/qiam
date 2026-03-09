@@ -376,7 +376,11 @@ export function SelfDialogueChat() {
       const time = formatTime(msg.created_at);
       
       if (msg.message === '__KISS__') {
-        return `[${time}] 💋 بوس حميمي`;
+        return `[${time}] 💋 جلسة بوس حميمي`;
+      }
+      
+      if (msg.message === '__TOUCH__') {
+        return `[${time}] 🤲 لمس حنون`;
       }
       
       if (msg.message.startsWith('__MILESTONE__')) {
