@@ -1210,7 +1210,12 @@ export function SelfDialogueChat() {
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'بوس حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'جلسة بوس حميمي', '-', '-', '-']);
+        return;
+      }
+      
+      if (m.message === '__TOUCH__') {
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
         return;
       }
       
