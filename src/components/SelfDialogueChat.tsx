@@ -307,6 +307,9 @@ export function SelfDialogueChat() {
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
   const [showQADialog, setShowQADialog] = useState(false);
+  const [showQABank, setShowQABank] = useState(false);
+  const [qaBankQuestions, setQaBankQuestions] = useState<string[]>(() => getQuestionBank());
+  const [qaBankNewText, setQaBankNewText] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [qaAnswer, setQaAnswer] = useState('');
   const [usedQuestionIndices, setUsedQuestionIndices] = useState<number[]>(() => {
