@@ -2153,6 +2153,85 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
           </div>
         </div>
       )}
+
+      {/* Q&A Bank Management Dialog */}
+      {showQABank && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowQABank(false)}>
+          <div className="bg-[#1a1a2e] border border-emerald-500/30 rounded-2xl p-5 w-[92vw] max-w-[450px] max-h-[85vh] flex flex-col gap-3" dir="rtl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-emerald-400" />
+                <h3 className="text-sm font-semibold text-emerald-300">بنك الأسئلة ({qaBankQuestions.length} سؤال)</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowQABank(false)} className="h-6 w-6 p-0 text-white/40 hover:text-white/70">
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            {/* Add questions textarea */}
+            <div className="space-y-2">
+              <p className="text-[10px] text-white/40">أضف أسئلة جديدة (كل سطر = سؤال):</p>
+              <Textarea
+                value={qaBankNewText}
+                onChange={e => setQaBankNewText(e.target.value)}
+                placeholder={"ما هو أكثر شيء يسعدك؟\nكيف تصف نفسك بثلاث كلمات؟\nما الشيء الذي تريد تغييره؟"}
+                className="min-h-[70px] bg-white/5 border-white/10 text-white/90 text-xs placeholder:text-white/20 resize-none focus:border-emerald-500/40"
+                dir="rtl"
+              />
+              <Button
+                onClick={() => {
+                  if (qaBankNewText.trim()) {
+                    const updated = addQuestionsFromText(qaBankNewText);
+                    setQaBankQuestions(updated);
+                    setQaBankNewText('');
+                    toast.success(`تمت إضافة الأسئلة الجديدة`);
+                  }
+                }}
+                disabled={!qaBankNewText.trim()}
+                className="w-full bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs h-8"
+              >
+                <Plus className="h-3 w-3 ml-1" /> إضافة الأسئلة
+              </Button>
+            </div>
+
+            {/* Questions list */}
+            <ScrollArea className="max-h-[40vh] pr-1">
+              <div className="space-y-1.5">
+                {qaBankQuestions.map((q, i) => (
+                  <div key={i} className="flex items-start gap-2 bg-white/5 rounded-lg p-2 group">
+                    <span className="text-[9px] text-emerald-400/50 mt-0.5 min-w-[18px]">{i + 1}</span>
+                    <p className="text-[11px] text-white/70 flex-1 leading-relaxed">{q}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const updated = removeQuestion(i);
+                        setQaBankQuestions(updated);
+                      }}
+                      className="h-5 w-5 p-0 text-red-400/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            {/* Reset button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const defaults = resetQuestionBank();
+                setQaBankQuestions(defaults);
+                toast.success('تم إعادة تعيين بنك الأسئلة');
+              }}
+              className="text-[10px] h-7 border-white/10 text-white/40 hover:text-white/60 hover:bg-white/5"
+            >
+              إعادة تعيين للأسئلة الافتراضية
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
