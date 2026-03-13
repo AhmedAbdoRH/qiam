@@ -393,6 +393,12 @@ export function SelfDialogueChat() {
         return `[${time}] 🤚 لمس حنون`;
       }
       
+      if (msg.message.startsWith('__QA__')) {
+        const qaBody = msg.message.replace('__QA__', '');
+        const [question, ...answerParts] = qaBody.split('|');
+        return `[${time}] ❓ ${question}\n💬 ${answerParts.join('|')}`;
+      }
+      
       if (msg.message.startsWith('__MILESTONE__')) {
         const content = msg.message.replace('__MILESTONE__', '');
         const parts = content.split('|');
