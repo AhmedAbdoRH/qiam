@@ -1647,6 +1647,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       <HelpCircle className="h-3 w-3" />
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setQaBankQuestions(getQuestionBank()); setShowQABank(true); }}
+                      className="h-7 px-2 text-[10px] text-emerald-400/60 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
+                      title="بنك الأسئلة"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
