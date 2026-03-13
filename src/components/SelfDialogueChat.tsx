@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { questionBank } from '@/data/questionBank';
+import { getQuestionBank, addQuestionsFromText, removeQuestion, resetQuestionBank } from '@/data/questionBank';
 // ✨ Optimized animations and styles for smoother chat experience
 const styles = `
   @keyframes message-pop {
