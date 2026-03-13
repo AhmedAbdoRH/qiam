@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, HelpCircle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
