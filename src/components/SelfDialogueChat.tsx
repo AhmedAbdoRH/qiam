@@ -2121,7 +2121,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
             </div>
             
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{questionBank[currentQuestionIndex]}</p>
+              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{qaBankQuestions[currentQuestionIndex]}</p>
             </div>
             
             <Textarea
