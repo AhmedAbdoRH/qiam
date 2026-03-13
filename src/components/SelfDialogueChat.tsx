@@ -2095,6 +2095,43 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
           )}
         </DialogContent>
       </Dialog>
+      {/* Q&A Dialog */}
+      {showQADialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowQADialog(false)}>
+          <div className="bg-[#1a1a2e] border border-emerald-500/30 rounded-2xl p-5 w-[90vw] max-w-[400px] flex flex-col gap-4" dir="rtl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-emerald-400" />
+                <h3 className="text-sm font-semibold text-emerald-300">سؤال وجواب</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowQADialog(false)} className="h-6 w-6 p-0 text-white/40 hover:text-white/70">
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{questionBank[currentQuestionIndex]}</p>
+            </div>
+            
+            <Textarea
+              value={qaAnswer}
+              onChange={e => setQaAnswer(e.target.value)}
+              placeholder="اكتب إجابتك هنا..."
+              className="min-h-[80px] bg-white/5 border-white/10 text-white/90 text-sm placeholder:text-white/25 resize-none focus:border-emerald-500/40"
+              dir="rtl"
+            />
+            
+            <div className="flex items-center gap-2">
+              <Button onClick={saveQA} disabled={!qaAnswer.trim()} className="flex-1 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs h-9">
+                حفظ الإجابة
+              </Button>
+              <Button variant="outline" onClick={skipQuestion} className="text-xs h-9 border-white/15 text-white/60 hover:text-white/80 hover:bg-white/5">
+                تخطي ⟵
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
