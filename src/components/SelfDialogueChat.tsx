@@ -705,6 +705,36 @@ export function SelfDialogueChat() {
             );
           }
 
+          // Render Q&A message
+          if (msg.message.startsWith('__QA__')) {
+            const qaBody = msg.message.replace('__QA__', '');
+            const [question, ...answerParts] = qaBody.split('|');
+            const answer = answerParts.join('|');
+            const qaTime = new Date(msg.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3"
+                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
+                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
+              >
+                <div className="relative max-w-[85%] w-full" dir="rtl">
+                  <div className="absolute -inset-1 rounded-xl blur-md bg-emerald-500/10" />
+                  <div className="relative rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <HelpCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-emerald-300 font-semibold leading-relaxed">{question}</p>
+                    </div>
+                    <div className="border-t border-emerald-500/20 pt-2">
+                      <p className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{answer}</p>
+                    </div>
+                    <div className="text-[8px] text-emerald-400/40 text-left">{qaTime}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           // Render milestone message
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneBody = msg.message.replace('__MILESTONE__', '');
