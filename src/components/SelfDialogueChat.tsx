@@ -1626,6 +1626,16 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       🤚
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={openQADialog}
+                      className="h-7 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
+                      title="سؤال وجواب"
+                    >
+                      <HelpCircle className="h-3 w-3" />
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
