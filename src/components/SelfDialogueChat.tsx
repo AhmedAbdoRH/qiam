@@ -1128,6 +1128,71 @@ export function SelfDialogueChat() {
     }
   };
 
+  // Q&A Functions
+  const getNextQuestionIndex = () => {
+    const available = questionBank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
+    if (available.length === 0) {
+      // Reset if all questions used
+      setUsedQuestionIndices([]);
+      localStorage.removeItem('qa-used-indices');
+      return Math.floor(Math.random() * questionBank.length);
+    }
+    return available[Math.floor(Math.random() * available.length)];
+  };
+
+  const openQADialog = () => {
+    const idx = getNextQuestionIndex();
+    setCurrentQuestionIndex(idx);
+    setQaAnswer('');
+    setShowQADialog(true);
+  };
+
+  const skipQuestion = () => {
+    const newUsed = [...usedQuestionIndices, currentQuestionIndex];
+    setUsedQuestionIndices(newUsed);
+    localStorage.setItem('qa-used-indices', JSON.stringify(newUsed));
+    const idx = getNextQuestionIndex();
+    setCurrentQuestionIndex(idx);
+    setQaAnswer('');
+  };
+
+  const saveQA = async () => {
+    if (!user || !qaAnswer.trim()) return;
+    const question = questionBank[currentQuestionIndex];
+    const qaMessage = `__QA__${question}|${qaAnswer.trim()}`;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const msg: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: qaMessage,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, msg]);
+    setAllMessages(prev => [...prev, msg]);
+    const newUsed = [...usedQuestionIndices, currentQuestionIndex];
+    setUsedQuestionIndices(newUsed);
+    localStorage.setItem('qa-used-indices', JSON.stringify(newUsed));
+    setShowQADialog(false);
+    setQaAnswer('');
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: qaMessage,
+        created_at: msg.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
   const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
