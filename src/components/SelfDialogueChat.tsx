@@ -1175,7 +1175,7 @@ export function SelfDialogueChat() {
       // Reset if all questions used
       setUsedQuestionIndices([]);
       localStorage.removeItem('qa-used-indices');
-      return Math.floor(Math.random() * questionBank.length);
+      return Math.floor(Math.random() * bank.length);
     }
     return available[Math.floor(Math.random() * available.length)];
   };
