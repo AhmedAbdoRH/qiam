@@ -1198,7 +1198,7 @@ export function SelfDialogueChat() {
 
   const saveQA = async () => {
     if (!user || !qaAnswer.trim()) return;
-    const question = questionBank[currentQuestionIndex];
+    const question = qaBankQuestions[currentQuestionIndex] || getQuestionBank()[currentQuestionIndex];
     const qaMessage = `__QA__${question}|${qaAnswer.trim()}`;
     const tempId = crypto.randomUUID();
     globalMessageSeq++;
