@@ -305,6 +305,15 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
+  const [showQADialog, setShowQADialog] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [qaAnswer, setQaAnswer] = useState('');
+  const [usedQuestionIndices, setUsedQuestionIndices] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem('qa-used-indices');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
   const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
