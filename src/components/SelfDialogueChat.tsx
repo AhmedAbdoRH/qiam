@@ -1169,7 +1169,8 @@ export function SelfDialogueChat() {
 
   // Q&A Functions
   const getNextQuestionIndex = () => {
-    const available = questionBank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
+    const bank = getQuestionBank();
+    const available = bank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
     if (available.length === 0) {
       // Reset if all questions used
       setUsedQuestionIndices([]);
