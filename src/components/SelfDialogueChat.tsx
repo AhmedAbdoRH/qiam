@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, HelpCircle, BookOpen } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, HelpCircle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { getQuestionBank, addQuestionsFromText, removeQuestion, resetQuestionBank } from '@/data/questionBank';
+import { questionBank } from '@/data/questionBank';
 // ✨ Optimized animations and styles for smoother chat experience
 const styles = `
   @keyframes message-pop {
@@ -307,9 +307,6 @@ export function SelfDialogueChat() {
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
   const [showQADialog, setShowQADialog] = useState(false);
-  const [showQABank, setShowQABank] = useState(false);
-  const [qaBankQuestions, setQaBankQuestions] = useState<string[]>(() => getQuestionBank());
-  const [qaBankNewText, setQaBankNewText] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [qaAnswer, setQaAnswer] = useState('');
   const [usedQuestionIndices, setUsedQuestionIndices] = useState<number[]>(() => {
@@ -318,15 +315,15 @@ export function SelfDialogueChat() {
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
   });
-  const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
-  const modeButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const sendLongPressFiredRef = useRef(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1169,13 +1166,12 @@ export function SelfDialogueChat() {
 
   // Q&A Functions
   const getNextQuestionIndex = () => {
-    const bank = getQuestionBank();
-    const available = bank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
+    const available = questionBank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
     if (available.length === 0) {
       // Reset if all questions used
       setUsedQuestionIndices([]);
       localStorage.removeItem('qa-used-indices');
-      return Math.floor(Math.random() * bank.length);
+      return Math.floor(Math.random() * questionBank.length);
     }
     return available[Math.floor(Math.random() * available.length)];
   };
@@ -1198,7 +1194,7 @@ export function SelfDialogueChat() {
 
   const saveQA = async () => {
     if (!user || !qaAnswer.trim()) return;
-    const question = qaBankQuestions[currentQuestionIndex] || getQuestionBank()[currentQuestionIndex];
+    const question = questionBank[currentQuestionIndex];
     const qaMessage = `__QA__${question}|${qaAnswer.trim()}`;
     const tempId = crypto.randomUUID();
     globalMessageSeq++;
@@ -1390,8 +1386,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
     if (!inputValue.trim() || !user) return;
 
     // Auto-insert spacer if last message was > 1.5 hours ago
-    const filtered = messages.filter(m => m.message !== '__SPACER__');
-    const lastMsg = filtered.length > 0 ? filtered[filtered.length - 1] : undefined;
+    const lastMsg = messages.filter(m => m.message !== '__SPACER__').at(-1);
     if (lastMsg && (Date.now() - new Date(lastMsg.created_at).getTime()) > 90 * 60 * 1000) {
       await insertSpacer();
     }
@@ -1645,16 +1640,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       title="سؤال وجواب"
                     >
                       <HelpCircle className="h-3 w-3" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setQaBankQuestions(getQuestionBank()); setShowQABank(true); }}
-                      className="h-7 px-2 text-[10px] text-emerald-400/60 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
-                      title="بنك الأسئلة"
-                    >
-                      <BookOpen className="h-3 w-3" />
                     </Button>
 
                   {/* Milestone Table Button */}
@@ -2131,7 +2116,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
             </div>
             
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{qaBankQuestions[currentQuestionIndex]}</p>
+              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{questionBank[currentQuestionIndex]}</p>
             </div>
             
             <Textarea
@@ -2150,85 +2135,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                 تخطي ⟵
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Q&A Bank Management Dialog */}
-      {showQABank && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowQABank(false)}>
-          <div className="bg-[#1a1a2e] border border-emerald-500/30 rounded-2xl p-5 w-[92vw] max-w-[450px] max-h-[85vh] flex flex-col gap-3" dir="rtl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-emerald-300">بنك الأسئلة ({qaBankQuestions.length} سؤال)</h3>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowQABank(false)} className="h-6 w-6 p-0 text-white/40 hover:text-white/70">
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-
-            {/* Add questions textarea */}
-            <div className="space-y-2">
-              <p className="text-[10px] text-white/40">أضف أسئلة جديدة (كل سطر = سؤال):</p>
-              <Textarea
-                value={qaBankNewText}
-                onChange={e => setQaBankNewText(e.target.value)}
-                placeholder={"ما هو أكثر شيء يسعدك؟\nكيف تصف نفسك بثلاث كلمات؟\nما الشيء الذي تريد تغييره؟"}
-                className="min-h-[70px] bg-white/5 border-white/10 text-white/90 text-xs placeholder:text-white/20 resize-none focus:border-emerald-500/40"
-                dir="rtl"
-              />
-              <Button
-                onClick={() => {
-                  if (qaBankNewText.trim()) {
-                    const updated = addQuestionsFromText(qaBankNewText);
-                    setQaBankQuestions(updated);
-                    setQaBankNewText('');
-                    toast.success(`تمت إضافة الأسئلة الجديدة`);
-                  }
-                }}
-                disabled={!qaBankNewText.trim()}
-                className="w-full bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs h-8"
-              >
-                <Plus className="h-3 w-3 ml-1" /> إضافة الأسئلة
-              </Button>
-            </div>
-
-            {/* Questions list */}
-            <ScrollArea className="max-h-[40vh] pr-1">
-              <div className="space-y-1.5">
-                {qaBankQuestions.map((q, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-white/5 rounded-lg p-2 group">
-                    <span className="text-[9px] text-emerald-400/50 mt-0.5 min-w-[18px]">{i + 1}</span>
-                    <p className="text-[11px] text-white/70 flex-1 leading-relaxed">{q}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const updated = removeQuestion(i);
-                        setQaBankQuestions(updated);
-                      }}
-                      className="h-5 w-5 p-0 text-red-400/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Reset button */}
-            <Button
-              variant="outline"
-              onClick={() => {
-                const defaults = resetQuestionBank();
-                setQaBankQuestions(defaults);
-                toast.success('تم إعادة تعيين بنك الأسئلة');
-              }}
-              className="text-[10px] h-7 border-white/10 text-white/40 hover:text-white/60 hover:bg-white/5"
-            >
-              إعادة تعيين للأسئلة الافتراضية
-            </Button>
           </div>
         </div>
       )}
