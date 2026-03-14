@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, HelpCircle } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -11,7 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { questionBank } from '@/data/questionBank';
 // ✨ Optimized animations and styles for smoother chat experience
 const styles = `
   @keyframes message-pop {
@@ -306,15 +305,6 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
-  const [showQADialog, setShowQADialog] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [qaAnswer, setQaAnswer] = useState('');
-  const [usedQuestionIndices, setUsedQuestionIndices] = useState<number[]>(() => {
-    try {
-      const stored = localStorage.getItem('qa-used-indices');
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
   const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
@@ -391,12 +381,6 @@ export function SelfDialogueChat() {
       
       if (msg.message === '__TOUCH__') {
         return `[${time}] 🤚 لمس حنون`;
-      }
-      
-      if (msg.message.startsWith('__QA__')) {
-        const qaBody = msg.message.replace('__QA__', '');
-        const [question, ...answerParts] = qaBody.split('|');
-        return `[${time}] ❓ ${question}\n💬 ${answerParts.join('|')}`;
       }
       
       if (msg.message.startsWith('__MILESTONE__')) {
@@ -707,36 +691,6 @@ export function SelfDialogueChat() {
                 onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
               >
                 <TouchLabel messageId={msg.id} timestamp={touchTime} />
-              </div>
-            );
-          }
-
-          // Render Q&A message
-          if (msg.message.startsWith('__QA__')) {
-            const qaBody = msg.message.replace('__QA__', '');
-            const [question, ...answerParts] = qaBody.split('|');
-            const answer = answerParts.join('|');
-            const qaTime = new Date(msg.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-            return (
-              <div key={msg.id} className="flex justify-center py-3"
-                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-              >
-                <div className="relative max-w-[85%] w-full" dir="rtl">
-                  <div className="absolute -inset-1 rounded-xl blur-md bg-emerald-500/10" />
-                  <div className="relative rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md p-3 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <HelpCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-emerald-300 font-semibold leading-relaxed">{question}</p>
-                    </div>
-                    <div className="border-t border-emerald-500/20 pt-2">
-                      <p className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{answer}</p>
-                    </div>
-                    <div className="text-[8px] text-emerald-400/40 text-left">{qaTime}</div>
-                  </div>
-                </div>
               </div>
             );
           }
@@ -1164,71 +1118,6 @@ export function SelfDialogueChat() {
     }
   };
 
-  // Q&A Functions
-  const getNextQuestionIndex = () => {
-    const available = questionBank.map((_, i) => i).filter(i => !usedQuestionIndices.includes(i));
-    if (available.length === 0) {
-      // Reset if all questions used
-      setUsedQuestionIndices([]);
-      localStorage.removeItem('qa-used-indices');
-      return Math.floor(Math.random() * questionBank.length);
-    }
-    return available[Math.floor(Math.random() * available.length)];
-  };
-
-  const openQADialog = () => {
-    const idx = getNextQuestionIndex();
-    setCurrentQuestionIndex(idx);
-    setQaAnswer('');
-    setShowQADialog(true);
-  };
-
-  const skipQuestion = () => {
-    const newUsed = [...usedQuestionIndices, currentQuestionIndex];
-    setUsedQuestionIndices(newUsed);
-    localStorage.setItem('qa-used-indices', JSON.stringify(newUsed));
-    const idx = getNextQuestionIndex();
-    setCurrentQuestionIndex(idx);
-    setQaAnswer('');
-  };
-
-  const saveQA = async () => {
-    if (!user || !qaAnswer.trim()) return;
-    const question = questionBank[currentQuestionIndex];
-    const qaMessage = `__QA__${question}|${qaAnswer.trim()}`;
-    const tempId = crypto.randomUUID();
-    globalMessageSeq++;
-    const msg: DialogueMessage = {
-      id: tempId,
-      sender: 'me',
-      message: qaMessage,
-      created_at: new Date().toISOString(),
-      status: 'pending',
-      localSeq: globalMessageSeq,
-      chat_mode: 'self'
-    };
-    setMessages(prev => [...prev, msg]);
-    setAllMessages(prev => [...prev, msg]);
-    const newUsed = [...usedQuestionIndices, currentQuestionIndex];
-    setUsedQuestionIndices(newUsed);
-    localStorage.setItem('qa-used-indices', JSON.stringify(newUsed));
-    setShowQADialog(false);
-    setQaAnswer('');
-    try {
-      await supabase.from('self_dialogue_messages').insert({
-        user_id: user.id,
-        sender: 'me',
-        message: qaMessage,
-        created_at: msg.created_at,
-        session_title: sessionTitle || null,
-        chat_mode: 'self'
-      });
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
-    } catch {
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
-    }
-  };
-
   const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
@@ -1630,16 +1519,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                       title="لمس حنون"
                     >
                       🤚
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={openQADialog}
-                      className="h-7 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
-                      title="سؤال وجواب"
-                    >
-                      <HelpCircle className="h-3 w-3" />
                     </Button>
 
                   {/* Milestone Table Button */}
@@ -2101,43 +1980,6 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
           )}
         </DialogContent>
       </Dialog>
-      {/* Q&A Dialog */}
-      {showQADialog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowQADialog(false)}>
-          <div className="bg-[#1a1a2e] border border-emerald-500/30 rounded-2xl p-5 w-[90vw] max-w-[400px] flex flex-col gap-4" dir="rtl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="h-4 w-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-emerald-300">سؤال وجواب</h3>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowQADialog(false)} className="h-6 w-6 p-0 text-white/40 hover:text-white/70">
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-sm text-emerald-200 leading-relaxed font-medium">{questionBank[currentQuestionIndex]}</p>
-            </div>
-            
-            <Textarea
-              value={qaAnswer}
-              onChange={e => setQaAnswer(e.target.value)}
-              placeholder="اكتب إجابتك هنا..."
-              className="min-h-[80px] bg-white/5 border-white/10 text-white/90 text-sm placeholder:text-white/25 resize-none focus:border-emerald-500/40"
-              dir="rtl"
-            />
-            
-            <div className="flex items-center gap-2">
-              <Button onClick={saveQA} disabled={!qaAnswer.trim()} className="flex-1 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs h-9">
-                حفظ الإجابة
-              </Button>
-              <Button variant="outline" onClick={skipQuestion} className="text-xs h-9 border-white/15 text-white/60 hover:text-white/80 hover:bg-white/5">
-                تخطي ⟵
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
