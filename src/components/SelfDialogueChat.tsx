@@ -314,8 +314,11 @@ export function SelfDialogueChat() {
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
   const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
-  const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressFiredRef = useRef(false);
+  const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toggleLongPressFiredRef = useRef(false);
+  const navigate = useNavigate();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
