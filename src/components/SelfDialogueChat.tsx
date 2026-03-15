@@ -212,7 +212,7 @@ const KissLabel = React.memo(function KissLabel({ messageId, timestamp }: { mess
         <span className={`kiss-heart-3 absolute -top-3 -left-1 text-[9px]`}>💗</span>
         <div className={`px-5 py-2.5 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-400/30 kiss-animated ${!isAnimating ? 'kiss-static' : ''}`}>
           <span className="text-lg">💋</span>
-          <span className="text-sm font-semibold text-rose-300 mr-2">جلسة بوس حميمي</span>
+          <span className="text-sm font-semibold text-rose-300 mr-2">بوس حميمي</span>
         </div>
       </div>
       <span className="text-[8px] text-white/30">{timestamp}</span>
@@ -376,7 +376,7 @@ export function SelfDialogueChat() {
       const time = formatTime(msg.created_at);
       
       if (msg.message === '__KISS__') {
-        return `[${time}] 💋 جلسة بوس حميمي`;
+        return `[${time}] 💋 بوس حميمي`;
       }
       
       if (msg.message === '__TOUCH__') {
@@ -1203,14 +1203,14 @@ export function SelfDialogueChat() {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'نية الجماع', 'ملحوظات']];
-    milestoneMessages.forEach(m => {
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'الملاحظات', 'النية']];
+    [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'جلسة بوس حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'بوس حميمي', '-', '-', '-']);
         return;
       }
       
@@ -1227,7 +1227,7 @@ export function SelfDialogueChat() {
       rows.push([
         dateStr, timeStr,
         parts[0] || '', parts[1] || '',
-        intention, notes
+        notes, intention
       ]);
     });
     const csv = rows.map(r => r.join(',')).join('\n');
@@ -1245,12 +1245,15 @@ export function SelfDialogueChat() {
     const content = msg.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
     const date = new Date(msg.created_at);
-    const text = `${parts[0] || ''} - ${date.toLocaleDateString('ar-SA')} ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+    const isSacredFmt = parts.length > 8;
+    const notes = isSacredFmt ? '' : (parts[2] || '');
+    const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+    const text = `التاريخ: ${date.toLocaleDateString('ar-SA')}
+الوقت: ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+النوع: ${parts[0] || ''}
 التقييم: ${parts[1] || ''}
-ممتع: ${parts[2] || ''} | مشبع: ${parts[3] || ''} | مريح: ${parts[4] || ''} | تحقيق النية: ${parts[5] || ''}
-Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1' ? 'نعم' : 'لا'}
-النوع: ${parts[8] || 'normal'}
-نية: ${parts[9] || '-'}`;
+الملاحظات: ${notes}
+النية: ${intention}`;
     navigator.clipboard.writeText(text);
     toast.success('تم نسخ البيانات');
   };
@@ -1566,7 +1569,7 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
                           </Button>
                         </div>
                         <div className="overflow-y-auto flex-1 space-y-2">
-                          {milestoneMessages.map(m => {
+                          {[...milestoneMessages].reverse().map(m => {
                             const date = new Date(m.created_at);
                             const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
                             const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
