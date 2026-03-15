@@ -349,9 +349,7 @@ const Anima = () => {
 
           {/* Quality Rating Section */}
           <div className="mb-4 pb-3 border-b border-white/10">
-            <div className="flex justify-center mb-3">
-              <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text">{Math.round(qualityRating * 10)}%</span>
-            </div>
+            {/* Percentage hidden as requested */}
             <Slider
               value={[qualityRating]}
               onValueChange={(value) => {
