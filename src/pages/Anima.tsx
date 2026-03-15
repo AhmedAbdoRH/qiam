@@ -11,14 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 
-const floatingHearts = Array.from({ length: 12 }, (_, i) => ({
-  id: i,
-  left: Math.random() * 100,
-  delay: Math.random() * 8,
-  duration: 6 + Math.random() * 6,
-  size: 10 + Math.random() * 18,
-  opacity: 0.1 + Math.random() * 0.25,
-}));
+  // Removed floating hearts configuration
 
 interface AnimaCard {
   id: string;
@@ -293,23 +286,7 @@ const Anima = () => {
       {/* Animated gradient background */}
       <div className="fixed inset-0 anima-bg" />
 
-      {/* Floating particles */}
-      {floatingHearts.map((h) => (
-        <div
-          key={h.id}
-          className="fixed pointer-events-none anima-float-heart"
-          style={{
-            left: `${h.left}%`,
-            bottom: "-30px",
-            animationDelay: `${h.delay}s`,
-            animationDuration: `${h.duration}s`,
-            fontSize: `${h.size}px`,
-            opacity: h.opacity,
-          }}
-        >
-          ♡
-        </div>
-      ))}
+      {/* Floating particles removed */}
 
       {/* Soft glowing orbs */}
       <div className="fixed top-1/4 right-1/4 w-64 h-64 rounded-full anima-orb anima-orb-pink" />
@@ -348,8 +325,7 @@ const Anima = () => {
               <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse">
                 <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40" />
               </div>
-              <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-purple-300/70 anima-sparkle" />
-              <Star className="absolute -bottom-1 -left-2 h-4 w-4 text-pink-300/60 anima-sparkle-delayed" />
+              {/* Sparkles and Star removed */}
             </div>
           </div>
 
@@ -647,11 +623,11 @@ const Anima = () => {
         }
 
         .anima-pulse {
-          animation: anima-pulse-anim 3s ease-in-out infinite;
+          animation: anima-pulse-anim 6s ease-in-out infinite;
         }
         @keyframes anima-pulse-anim {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(236, 72, 153, 0.15); }
-          50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(236, 72, 153, 0.3); }
+          0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(236, 72, 153, 0.1); }
+          50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(236, 72, 153, 0.2); }
         }
 
         /* anima-icon-glow is now dynamic via inline styles */
