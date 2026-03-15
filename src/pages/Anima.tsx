@@ -547,8 +547,8 @@ const Anima = () => {
                 })}>
                   <defs>
                     <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="rgba(244, 114, 182, 0.8)" />
-                      <stop offset="100%" stopColor="rgba(244, 114, 182, 0.1)" />
+                      <stop offset="0%" stopColor="rgba(244, 114, 182, 0.1)" />
+                      <stop offset="100%" stopColor="rgba(244, 114, 182, 0.8)" />
                     </linearGradient>
                   </defs>
                   {/* Expanded domain to 12 to show baseline 10 more clearly with space above */}
