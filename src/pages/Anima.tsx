@@ -669,28 +669,20 @@ const Anima = () => {
           50% { transform: translateY(-4px); }
         }
         
-        /* Make slider thumb transparent and remove shadow */
+        /* Hide slider thumb completely */
         [role="slider"] {
-          background-color: transparent !important;
-          border-color: rgba(255, 255, 255, 0.2) !important;
-          box-shadow: none !important;
-          outline: none !important;
+          display: none !important;
         }
 
-        /* Magic flowing effect inside slider track */
+        /* Ensure slider track and range have rounded corners */
         .relative.w-full.touch-none.select-none.flex.items-center [data-orientation="horizontal"] {
-          background: linear-gradient(90deg, 
-            rgba(236, 72, 153, 0.2) 0%, 
-            rgba(236, 72, 153, 0.5) 50%, 
-            rgba(236, 72, 153, 0.2) 100%
-          );
-          background-size: 200% 100%;
-          animation: anima-magic-flow 3s linear infinite;
+          border-radius: 9999px !important;
+          overflow: hidden;
         }
-
-        @keyframes anima-magic-flow {
-          0% { background-position: 100% 0%; }
-          100% { background-position: -100% 0%; }
+        
+        /* Ensure the progress range itself is rounded */
+        [data-orientation="horizontal"] > span {
+          border-radius: 9999px !important;
         }
       `}</style>
     </div>
