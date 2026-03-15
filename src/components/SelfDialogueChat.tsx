@@ -1279,7 +1279,8 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
     if (!inputValue.trim() || !user) return;
 
     // Auto-insert spacer if last message was > 1.5 hours ago
-    const lastMsg = messages.filter(m => m.message !== '__SPACER__').at(-1);
+    const filtered = messages.filter(m => m.message !== '__SPACER__');
+    const lastMsg = filtered.length > 0 ? filtered[filtered.length - 1] : undefined;
     if (lastMsg && (Date.now() - new Date(lastMsg.created_at).getTime()) > 90 * 60 * 1000) {
       await insertSpacer();
     }
