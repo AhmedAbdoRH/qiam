@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus } from "lucide-react";
+import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -488,6 +489,45 @@ const Anima = () => {
               <span className="text-sm font-medium text-white/40 group-hover:text-white/60">إضافة بطاقة</span>
             </button>
           </div>
+
+          {/* Minimalist Professional Chart */}
+          {latestMilestones.length > 1 && (
+            <div 
+              className={`mt-10 w-full h-24 transition-all duration-1000 delay-1000 ${
+                mounted ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={[...latestMilestones].reverse().map((m, i) => ({ 
+                  val: parseInt(parseMilestone(m.message).rating) || 0,
+                  id: i 
+                }))}>
+                  <defs>
+                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="rgba(244, 114, 182, 0.1)" />
+                      <stop offset="50%" stopColor="rgba(244, 114, 182, 0.6)" />
+                      <stop offset="100%" stopColor="rgba(244, 114, 182, 0.1)" />
+                    </linearGradient>
+                  </defs>
+                  <YAxis hide domain={[0, 10]} />
+                  <XAxis hide />
+                  <Tooltip 
+                    content={() => null} 
+                    cursor={{ stroke: 'rgba(244, 114, 182, 0.2)', strokeWidth: 1 }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="val" 
+                    stroke="url(#lineGradient)" 
+                    strokeWidth={2} 
+                    dot={false}
+                    activeDot={{ r: 3, fill: '#f472b6', strokeWidth: 0 }}
+                    animationDuration={3000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
