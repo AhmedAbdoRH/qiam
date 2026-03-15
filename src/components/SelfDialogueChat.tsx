@@ -129,6 +129,16 @@ const styles = `
     animation: none;
     transform: scale(1) rotate(0deg);
   }
+
+  @keyframes anima-transition-expand {
+    0% { transform: scale(0); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: scale(50); opacity: 1; }
+  }
+  .anima-transition-circle {
+    background: radial-gradient(circle, rgba(40,10,30,1) 10%, rgba(20,5,20,0.95) 50%, rgba(5,0,5,0.9) 80%);
+    animation: anima-transition-expand 1.2s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  }
   `;
 
 // Memoized message component for better performance
@@ -318,6 +328,12 @@ export function SelfDialogueChat() {
   const sendLongPressFiredRef = useRef(false);
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleLongPressFiredRef = useRef(false);
+  
+  // Transition properties for Anima navigation
+  const [isTransitioningToAnima, setIsTransitioningToAnima] = useState(false);
+  const animaNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animaNavFiredRef = useRef(false);
+  
   const navigate = useNavigate();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1930,8 +1946,45 @@ export function SelfDialogueChat() {
                         </button>
                       </div>
 
-                      {/* Spacer */}
-                      <div className="w-6" />
+                      {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (animaNavFiredRef.current) {
+                            animaNavFiredRef.current = false;
+                            return;
+                          }
+                          toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          animaNavFiredRef.current = false;
+                          animaNavLongPressRef.current = setTimeout(() => {
+                            animaNavFiredRef.current = true;
+                            setIsTransitioningToAnima(true);
+                            setTimeout(() => {
+                              navigate('/anima');
+                            }, 1100);
+                          }, 600);
+                        }}
+                        onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        onTouchStart={() => {
+                          animaNavFiredRef.current = false;
+                          animaNavLongPressRef.current = setTimeout(() => {
+                            animaNavFiredRef.current = true;
+                            setIsTransitioningToAnima(true);
+                            setTimeout(() => {
+                              navigate('/anima');
+                            }, 1100);
+                          }, 600);
+                        }}
+                        onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
+                        title="طوّل الضغطة للانتقال لصفحة الأنيما"
+                      >
+                        <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
+                      </button>
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -2012,6 +2065,15 @@ export function SelfDialogueChat() {
                   </div>
               </div>
             </>
+          )}
+
+          {/* Anima Page Navigation Transition Overlay */}
+          {isTransitioningToAnima && (
+            <div className="fixed inset-0 z-[99999] pointer-events-none flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-500" />
+              <div className="relative flex items-center justify-center w-[120px] h-[120px] anima-transition-circle" />
+              <Heart className="absolute z-10 w-24 h-24 text-pink-200 fill-pink-400/60 animate-pulse drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]" />
+            </div>
           )}
         </DialogContent>
       </Dialog>
