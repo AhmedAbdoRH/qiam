@@ -345,8 +345,8 @@ const Anima = () => {
                   transition: 'all 0.4s ease',
                 }}
               />
-              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse">
-                <Heart className="h-9 w-9 text-pink-300 fill-pink-300/40" />
+              <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse">
+                <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40" />
               </div>
               <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-purple-300/70 anima-sparkle" />
               <Star className="absolute -bottom-1 -left-2 h-4 w-4 text-pink-300/60 anima-sparkle-delayed" />
@@ -355,7 +355,7 @@ const Anima = () => {
 
           {/* Title */}
           <h1
-            className={`text-3xl font-bold text-center mb-3 bg-gradient-to-l from-pink-300 via-purple-300 to-pink-200 bg-clip-text text-transparent transition-all duration-1000 delay-200 ${
+            className={`text-3xl font-bold text-center mb-3 text-pink-300 transition-all duration-1000 delay-200 ${
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
