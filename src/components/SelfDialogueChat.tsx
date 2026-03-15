@@ -306,14 +306,14 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
-  const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
-  const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const modeButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressFiredRef = useRef(false);
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
