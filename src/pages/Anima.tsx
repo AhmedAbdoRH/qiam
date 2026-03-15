@@ -22,11 +22,11 @@ interface AnimaCard {
 }
 
 const defaultCards: AnimaCard[] = [
-  { id: "1", emoji: "", title: "إشباع جنسي", description: "", order_index: 0 },
-  { id: "2", emoji: "", title: "راعيةٌ حنونة", description: "", order_index: 1 },
-  { id: "3", emoji: "", title: "قبولٌ مُطلق", description: "", order_index: 2 },
-  { id: "4", emoji: "", title: "إشباع عاطفي", description: "", order_index: 3 },
-  { id: "5", emoji: "", title: "استسلام", description: "", order_index: 4 },
+  { id: "1", emoji: "", title: "رعاية حنون", description: "", order_index: 0 },
+  { id: "2", emoji: "", title: "إشباع عاطفي", description: "", order_index: 1 },
+  { id: "3", emoji: "", title: "قبول تام", description: "", order_index: 2 },
+  { id: "4", emoji: "", title: "استسلام وتسليم", description: "", order_index: 3 },
+  { id: "5", emoji: "", title: "حب غير مشروط", description: "", order_index: 4 },
 ];
 
 const Anima = () => {
@@ -645,11 +645,18 @@ const Anima = () => {
         }
 
         .anima-float-card {
-          animation: anima-card-float 4s ease-in-out infinite;
+          animation: anima-card-float 8s ease-in-out infinite;
         }
         @keyframes anima-card-float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+          50% { transform: translateY(-4px); }
+        }
+        
+        /* Make slider thumb transparent */
+        [role="slider"] {
+          background-color: transparent !important;
+          border-color: rgba(255, 255, 255, 0.3) !important;
+          box-shadow: none !important;
         }
       `}</style>
     </div>
