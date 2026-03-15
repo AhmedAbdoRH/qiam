@@ -99,7 +99,7 @@ const Anima = () => {
     enabled: !!user
   });
 
-  // Fetch latest 3 milestones (آخر 3 جماعات)
+  // Fetch all milestones (جميع الجماعات)
   const { data: latestMilestones = [] } = useQuery({
     queryKey: ['latestMilestones', user?.id],
     queryFn: async () => {
@@ -109,11 +109,10 @@ const Anima = () => {
         .select('*')
         .eq('user_id', user.id)
         .like('message', '%__MILESTONE__%')
-        .order('created_at', { ascending: false })
-        .limit(3);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).reverse(); // Show oldest first
+      return data || []; // Show newest first
     },
     enabled: !!user
   });
