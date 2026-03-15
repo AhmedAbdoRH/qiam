@@ -526,10 +526,10 @@ const Anima = () => {
             </button>
           </div>
 
-          {/* Minimalist Professional Chart - Extra Expanded Vertical Space */}
+          {/* Minimalist Professional Chart - Maximum Expanded Vertical Space */}
           {latestMilestones.length > 1 && (
             <div 
-              className={`mt-16 w-full h-64 transition-all duration-1000 delay-1000 ${
+              className={`mt-20 w-full h-[400px] transition-all duration-1000 delay-1000 ${
                 mounted ? "opacity-100" : "opacity-0"
               }`}
             >
