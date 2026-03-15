@@ -542,6 +542,9 @@ const Anima = () => {
                   return { 
                     val: ratingVal,
                     date: date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                    title: milestone.title,
+                    intention: milestone.intention,
+                    notes: milestone.notes,
                     id: i 
                   };
                 })}>
@@ -559,15 +562,33 @@ const Anima = () => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
-                          <div className="bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-lg text-[10px] text-pink-200">
-                            <p className="font-bold">{data.date}</p>
-                            <p>التقييم: {data.val.toFixed(1)}</p>
+                          <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-xl text-[10px] text-pink-100 shadow-2xl max-w-[200px] flex flex-col gap-1.5" dir="rtl">
+                            <div className="flex justify-between items-center border-b border-white/10 pb-1 mb-1">
+                              <span className="font-bold text-pink-300">{data.title || 'جماع'}</span>
+                              <span className="text-[9px] text-white/40">{data.date}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-white/50">التقييم:</span>
+                              <span className="font-black text-pink-400">{data.val.toFixed(1)}</span>
+                            </div>
+                            {data.intention && (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-white/50">النية:</span>
+                                <span className="text-pink-200/80 leading-tight">{data.intention}</span>
+                              </div>
+                            )}
+                            {data.notes && (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-white/50">ملاحظات:</span>
+                                <span className="text-pink-200/60 leading-tight italic">{data.notes}</span>
+                              </div>
+                            )}
                           </div>
                         );
                       }
                       return null;
                     }} 
-                    cursor={{ stroke: 'rgba(244, 114, 182, 0.2)', strokeWidth: 1 }} 
+                    cursor={{ stroke: 'rgba(244, 114, 182, 0.3)', strokeWidth: 1 }} 
                   />
                   <ReferenceLine 
                     y={10} 
