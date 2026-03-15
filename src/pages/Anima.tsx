@@ -526,15 +526,15 @@ const Anima = () => {
             </button>
           </div>
 
-          {/* Minimalist Professional Chart - Expanded Vertical Space */}
+          {/* Minimalist Professional Chart - Extra Expanded Vertical Space */}
           {latestMilestones.length > 1 && (
             <div 
-              className={`mt-12 w-full h-48 transition-all duration-1000 delay-1000 ${
+              className={`mt-16 w-full h-64 transition-all duration-1000 delay-1000 ${
                 mounted ? "opacity-100" : "opacity-0"
               }`}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={[...latestMilestones].reverse().map((m, i) => {
+                <LineChart data={[...latestMilestones].reverse().slice(6).map((m, i) => {
                   const milestone = parseMilestone(m.message);
                   const date = new Date(m.created_at);
                   // Use parseFloat to keep decimal precision
