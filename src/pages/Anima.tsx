@@ -40,6 +40,21 @@ const Anima = () => {
   const [qualityRating, setQualityRating] = useState(5.0);
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const handleHeartStart = () => {
+    const timer = setTimeout(() => {
+      navigate(-1);
+    }, 800); // 800ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleHeartEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -296,13 +311,7 @@ const Anima = () => {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 right-6 p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/70 hover:text-white hover:bg-white/20 transition-all duration-300"
-        >
-          <ArrowRight className="h-5 w-5" />
-        </button>
+        {/* Back button removed as requested */}
 
         {/* Main card */}
         <div
@@ -323,8 +332,15 @@ const Anima = () => {
                   transition: 'all 0.4s ease',
                 }}
               />
-              <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse">
-                <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40" />
+              <div 
+                onMouseDown={handleHeartStart}
+                onMouseUp={handleHeartEnd}
+                onMouseLeave={handleHeartEnd}
+                onTouchStart={handleHeartStart}
+                onTouchEnd={handleHeartEnd}
+                className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+              >
+                <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
               {/* Sparkles and Star removed */}
             </div>
