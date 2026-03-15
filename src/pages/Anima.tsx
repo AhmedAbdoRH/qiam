@@ -669,11 +669,28 @@ const Anima = () => {
           50% { transform: translateY(-4px); }
         }
         
-        /* Make slider thumb transparent */
+        /* Make slider thumb transparent and remove shadow */
         [role="slider"] {
           background-color: transparent !important;
-          border-color: rgba(255, 255, 255, 0.3) !important;
+          border-color: rgba(255, 255, 255, 0.2) !important;
           box-shadow: none !important;
+          outline: none !important;
+        }
+
+        /* Magic flowing effect inside slider track */
+        .relative.w-full.touch-none.select-none.flex.items-center [data-orientation="horizontal"] {
+          background: linear-gradient(90deg, 
+            rgba(236, 72, 153, 0.2) 0%, 
+            rgba(236, 72, 153, 0.5) 50%, 
+            rgba(236, 72, 153, 0.2) 100%
+          );
+          background-size: 200% 100%;
+          animation: anima-magic-flow 3s linear infinite;
+        }
+
+        @keyframes anima-magic-flow {
+          0% { background-position: 100% 0%; }
+          100% { background-position: -100% 0%; }
         }
       `}</style>
     </div>
