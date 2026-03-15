@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus } from "lucide-react";
+import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -119,6 +119,36 @@ const Anima = () => {
   });
 
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState(0);
+
+  // Delete milestone mutation
+  const deleteMilestoneMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('self_dialogue_messages')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['latestMilestones', user?.id] });
+      toast.success('تم حذف السجل بنجاح');
+      // Adjust index if needed
+      if (currentMilestoneIndex >= latestMilestones.length - 1 && currentMilestoneIndex > 0) {
+        setCurrentMilestoneIndex(prev => prev - 1);
+      }
+    },
+    onError: () => {
+      toast.error('حدث خطأ أثناء الحذف');
+    }
+  });
+
+  const handleDeleteMilestone = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('هل أنت متأكد من حذف هذا السجل؟')) {
+      deleteMilestoneMutation.mutate(id);
+    }
+  };
 
   // Update quality rating in database
   const updateQualityRatingMutation = useMutation({
@@ -421,6 +451,12 @@ const Anima = () => {
                             <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">
                               {milestone.rating}
                             </span>
+                            <button 
+                              onClick={(e) => handleDeleteMilestone(e, currentMilestone.id)}
+                              className="mt-2 p-1 rounded-full hover:bg-white/10 text-white/30 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
 
@@ -498,10 +534,15 @@ const Anima = () => {
               }`}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={[...latestMilestones].reverse().map((m, i) => ({ 
-                  val: parseInt(parseMilestone(m.message).rating) || 0,
-                  id: i 
-                }))}>
+                <LineChart data={[...latestMilestones].reverse().map((m, i) => {
+                  const milestone = parseMilestone(m.message);
+                  const date = new Date(m.created_at);
+                  return { 
+                    val: parseInt(milestone.rating) || 0,
+                    date: date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                    id: i 
+                  };
+                })}>
                   <defs>
                     <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="rgba(244, 114, 182, 0.1)" />
@@ -512,7 +553,18 @@ const Anima = () => {
                   <YAxis hide domain={[0, 10]} />
                   <XAxis hide />
                   <Tooltip 
-                    content={() => null} 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-lg text-[10px] text-pink-200">
+                            <p className="font-bold">{data.date}</p>
+                            <p>التقييم: {data.val}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }} 
                     cursor={{ stroke: 'rgba(244, 114, 182, 0.2)', strokeWidth: 1 }} 
                   />
                   <Line 
