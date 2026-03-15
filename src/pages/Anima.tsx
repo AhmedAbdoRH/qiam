@@ -42,6 +42,9 @@ const Anima = () => {
   const [animaMessage, setAnimaMessage] = useState(() => {
     return localStorage.getItem("anima_message") || "";
   });
+  const [isLiked, setIsLiked] = useState(() => {
+    return localStorage.getItem("anima_liked") === "true";
+  });
   const [qualityRating, setQualityRating] = useState(5.0);
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
@@ -72,6 +75,10 @@ const Anima = () => {
   useEffect(() => {
     localStorage.setItem("anima_message", animaMessage);
   }, [animaMessage]);
+
+  useEffect(() => {
+    localStorage.setItem("anima_liked", isLiked.toString());
+  }, [isLiked]);
 
   // Fetch anima cards from database
   const { data: dbCards = [] } = useQuery({
@@ -357,6 +364,39 @@ const Anima = () => {
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
+          {/* Anima Message Card - Moved to Top */}
+          <div 
+            className={`mb-12 w-full transition-all duration-1000 delay-300 ${
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`}
+          >
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-pink-400" />
+                  <h3 className="text-sm font-medium text-pink-200/80">رسالة من الأنيما</h3>
+                </div>
+                <button 
+                  onClick={() => setIsLiked(!isLiked)}
+                  className={`p-2 rounded-full transition-all duration-300 ${
+                    isLiked ? "bg-pink-500/20 text-pink-500 scale-110" : "text-white/20 hover:text-pink-400 hover:bg-white/5"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+                </button>
+              </div>
+              <textarea
+                value={animaMessage}
+                onChange={(e) => setAnimaMessage(e.target.value)}
+                placeholder="اكتب رسالتك هنا..."
+                className="w-full h-32 bg-transparent border-none focus:ring-0 text-white/80 placeholder:text-white/20 text-sm resize-none leading-relaxed text-right outline-none"
+                dir="rtl"
+              />
+              <div className="mt-2 flex justify-end">
+                <span className="text-[10px] text-white/20 italic">يتم الحفظ تلقائياً</span>
+              </div>
+            </div>
+          </div>
           {/* Glowing heart icon */}
           <div className="flex justify-center mb-8">
             <div className="relative">
@@ -455,16 +495,10 @@ const Anima = () => {
                             <p className="text-[11px] text-pink-200 mt-0.5">{timeDiff}</p>
                           </div>
                           <div className="flex flex-col items-center justify-center flex-shrink-0">
-                            <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">
-                              {milestone.rating}
-                            </span>
-                            <button 
-                              onClick={(e) => handleDeleteMilestone(e, currentMilestone.id)}
-                              className="mt-2 p-1 rounded-full hover:bg-white/10 text-white/30 hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
+	                            <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">
+	                              {milestone.rating}
+	                            </span>
+	                          </div>
                         </div>
 
                         {/* Intention */}
@@ -616,30 +650,7 @@ const Anima = () => {
             </div>
           )}
 
-          {/* Anima Message Card */}
-          <div 
-            className={`mt-12 w-full max-w-md mx-auto transition-all duration-1000 delay-1000 ${
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-            style={{ marginBottom: '100px' }}
-          >
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <h3 className="text-sm font-medium text-pink-200/80">رسالة من الأنيما</h3>
-              </div>
-              <textarea
-                value={animaMessage}
-                onChange={(e) => setAnimaMessage(e.target.value)}
-                placeholder="اكتب رسالتك هنا..."
-                className="w-full h-32 bg-transparent border-none focus:ring-0 text-white/80 placeholder:text-white/20 text-sm resize-none leading-relaxed text-right outline-none"
-                dir="rtl"
-              />
-              <div className="mt-2 flex justify-end">
-                <span className="text-[10px] text-white/20 italic">يتم الحفظ تلقائياً</span>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
