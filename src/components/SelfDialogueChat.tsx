@@ -1278,6 +1278,27 @@ export function SelfDialogueChat() {
     toast.success('تم نسخ البيانات');
   };
 
+  const deleteMilestone = async (id: string) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('self_dialogue_messages')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      
+      setMessages(prev => prev.filter(m => m.id !== id));
+      setAllMessages(prev => prev.filter(m => m.id !== id));
+      toast.success('تم حذف السجل بنجاح');
+    } catch (error) {
+      console.error('Error deleting milestone:', error);
+      toast.error('حدث خطأ أثناء الحذف');
+    }
+  };
+
   const handleSendButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     // Skip if long-press just fired
@@ -1601,9 +1622,14 @@ export function SelfDialogueChat() {
                                 <div key={m.id} className="bg-rose-500/10 rounded-lg p-3 border border-rose-400/20 text-right" dir="rtl">
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-semibold text-rose-300">💋 بوس حميمي</span>
-                                    <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                      <Copy className="h-3 w-3" />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
                                 </div>
@@ -1616,9 +1642,14 @@ export function SelfDialogueChat() {
                                 <div key={m.id} className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20 text-right" dir="rtl">
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-semibold text-purple-300">🤲 لمس حنون</span>
-                                    <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                      <Copy className="h-3 w-3" />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
                                 </div>
@@ -1641,6 +1672,9 @@ export function SelfDialogueChat() {
                                     <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
                                     <button onClick={() => copyMilestoneData(m)} className="p-1 text-white/30 hover:text-white/60">
                                       <Copy className="h-3 w-3" />
+                                    </button>
+                                    <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                      <Trash2 className="h-3 w-3" />
                                     </button>
                                   </div>
                                 </div>
