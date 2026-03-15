@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2 } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from "recharts";
+import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip, ReferenceLine } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -537,20 +537,21 @@ const Anima = () => {
                 <LineChart data={[...latestMilestones].reverse().map((m, i) => {
                   const milestone = parseMilestone(m.message);
                   const date = new Date(m.created_at);
+                  // Use parseFloat to keep decimal precision
+                  const ratingVal = parseFloat(milestone.rating) || 0;
                   return { 
-                    val: parseInt(milestone.rating) || 0,
+                    val: ratingVal,
                     date: date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
                     id: i 
                   };
                 })}>
                   <defs>
                     <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="rgba(244, 114, 182, 0.1)" />
-                      <stop offset="50%" stopColor="rgba(244, 114, 182, 0.6)" />
+                      <stop offset="0%" stopColor="rgba(244, 114, 182, 0.8)" />
                       <stop offset="100%" stopColor="rgba(244, 114, 182, 0.1)" />
                     </linearGradient>
                   </defs>
-                  <YAxis hide domain={[0, 10]} />
+                  <YAxis hide domain={[0, 10.5]} />
                   <XAxis hide />
                   <Tooltip 
                     content={({ active, payload }) => {
@@ -559,13 +560,18 @@ const Anima = () => {
                         return (
                           <div className="bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-lg text-[10px] text-pink-200">
                             <p className="font-bold">{data.date}</p>
-                            <p>التقييم: {data.val}</p>
+                            <p>التقييم: {data.val.toFixed(1)}</p>
                           </div>
                         );
                       }
                       return null;
                     }} 
                     cursor={{ stroke: 'rgba(244, 114, 182, 0.2)', strokeWidth: 1 }} 
+                  />
+                  <ReferenceLine 
+                    y={10} 
+                    stroke="rgba(255, 255, 255, 0.08)" 
+                    strokeDasharray="3 3" 
                   />
                   <Line 
                     type="monotone" 
