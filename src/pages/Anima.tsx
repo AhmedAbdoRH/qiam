@@ -526,10 +526,10 @@ const Anima = () => {
             </button>
           </div>
 
-          {/* Minimalist Professional Chart */}
+          {/* Minimalist Professional Chart - Expanded Vertical Space */}
           {latestMilestones.length > 1 && (
             <div 
-              className={`mt-10 w-full h-24 transition-all duration-1000 delay-1000 ${
+              className={`mt-12 w-full h-48 transition-all duration-1000 delay-1000 ${
                 mounted ? "opacity-100" : "opacity-0"
               }`}
             >
@@ -551,7 +551,8 @@ const Anima = () => {
                       <stop offset="100%" stopColor="rgba(244, 114, 182, 0.1)" />
                     </linearGradient>
                   </defs>
-                  <YAxis hide domain={[0, 10.5]} />
+                  {/* Expanded domain to 12 to show baseline 10 more clearly with space above */}
+                  <YAxis hide domain={[0, 12]} />
                   <XAxis hide />
                   <Tooltip 
                     content={({ active, payload }) => {
@@ -570,8 +571,8 @@ const Anima = () => {
                   />
                   <ReferenceLine 
                     y={10} 
-                    stroke="rgba(255, 255, 255, 0.08)" 
-                    strokeDasharray="3 3" 
+                    stroke="rgba(255, 255, 255, 0.12)" 
+                    strokeDasharray="4 4" 
                   />
                   <Line 
                     type="monotone" 
