@@ -22,11 +22,11 @@ interface AnimaCard {
 }
 
 const defaultCards: AnimaCard[] = [
-  { id: "1", emoji: "🍑", title: "إشباع جنسي", description: "", order_index: 0 },
-  { id: "2", emoji: "🤎", title: "راعيةٌ حنونة", description: "", order_index: 1 },
-  { id: "3", emoji: "💫", title: "قبولٌ مُطلق", description: "", order_index: 2 },
-  { id: "4", emoji: "🍼", title: "إرواءٌ حقيقي", description: "", order_index: 3 },
-  { id: "5", emoji: "🏳️", title: "استسلام", description: "", order_index: 4 },
+  { id: "1", emoji: "", title: "إشباع جنسي", description: "", order_index: 0 },
+  { id: "2", emoji: "", title: "راعيةٌ حنونة", description: "", order_index: 1 },
+  { id: "3", emoji: "", title: "قبولٌ مُطلق", description: "", order_index: 2 },
+  { id: "4", emoji: "", title: "إشباع عاطفي", description: "", order_index: 3 },
+  { id: "5", emoji: "", title: "استسلام", description: "", order_index: 4 },
 ];
 
 const Anima = () => {
@@ -434,14 +434,16 @@ const Anima = () => {
               <button
                 key={item.id}
                 onClick={() => setSelectedCard(item)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-pink-400/30 transition-all duration-500 group cursor-pointer text-center ${
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-pink-400/30 transition-all duration-500 group cursor-pointer text-center anima-float-card ${
                   mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                 }`}
-                style={{ transitionDelay: `${600 + i * 150}ms` }}
+                style={{ 
+                  transitionDelay: `${600 + i * 150}ms`,
+                  animationDelay: `${i * 0.5}s`
+                }}
                 dir="rtl"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{item.emoji}</span>
-                <h3 className="text-sm font-semibold text-pink-100">{item.title}</h3>
+                <h3 className="text-[13px] font-medium text-pink-100/90 group-hover:text-white transition-colors">{item.title}</h3>
               </button>
             ))}
           </div>
@@ -640,6 +642,14 @@ const Anima = () => {
         @keyframes anima-sparkle-anim {
           0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
           50% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+        }
+
+        .anima-float-card {
+          animation: anima-card-float 4s ease-in-out infinite;
+        }
+        @keyframes anima-card-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
         }
       `}</style>
     </div>
