@@ -4,6 +4,7 @@ import { Toaster } from './components/ui/toaster';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster as Sonner } from './components/ui/sonner';
 import Auth from "./pages/Auth";
+import Anima from "./pages/Anima";
 import Behavioral from "./pages/Behavioral";
 import Divinity from "./pages/Divinity";
 import Index from "./pages/Index";
@@ -15,13 +16,14 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const showBottomNavBar = location.pathname !== "/auth";
+  const showBottomNavBar = location.pathname !== "/auth" && location.pathname !== "/anima";
 
   return (
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/anima" element={<Anima />} />
         <Route path="/behavioral" element={<Behavioral />} />
         <Route path="/divinity" element={<Divinity />} />
         <Route path="*" element={<NotFound />} />

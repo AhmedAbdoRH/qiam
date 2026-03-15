@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
@@ -305,16 +306,19 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
-  const milestoneLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
-  const modeButtonLongPressRef = useRef<NodeJS.Timeout | null>(null);
-  const sendLongPressRef = useRef<NodeJS.Timeout | null>(null);
+  const modeButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressFiredRef = useRef(false);
+  const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toggleLongPressFiredRef = useRef(false);
+  const navigate = useNavigate();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -1275,7 +1279,8 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
     if (!inputValue.trim() || !user) return;
 
     // Auto-insert spacer if last message was > 1.5 hours ago
-    const lastMsg = messages.filter(m => m.message !== '__SPACER__').at(-1);
+    const filtered = messages.filter(m => m.message !== '__SPACER__');
+    const lastMsg = filtered.length > 0 ? filtered[filtered.length - 1] : undefined;
     if (lastMsg && (Date.now() - new Date(lastMsg.created_at).getTime()) > 90 * 60 * 1000) {
       await insertSpacer();
     }
@@ -1751,13 +1756,40 @@ Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1
 
                     <div className="flex items-center justify-center gap-2 mb-2">
 
-                      {/* زر التبديل التلقائي - زجاجي */}
+                      {/* زر التبديل التلقائي - زجاجي + ضغط مطول يفتح صفحة الأنيما */}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
+                          if (toggleLongPressFiredRef.current) {
+                            toggleLongPressFiredRef.current = false;
+                            return;
+                          }
                           setIsAutoSwitch(!isAutoSwitch);
                         }}
-                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleLongPressFiredRef.current = false;
+                          toggleLongPressRef.current = setTimeout(() => {
+                            toggleLongPressFiredRef.current = true;
+                            navigate('/anima');
+                          }, 1500);
+                        }}
+                        onMouseUp={() => {
+                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
+                        }}
+                        onMouseLeave={() => {
+                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
+                        }}
+                        onTouchStart={() => {
+                          toggleLongPressFiredRef.current = false;
+                          toggleLongPressRef.current = setTimeout(() => {
+                            toggleLongPressFiredRef.current = true;
+                            navigate('/anima');
+                          }, 1500);
+                        }}
+                        onTouchEnd={() => {
+                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
+                        }}
                         className={`group relative flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-md transition-all duration-500 ${isAutoSwitch
                           ? 'text-green-300/60 bg-green-900/20 border border-green-800/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.1)]'
                           : 'text-white/20 bg-white/5 border border-white/10 hover:text-white/40'
