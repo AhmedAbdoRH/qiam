@@ -22,11 +22,12 @@ interface AnimaCard {
 }
 
 const defaultCards: AnimaCard[] = [
-  { id: "1", emoji: "", title: "رعاية حنون", description: "", order_index: 0 },
-  { id: "2", emoji: "", title: "إشباع عاطفي", description: "", order_index: 1 },
+  { id: "1", emoji: "", title: "إشباع عاطفي", description: "", order_index: 0 },
+  { id: "2", emoji: "", title: "إشباع جنسي", description: "", order_index: 1 },
   { id: "3", emoji: "", title: "قبول تام", description: "", order_index: 2 },
-  { id: "4", emoji: "", title: "استسلام وتسليم", description: "", order_index: 3 },
-  { id: "5", emoji: "", title: "حب غير مشروط", description: "", order_index: 4 },
+  { id: "4", emoji: "", title: "حب غير مشروط", description: "", order_index: 3 },
+  { id: "5", emoji: "", title: "تسليم واستسلام", description: "", order_index: 4 },
+  { id: "6", emoji: "", title: "رعاية حنون", description: "", order_index: 5 },
 ];
 
 const Anima = () => {
