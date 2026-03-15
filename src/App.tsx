@@ -4,6 +4,7 @@ import { Toaster } from './components/ui/toaster';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster as Sonner } from './components/ui/sonner';
 import Auth from "./pages/Auth";
+import Anima from "./pages/Anima";
 import Behavioral from "./pages/Behavioral";
 import Divinity from "./pages/Divinity";
 import Index from "./pages/Index";
