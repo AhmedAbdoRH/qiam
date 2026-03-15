@@ -1207,19 +1207,19 @@ export function SelfDialogueChat() {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'نية الجماع', 'ملحوظات']];
-    milestoneMessages.forEach(m => {
+    const rows = [['التاريخ', 'الوقت', 'التقييم', 'الملاحظات', 'النية']];
+    [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'جلسة بوس حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, '-', '-', '-']);
         return;
       }
       
       if (m.message === '__TOUCH__') {
-        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
+        rows.push([dateStr, timeStr, '-', '-', '-']);
         return;
       }
       
@@ -1230,8 +1230,8 @@ export function SelfDialogueChat() {
       const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
       rows.push([
         dateStr, timeStr,
-        parts[0] || '', parts[1] || '',
-        intention, notes
+        parts[1] || '',
+        notes, intention
       ]);
     });
     const csv = rows.map(r => r.join(',')).join('\n');
@@ -1249,12 +1249,15 @@ export function SelfDialogueChat() {
     const content = msg.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
     const date = new Date(msg.created_at);
-    const text = `${parts[0] || ''} - ${date.toLocaleDateString('ar-SA')} ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+    const isSacredFmt = parts.length > 8;
+    const notes = isSacredFmt ? '' : (parts[2] || '');
+    const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+    const text = `التاريخ: ${date.toLocaleDateString('ar-SA')}
+الوقت: ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+النوع: ${parts[0] || ''}
 التقييم: ${parts[1] || ''}
-ممتع: ${parts[2] || ''} | مشبع: ${parts[3] || ''} | مريح: ${parts[4] || ''} | تحقيق النية: ${parts[5] || ''}
-Afterglow: ${parts[6] === '1' ? 'نعم' : 'لا'} | مقدس: ${parts[7] === '1' ? 'نعم' : 'لا'}
-النوع: ${parts[8] || 'normal'}
-نية: ${parts[9] || '-'}`;
+الملاحظات: ${notes}
+النية: ${intention}`;
     navigator.clipboard.writeText(text);
     toast.success('تم نسخ البيانات');
   };
