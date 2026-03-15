@@ -36,12 +36,13 @@ const Anima = () => {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<AnimaCard | null>(null);  const [isEditing, setIsEditing] = useState(false);
-  const [editingCard, setEditingCard] = useState<CardData | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<AnimaCard | null>(null);
+  const [isEditingCard, setIsEditingCard] = useState(false);
+  const [editingCard, setEditingCard] = useState<AnimaCard | null>(null);
   const [animaMessage, setAnimaMessage] = useState(() => {
     return localStorage.getItem("anima_message") || "";
-  });ng] = useState(5.0);
+  });
+  const [qualityRating, setQualityRating] = useState(5.0);
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -620,6 +621,7 @@ const Anima = () => {
             className={`mt-12 w-full max-w-md mx-auto transition-all duration-1000 delay-1000 ${
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
+            style={{ marginBottom: '100px' }}
           >
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center gap-2 mb-4">
@@ -630,7 +632,7 @@ const Anima = () => {
                 value={animaMessage}
                 onChange={(e) => setAnimaMessage(e.target.value)}
                 placeholder="اكتب رسالتك هنا..."
-                className="w-full h-32 bg-transparent border-none focus:ring-0 text-white/80 placeholder:text-white/20 text-sm resize-none leading-relaxed text-right"
+                className="w-full h-32 bg-transparent border-none focus:ring-0 text-white/80 placeholder:text-white/20 text-sm resize-none leading-relaxed text-right outline-none"
                 dir="rtl"
               />
               <div className="mt-2 flex justify-end">
