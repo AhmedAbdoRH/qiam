@@ -16,7 +16,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const showBottomNavBar = location.pathname !== "/auth";
+  const showBottomNavBar = location.pathname !== "/auth" && location.pathname !== "/anima";
 
   return (
     <AuthProvider>
