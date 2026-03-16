@@ -49,6 +49,8 @@ const Anima = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isAddingWish, setIsAddingWish] = useState(false);
+  const [newWish, setNewWish] = useState("");
 
   const handleHeartStart = () => {
     const timer = setTimeout(() => {
@@ -112,6 +114,66 @@ const Anima = () => {
       return data;
     },
     enabled: !!user
+  });
+
+  // Fetch anima wishes
+  const { data: animaWishes = [] } = useQuery({
+    queryKey: ['animaWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_cards')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('description', 'WISH') // Use description as a marker for wishes
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  // Add wish mutation
+  const addWishMutation = useMutation({
+    mutationFn: async (wish: string) => {
+      if (!user) throw new Error('No user');
+      const { error } = await supabase
+        .from('anima_cards')
+        .insert({
+          user_id: user.id,
+          title: wish,
+          description: 'WISH',
+          emoji: '✨',
+          order_index: 999 // High index for wishes
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['animaWishes', user?.id] });
+      toast.success('تمت إضافة الأمنية');
+      setNewWish("");
+      setIsAddingWish(false);
+    },
+    onError: () => {
+      toast.error('حدث خطأ في إضافة الأمنية');
+    }
+  });
+
+  // Delete wish mutation
+  const deleteWishMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('anima_cards')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['animaWishes', user?.id] });
+      toast.success('تم حذف الأمنية');
+    }
   });
 
   // Fetch all milestones (جميع الجماعات)
@@ -566,6 +628,84 @@ const Anima = () => {
               <span className="text-sm font-medium text-white/40 group-hover:text-white/60">إضافة بطاقة</span>
             </button>
           </div>
+
+          {/* Anima Wishes Section */}
+          <div className="mt-16 w-full max-w-md mx-auto">
+            <div className="flex items-center justify-between mb-6 px-2">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما مني</h2>
+              </div>
+              <button 
+                onClick={() => setIsAddingWish(true)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {animaWishes.map((wish) => (
+                <div 
+                  key={wish.id}
+                  className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/10 hover:border-pink-500/30"
+                  dir="rtl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/90 leading-relaxed">{wish.title}</p>
+                    </div>
+                    <button 
+                      onClick={() => deleteWishMutation.mutate(wish.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {animaWishes.length === 0 && !isAddingWish && (
+                <div className="text-center py-8 border-2 border-dashed border-white/5 rounded-2xl">
+                  <p className="text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Add Wish Sheet */}
+          <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
+            <SheetContent side="bottom" className="h-auto rounded-t-3xl bg-black/95 backdrop-blur-2xl border-t border-white/10">
+              <SheetHeader className="text-right px-6 pt-6 pb-4" dir="rtl">
+                <SheetTitle className="text-xl font-bold">أمنية جديدة</SheetTitle>
+              </SheetHeader>
+              <div className="px-6 py-4">
+                <Textarea 
+                  value={newWish}
+                  onChange={(e) => setNewWish(e.target.value)}
+                  placeholder="ماذا تتمنى الأنيما منك؟"
+                  className="min-h-[120px] bg-white/5 border-white/10 text-white text-right focus:border-pink-500/50"
+                  dir="rtl"
+                />
+              </div>
+              <SheetFooter className="px-6 pb-8 gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsAddingWish(false)}
+                  className="flex-1 text-white/50"
+                >
+                  إلغاء
+                </Button>
+                <Button 
+                  onClick={() => addWishMutation.mutate(newWish)}
+                  disabled={!newWish.trim() || addWishMutation.isPending}
+                  className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
+                >
+                  إضافة الأمنية
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
 
           {/* Minimalist Professional Chart - Maximum Expanded Vertical Space */}
           {latestMilestones.length > 1 && (
