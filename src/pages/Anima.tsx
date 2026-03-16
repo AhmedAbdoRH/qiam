@@ -392,9 +392,43 @@ const Anima = () => {
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          {/* Anima Message Card - Moved to Top */}
+          {/* Logo + Title at the very top */}
+          <div className={`flex flex-col items-center mb-10 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+            {/* Glowing heart icon */}
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    inset: `-${Math.round(qualityRating * 4)}px`,
+                    background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55}), transparent 70%)`,
+                    filter: `blur(${12 + qualityRating * 2}px)`,
+                    opacity: Math.max(0.08, qualityRating / 10),
+                    transition: 'all 0.4s ease',
+                  }}
+                />
+                <div 
+                  onMouseDown={handleHeartStart}
+                  onMouseUp={handleHeartEnd}
+                  onMouseLeave={handleHeartEnd}
+                  onTouchStart={handleHeartStart}
+                  onTouchEnd={handleHeartEnd}
+                  className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+                >
+                  <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-3xl font-bold text-center text-pink-300">
+              الأنيما
+            </h1>
+          </div>
+
+          {/* Anima Message Card */}
           <div 
-            className={`mb-12 w-full transition-all duration-1000 delay-300 ${
+            className={`mb-6 w-full transition-all duration-1000 delay-300 ${
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
@@ -425,49 +459,50 @@ const Anima = () => {
               </div>
             </div>
           </div>
-          {/* Glowing heart icon */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div
-                className="absolute rounded-full"
-                style={{
-                  inset: `-${Math.round(qualityRating * 4)}px`,
-                  background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55}), transparent 70%)`,
-                  filter: `blur(${12 + qualityRating * 2}px)`,
-                  opacity: Math.max(0.08, qualityRating / 10),
-                  transition: 'all 0.4s ease',
-                }}
-              />
-              <div 
-                onMouseDown={handleHeartStart}
-                onMouseUp={handleHeartEnd}
-                onMouseLeave={handleHeartEnd}
-                onTouchStart={handleHeartStart}
-                onTouchEnd={handleHeartEnd}
-                className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
-              >
-                <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40 pointer-events-none" />
+
+          {/* Anima Wishes Section - directly after message */}
+          <div className="mb-12 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما</h2>
               </div>
-              {/* Sparkles and Star removed */}
+              <button 
+                onClick={() => setIsAddingWish(true)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {localWishes.map((wish) => (
+                <div 
+                  key={wish.id}
+                  className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/10 hover:border-pink-500/30"
+                  dir="rtl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/90 leading-relaxed">{wish.title}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteLocalWish(wish.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {localWishes.length === 0 && !isAddingWish && (
+                <div className="text-center py-8 border-2 border-dashed border-white/5 rounded-2xl">
+                  <p className="text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Title */}
-          <h1
-            className={`text-3xl font-bold text-center mb-3 text-pink-300 transition-all duration-1000 delay-200 ${
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-          >
-            الأنيما
-          </h1>
-
-          <p
-            className={`text-center text-sm text-pink-200/60 mb-10 leading-relaxed transition-all duration-1000 delay-400 ${
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-          >
-            المساحة الداخلية للذات الأنثوية
-          </p>
 
           {/* Quality Rating Section */}
           <div className="mb-4 pb-3 border-b border-white/10">
@@ -593,50 +628,6 @@ const Anima = () => {
               <Plus className="w-5 h-5 text-white/40 group-hover:text-white/60 transition-colors duration-300" />
               <span className="text-sm font-medium text-white/40 group-hover:text-white/60">إضافة بطاقة</span>
             </button>
-          </div>
-
-          {/* Anima Wishes Section */}
-          <div className="mt-16 w-full max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-6 px-2">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما مني</h2>
-              </div>
-              <button 
-                onClick={() => setIsAddingWish(true)}
-                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {localWishes.map((wish) => (
-                <div 
-                  key={wish.id}
-                  className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/10 hover:border-pink-500/30"
-                  dir="rtl"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="text-sm text-white/90 leading-relaxed">{wish.title}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleDeleteLocalWish(wish.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {localWishes.length === 0 && !isAddingWish && (
-                <div className="text-center py-8 border-2 border-dashed border-white/5 rounded-2xl">
-                  <p className="text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Add Wish Sheet */}
