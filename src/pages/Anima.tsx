@@ -49,6 +49,10 @@ const Anima = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [pressDuration, setPressDuration] = useState(0);
+  const [isPressing, setIsPressing] = useState(false);
+  const [pressStartTime, setPressStartTime] = useState<number | null>(null);
+  const [fadeOutTimer, setFadeOutTimer] = useState<NodeJS.Timeout | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -104,15 +108,42 @@ const Anima = () => {
   }, [localTasks]);
 
   const handleHeartStart = () => {
-    const timer = setTimeout(() => navigate(-1), 800);
+    const startTime = Date.now();
+    setPressStartTime(startTime);
+    setIsPressing(true);
+    if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      setPressDuration(Math.min(elapsed / 100, 10));
+    }, 50);
     setLongPressTimer(timer);
   };
 
   const handleHeartEnd = () => {
     if (longPressTimer) {
-      clearTimeout(longPressTimer);
+      clearInterval(longPressTimer as unknown as number);
       setLongPressTimer(null);
     }
+    setIsPressing(false);
+    setPressStartTime(null);
+    
+    // Fade out over 60 seconds
+    const maxDuration = pressDuration;
+    const fadeStartTime = Date.now();
+    const fadeDuration = 60000; // 60 seconds
+    
+    if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
+    const fadeTimer = setInterval(() => {
+      const elapsed = Date.now() - fadeStartTime;
+      const progress = Math.min(elapsed / fadeDuration, 1);
+      setPressDuration(Math.max(0, maxDuration * (1 - progress)));
+      
+      if (progress >= 1) {
+        clearInterval(fadeTimer);
+        setFadeOutTimer(null);
+      }
+    }, 50);
+    setFadeOutTimer(fadeTimer as unknown as NodeJS.Timeout);
   };
 
   useEffect(() => {
@@ -122,6 +153,13 @@ const Anima = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Cleanup fade out timer on unmount
+  useEffect(() => {
+    return () => {
+      if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
+    };
+  }, [fadeOutTimer]);
 
   // Database Queries
   const { data: dbCards = [] } = useQuery({
@@ -378,18 +416,18 @@ const Anima = () => {
           <div className="flex flex-col items-center mb-10">
             <div className="relative mb-4">
               <div className="absolute rounded-full" style={{
-                inset: `-${Math.round(qualityRating * 4)}px`,
-                background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55}), transparent 70%)`,
-                filter: `blur(${12 + qualityRating * 2}px)`,
-                opacity: Math.max(0.08, qualityRating / 10),
-                transition: 'all 0.4s ease',
+                inset: `-${Math.round((qualityRating + pressDuration) * 4)}px`,
+                background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
+                filter: `blur(${12 + qualityRating * 2 + pressDuration * 3}px)`,
+                opacity: Math.max(0.08, (qualityRating + pressDuration) / 10),
+                transition: 'all 0.1s ease',
               }} />
               <div 
                 onMouseDown={handleHeartStart} onMouseUp={handleHeartEnd} onMouseLeave={handleHeartEnd}
                 onTouchStart={handleHeartStart} onTouchEnd={handleHeartEnd}
-                className="relative w-28 h-28 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
               >
-                <Heart className="h-14 w-14 text-pink-300 fill-pink-300/40 pointer-events-none" />
+                <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-center text-pink-300">الأنيما</h1>
