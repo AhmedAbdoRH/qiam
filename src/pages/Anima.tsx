@@ -48,6 +48,7 @@ const Anima = () => {
   const [qualityRating, setQualityRating] = useState(5.0);
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [pressDuration, setPressDuration] = useState(0);
   const [isPressing, setIsPressing] = useState(false);
@@ -303,7 +304,7 @@ const Anima = () => {
     setTimeout(() => {
       setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
       setIsExiting(false);
-    }, 3000);
+    }, 1000);
   };
 
   // Mutation for database updates
@@ -357,15 +358,23 @@ const Anima = () => {
       setTimeout(() => {
         setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
         setIsExiting(false);
-      }, 3000);
+      }, 1000);
     }, 14000);
     return () => clearInterval(interval);
   }, [latestMilestones.length]);
 
   useEffect(() => {
+    setIsEntering(false);
     setCardMounted(false);
-    const timer = setTimeout(() => setCardMounted(true), 50);
-    return () => clearTimeout(timer);
+    const enterTimer = setTimeout(() => setIsEntering(true), 50);
+    const mountTimer = setTimeout(() => {
+      setCardMounted(true);
+      setIsEntering(false);
+    }, 600);
+    return () => {
+      clearTimeout(enterTimer);
+      clearTimeout(mountTimer);
+    };
   }, [currentMilestoneIndex]);
 
   const parseMilestone = (message: string) => {
@@ -600,7 +609,9 @@ const Anima = () => {
                 return (
                   <button 
                     onClick={handleMilestoneClick}
-                    className={`w-full relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 p-2.5 transition-opacity duration-[3000ms] text-left hover:border-pink-400/40 cursor-pointer ${!isExiting && cardMounted ? 'opacity-100' : 'opacity-0'}`}>
+                    className={`w-full relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 p-2.5 text-left hover:border-pink-400/40 cursor-pointer transition-all duration-1000 ${
+                      isExiting ? 'opacity-0 scale-95' : isEntering ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+                    }`}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         {getMilestoneIcon(milestone.type)}
