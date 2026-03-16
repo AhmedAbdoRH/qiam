@@ -51,6 +51,14 @@ const Anima = () => {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
+  const [localWishes, setLocalWishes] = useState<{id: string, title: string}[]>(() => {
+    const saved = localStorage.getItem("anima_wishes");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
+  }, [localWishes]);
 
   const handleHeartStart = () => {
     const timer = setTimeout(() => {
@@ -116,65 +124,23 @@ const Anima = () => {
     enabled: !!user
   });
 
-  // Fetch anima wishes
-  const { data: animaWishes = [] } = useQuery({
-    queryKey: ['animaWishes', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('anima_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('description', 'WISH') // Use description as a marker for wishes
-        .order('created_at', { ascending: false });
+  // Local Wish Handlers
+  const handleAddLocalWish = (wish: string) => {
+    if (!wish.trim()) return;
+    const newWishObj = {
+      id: `wish-${Date.now()}`,
+      title: wish.trim()
+    };
+    setLocalWishes(prev => [newWishObj, ...prev]);
+    setNewWish("");
+    setIsAddingWish(false);
+    toast.success('تمت إضافة الأمنية محلياً');
+  };
 
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
-
-  // Add wish mutation
-  const addWishMutation = useMutation({
-    mutationFn: async (wish: string) => {
-      if (!user) throw new Error('No user');
-      const { error } = await supabase
-        .from('anima_cards')
-        .insert({
-          user_id: user.id,
-          title: wish,
-          description: 'WISH',
-          emoji: '✨',
-          order_index: 999 // High index for wishes
-        });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaWishes', user?.id] });
-      toast.success('تمت إضافة الأمنية');
-      setNewWish("");
-      setIsAddingWish(false);
-    },
-    onError: () => {
-      toast.error('حدث خطأ في إضافة الأمنية');
-    }
-  });
-
-  // Delete wish mutation
-  const deleteWishMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('anima_cards')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user?.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaWishes', user?.id] });
-      toast.success('تم حذف الأمنية');
-    }
-  });
+  const handleDeleteLocalWish = (id: string) => {
+    setLocalWishes(prev => prev.filter(w => w.id !== id));
+    toast.success('تم حذف الأمنية');
+  };
 
   // Fetch all milestones (جميع الجماعات)
   const { data: latestMilestones = [] } = useQuery({
@@ -645,7 +611,7 @@ const Anima = () => {
             </div>
 
             <div className="space-y-3">
-              {animaWishes.map((wish) => (
+              {localWishes.map((wish) => (
                 <div 
                   key={wish.id}
                   className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/10 hover:border-pink-500/30"
@@ -656,7 +622,7 @@ const Anima = () => {
                       <p className="text-sm text-white/90 leading-relaxed">{wish.title}</p>
                     </div>
                     <button 
-                      onClick={() => deleteWishMutation.mutate(wish.id)}
+                      onClick={() => handleDeleteLocalWish(wish.id)}
                       className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -665,7 +631,7 @@ const Anima = () => {
                 </div>
               ))}
 
-              {animaWishes.length === 0 && !isAddingWish && (
+              {localWishes.length === 0 && !isAddingWish && (
                 <div className="text-center py-8 border-2 border-dashed border-white/5 rounded-2xl">
                   <p className="text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
                 </div>
@@ -697,8 +663,8 @@ const Anima = () => {
                   إلغاء
                 </Button>
                 <Button 
-                  onClick={() => addWishMutation.mutate(newWish)}
-                  disabled={!newWish.trim() || addWishMutation.isPending}
+                  onClick={() => handleAddLocalWish(newWish)}
+                  disabled={!newWish.trim()}
                   className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
                 >
                   إضافة الأمنية
