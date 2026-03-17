@@ -59,6 +59,8 @@ const Anima = () => {
   const [newMessage, setNewMessage] = useState("");
   const [showMilestones, setShowMilestones] = useState(true);
   const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
+  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
+  const [newSexualWish, setNewSexualWish] = useState("");
   
   const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
     const saved = localStorage.getItem("anima_messages");
@@ -86,6 +88,13 @@ const Anima = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [localSexualWishes, setLocalSexualWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
+    const saved = localStorage.getItem("anima_sexual_wishes");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [showSexualWishes, setShowSexualWishes] = useState(true);
+
   const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
     const saved = localStorage.getItem("anima_cards");
     return saved ? JSON.parse(saved) : [];
@@ -95,6 +104,10 @@ const Anima = () => {
   useEffect(() => {
     localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
   }, [localWishes]);
+
+  useEffect(() => {
+    localStorage.setItem("anima_sexual_wishes", JSON.stringify(localSexualWishes));
+  }, [localSexualWishes]);
 
   useEffect(() => {
     localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
@@ -275,6 +288,25 @@ const Anima = () => {
     toast.success('تم حذف عنصر التقويم');
   };
 
+  // Sexual Wish Handlers
+  const handleAddSexualWish = (wish: string) => {
+    if (!wish.trim()) return;
+    const newWishObj = { id: `sexual-wish-${Date.now()}`, title: wish.trim(), completed: false };
+    setLocalSexualWishes(prev => [newWishObj, ...prev]);
+    setNewWish("");
+    setIsAddingWish(false);
+    toast.success('تمت إضافة الأمنية الجنسية');
+  };
+
+  const handleToggleSexualWishCompleted = (id: string) => {
+    setLocalSexualWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  };
+
+  const handleDeleteSexualWish = (id: string) => {
+    setLocalSexualWishes(prev => prev.filter(w => w.id !== id));
+    toast.success('تم حذف الأمنية الجنسية');
+  };
+
   // Wish Handlers
   const handleAddLocalWish = (wish: string) => {
     if (!wish.trim()) return;
@@ -389,9 +421,9 @@ const Anima = () => {
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
-      setQualityRating(ratingData.balance_rating ?? 5.0);
+      setQualityRating((ratingData as any).balance_rating ?? 5.0);
     } else if (ratingData && 'rating' in ratingData) {
-      setQualityRating(ratingData.rating ?? 5.0);
+      setQualityRating((ratingData as any).rating ?? 5.0);
     }
   }, [ratingData]);
 
@@ -440,7 +472,7 @@ const Anima = () => {
 
   const getMilestoneIcon = (type: string) => {
     switch (type) {
-      case 'sacred': return <Flame className="w-3.5 h-3.5 text-red-500 fill-red-500" />;
+      case 'sacred': return <Flame className="w-3.5 h-3.5 text-transparent fill-transparent" style={{ filter: 'drop-shadow(0 0 8px rgba(255,140,0,0.8))' }} />;
       case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-500" />;
       case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-500" />;
       case 'nursing': return <span className="text-amber-700 text-[10px]">💧</span>;
@@ -482,14 +514,11 @@ const Anima = () => {
                 transition: 'all 0.1s ease',
               }} />
               <div 
-                onMouseDown={handleHeartStart} onMouseUp={handleHeartEnd} onMouseLeave={handleHeartEnd}
-                onTouchStart={handleHeartStart} onTouchEnd={handleHeartEnd}
                 className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
               >
                 <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-center text-pink-300 select-none">الأنيما</h1>
           </div>
 
           {/* Quality Slider */}
@@ -567,19 +596,113 @@ const Anima = () => {
             </div>
           </div>
 
+          {/* Sexual Wishes Section */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
+                <h2 className="text-lg font-bold text-pink-100">مهام الأنيما الجنسية</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    const wish = prompt('اكتب المهمة الجنسية:');
+                    if (wish && wish.trim()) {
+                      handleAddSexualWish(wish.trim());
+                    }
+                  }}
+                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => setShowSexualWishes(!showSexualWishes)}
+                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
+                >
+                  <span className="text-xs font-medium">▼</span>
+                </button>
+              </div>
+            </div>
+            
+            {showSexualWishes && (
+              <div className="space-y-3 animate-in slide-in-from-top duration-200">
+                {localSexualWishes.map((wish) => (
+                  <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-pink-500/10 border-pink-500/30" : "bg-pink-500/5 border-pink-400/20 hover:border-pink-500/30"}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className={`text-sm leading-relaxed flex-1 ${
+                        wish.completed
+                          ? "text-white/50 line-through"
+                          : "text-white/90"
+                      }`}>{wish.title}</p>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleToggleSexualWishCompleted(wish.id)}
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                            wish.completed
+                              ? "bg-pink-500 border-pink-500"
+                              : "border-pink-400/30 hover:border-pink-400"
+                          }`}
+                        >
+                          {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
+                        </button>
+                        <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {localSexualWishes.length === 0 && (
+                  <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام جنسية حالياً</p>
+                )}
+              </div>
+            )}
+
+            {/* Sexual Wish Dialog */}
+            {isAddingSexualWish && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
+                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة مهمة جنسية جديدة</h3>
+                  <textarea
+                    value={newSexualWish}
+                    onChange={(e) => setNewSexualWish(e.target.value)}
+                    placeholder="اكتب المهمة الجنسية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddSexualWish(newSexualWish); }}
+                      disabled={!newSexualWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                    >
+                      إضافة مهمة جنسية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingSexualWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Wishes Section */}
           <div className="mb-12 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما</h2>
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما العامة</h2>
               </div>
               <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3">
-              {localWishes.map((wish) => (
+              {localWishes.slice(3).map((wish) => (
                 <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
                   <div className="flex items-center justify-between gap-3">
                     <p className={`text-sm leading-relaxed flex-1 ${
@@ -607,6 +730,37 @@ const Anima = () => {
               ))}
             </div>
           </div>
+
+          {/* Regular Wish Dialog */}
+          {isAddingWish && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
+              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية عامة جديدة</h3>
+                <textarea
+                    value={newWish}
+                    onChange={(e) => setNewWish(e.target.value)}
+                    placeholder="اكتب الأمنية العامة..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
+                      disabled={!newWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                    >
+                      إضافة أمنية عامة
+                    </button>
+                    <button
+                      onClick={() => setIsAddingWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
           {/* Treatment Section (Therapy Tasks) */}
           <div className="mb-8 w-full">
@@ -768,7 +922,7 @@ const Anima = () => {
                   });
                 })()}
                   >
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient></defs>
+                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)"/><stop offset="50%" stopColor="rgba(255,69,0,0.6)"/><stop offset="100%" stopColor="rgba(255,0,0,0.8)"/></linearGradient></defs>
                   <YAxis hide domain={[5, 10]} />
                   <XAxis 
                     dataKey="timePosition" 
@@ -832,7 +986,7 @@ const Anima = () => {
                         <g key={`dot-${cx}-${cy}`}>
                           {/* Icon inside */}
                           <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
                             {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
@@ -894,79 +1048,81 @@ const Anima = () => {
       </div>
 
       {/* Sheets (Wishes, Tasks, Cards) */}
-      <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-pink-500">إضافة</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <div>
+        <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
+            <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+            <SheetFooter className="px-6 pb-8 gap-3">
+              <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
+              <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-pink-500">إضافة</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
+            <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+            <SheetFooter className="px-6 pb-8 gap-3">
+              <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
+              <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
+            <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+            <SheetFooter className="px-6 pb-8 gap-3">
+              <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
+              <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
-            setEditingCard({ ...selectedCard! });
-            setIsEditingCard(true);
-          }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
-          <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
+              setEditingCard({ ...selectedCard! });
+              setIsEditingCard(true);
+            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
+            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
-          <div className="px-6 py-6 space-y-4">
-            <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
-            <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
-          </div>
-          <SheetFooter className="px-6 pb-6 gap-3">
-            <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
-            <Button 
-              onClick={() => {
-                if (!editingCard) return;
-                // Check if it's a new card (temp id)
-                if (editingCard.id.startsWith('temp-')) {
-                  handleAddLocalCard(editingCard);
-                } else if (localCards.find(c => c.id === editingCard.id)) {
-                  // It's a local card
-                  handleUpdateLocalCard(editingCard);
-                } else {
-                  // It's a database card
-                  updateCardMutation.mutate(editingCard);
-                }
-              }} 
-              className="flex-1 bg-pink-500"
-            >
-              حفظ
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
+            <div className="px-6 py-6 space-y-4">
+              <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
+              <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
+            </div>
+            <SheetFooter className="px-6 pb-6 gap-3">
+              <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
+              <Button 
+                onClick={() => {
+                  if (!editingCard) return;
+                  // Check if it's a new card (temp id)
+                  if (editingCard.id.startsWith('temp-')) {
+                    handleAddLocalCard(editingCard);
+                  } else if (localCards.find(c => c.id === editingCard.id)) {
+                    // It's a local card
+                    handleUpdateLocalCard(editingCard);
+                  } else {
+                    // It's a database card
+                    updateCardMutation.mutate(editingCard);
+                  }
+                }} 
+                className="flex-1 bg-pink-500"
+              >
+                حفظ
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
 
       <style>{`
         .anima-bg { background: linear-gradient(135deg, hsl(330,40%,8%) 0%, hsl(280,35%,10%) 30%, hsl(320,30%,7%) 60%, hsl(270,40%,9%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
