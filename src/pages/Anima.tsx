@@ -58,6 +58,7 @@ const Anima = () => {
   const [newWish, setNewWish] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [showMilestones, setShowMilestones] = useState(true);
+  const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
   
   const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
     const saved = localStorage.getItem("anima_messages");
@@ -69,6 +70,14 @@ const Anima = () => {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [localTasks, setLocalTasks] = useState<AnimaTask[]>(() => {
     const saved = localStorage.getItem("anima_tasks");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Calendar State
+  const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
+  const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
+  const [localCalendarItems, setLocalCalendarItems] = useState<AnimaTask[]>(() => {
+    const saved = localStorage.getItem("anima_calendar");
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -92,6 +101,10 @@ const Anima = () => {
   }, [localTasks]);
 
   useEffect(() => {
+    localStorage.setItem("anima_calendar", JSON.stringify(localCalendarItems));
+  }, [localCalendarItems]);
+
+  useEffect(() => {
     localStorage.setItem("anima_cards", JSON.stringify(localCards));
   }, [localCards]);
 
@@ -107,6 +120,11 @@ const Anima = () => {
   const sortedTasks = useMemo(() => {
     return [...localTasks].sort((a, b) => a.progress - b.progress);
   }, [localTasks]);
+
+  // Sorted Calendar Items Logic (Lowest progress first)
+  const sortedCalendarItems = useMemo(() => {
+    return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
+  }, [localCalendarItems]);
 
   const handleHeartStart = () => {
     const startTime = Date.now();
@@ -234,6 +252,29 @@ const Anima = () => {
     toast.success('تم حذف المهمة');
   };
 
+  // Calendar Handlers
+  const handleAddCalendarItem = () => {
+    if (!newCalendarItemTitle.trim()) return;
+    const newItem: AnimaTask = {
+      id: `calendar-${Date.now()}`,
+      title: newCalendarItemTitle.trim(),
+      progress: 0
+    };
+    setLocalCalendarItems([...localCalendarItems, newItem]);
+    setNewCalendarItemTitle("");
+    setIsAddingCalendarItem(false);
+    toast.success('تمت إضافة عنصر التقويم');
+  };
+
+  const handleUpdateCalendarProgress = (id: string, progress: number) => {
+    setLocalCalendarItems(prev => prev.map(c => c.id === id ? { ...c, progress } : c));
+  };
+
+  const handleDeleteCalendarItem = (id: string) => {
+    setLocalCalendarItems(prev => prev.filter(c => c.id !== id));
+    toast.success('تم حذف عنصر التقويم');
+  };
+
   // Wish Handlers
   const handleAddLocalWish = (wish: string) => {
     if (!wish.trim()) return;
@@ -347,21 +388,27 @@ const Anima = () => {
   const cardsToDisplay = localCards.length > 0 ? localCards : (dbCards.length > 0 ? dbCards : defaultCards);
 
   useEffect(() => {
-    if (ratingData) setQualityRating(ratingData.balance_rating ?? 5.0);
+    if (ratingData && 'balance_rating' in ratingData) {
+      setQualityRating(ratingData.balance_rating ?? 5.0);
+    } else if (ratingData && 'rating' in ratingData) {
+      setQualityRating(ratingData.rating ?? 5.0);
+    }
   }, [ratingData]);
 
   // Milestone Auto-advance
   useEffect(() => {
     if (latestMilestones.length === 0) return;
+    // Reset to first milestone when autoplay is disabled
+    if (!isAutoPlayEnabled) {
+      setCurrentMilestoneIndex(0);
+      return;
+    }
+    
     const interval = setInterval(() => {
-      setIsExiting(true);
-      setTimeout(() => {
-        setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
-        setIsExiting(false);
-      }, 1000);
+      setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
     }, 14000);
     return () => clearInterval(interval);
-  }, [latestMilestones.length]);
+  }, [latestMilestones.length, isAutoPlayEnabled]);
 
   useEffect(() => {
     setIsEntering(false);
@@ -380,22 +427,25 @@ const Anima = () => {
   const parseMilestone = (message: string) => {
     const content = message.replace('__MILESTONE__', '');
     const parts = content.split('|');
-    const isSacredFmt = parts.length > 8;
+    const isSacredFmt = parts.length > 5;
+    
     return {
       title: parts[0] || 'جماع',
       rating: parts[1] || '-',
       notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[9] || '') : (parts[4] || '')
+      type: isSacredFmt ? (parts[5] || 'normal') : (parts[3] || 'normal'),
+      intention: isSacredFmt ? (parts[6] || '') : (parts[4] || '')
     };
   };
 
   const getMilestoneIcon = (type: string) => {
     switch (type) {
-      case 'sacred': return <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400" />;
-      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-400" />;
-      case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-400" />;
-      default: return <Zap className="w-3.5 h-3.5 text-blue-400" />;
+      case 'sacred': return <Flame className="w-3.5 h-3.5 text-red-500 fill-red-500" />;
+      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-500" />;
+      case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-500" />;
+      case 'nursing': return <span className="text-amber-700 text-[10px]">💧</span>;
+      case 'normal': return <Zap className="w-3.5 h-3.5 text-blue-500" />;
+      default: return <Zap className="w-3.5 h-3.5 text-blue-500" />;
     }
   };
 
@@ -439,7 +489,7 @@ const Anima = () => {
                 <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-center text-pink-300">الأنيما</h1>
+            <h1 className="text-3xl font-bold text-center text-pink-300 select-none">الأنيما</h1>
           </div>
 
           {/* Quality Slider */}
@@ -600,57 +650,73 @@ const Anima = () => {
             </div>
           </div>
 
-          {/* Milestones Display */}
-          {latestMilestones.length > 0 && showMilestones && (
-            <div className="mb-6">
-              {(() => {
-                const currentMilestone = latestMilestones[currentMilestoneIndex];
-                const milestone = parseMilestone(currentMilestone.message);
-                return (
-                  <button 
-                    onClick={handleMilestoneClick}
-                    className={`w-full relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 p-2.5 text-left hover:border-pink-400/40 cursor-pointer transition-all duration-1000 ${
-                      isExiting ? 'opacity-0 scale-95' : isEntering ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-                    }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5">
-                        {getMilestoneIcon(milestone.type)}
-                        <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
-                      </div>
-                      <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
-                    </div>
-                    {milestone.intention && <div className="pt-1.5 border-t border-white/20 text-xs text-white/85 font-medium">{milestone.intention}</div>}
-                    {milestone.notes && <div className="pt-1 text-xs text-yellow-100/80 line-clamp-2 italic">{milestone.notes}</div>}
-                  </button>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {cardsToDisplay.map((item, i) => (
-              <div key={item.id} className="group relative">
-                <button 
-                  onClick={() => {
-                    setSelectedCard(item);
-                    setEditingCard({ ...item });
-                    setIsEditingCard(true);
-                  }}
-                  className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
-                >
-                  <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
-                </button>
-                {localCards.find(c => c.id === item.id) && (
-                  <button
-                    onClick={() => handleDeleteLocalCard(item.id)}
-                    className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
+          {/* Calendar Section */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <ListTodo className="w-5 h-5 text-green-400" />
+                <h2 className="text-lg font-bold text-green-100">تقويم الأنيما</h2>
               </div>
-            ))}
+              <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {sortedCalendarItems.map((item) => (
+                <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${item.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{item.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteCalendarItem(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[item.progress]}
+                    onValueChange={(val) => handleUpdateCalendarProgress(item.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
+                  />
+                </div>
+              ))}
+              {localCalendarItems.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد عناصر تقويم حالياً</p>
+              )}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="grid grid-cols-2 gap-3">
+              {cardsToDisplay.map((item, i) => (
+                <div key={item.id} className="group relative">
+                  <button 
+                    onClick={() => {
+                      setSelectedCard(item);
+                      setEditingCard({ ...item });
+                      setIsEditingCard(true);
+                    }}
+                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
+                  >
+                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
+                  </button>
+                  {localCards.find(c => c.id === item.id) && (
+                    <button
+                      onClick={() => handleDeleteLocalCard(item.id)}
+                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           <button onClick={() => {
@@ -663,20 +729,165 @@ const Anima = () => {
 
           {/* Chart Section */}
           {latestMilestones.length > 1 && (
-            <div className="mt-20 w-full h-[400px]">
+            <div className="mt-20 w-full h-[120px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={[...latestMilestones].reverse().slice(-6).map((m, i) => ({
-                  val: parseFloat(parseMilestone(m.message).rating) || 0,
-                  date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                  title: parseMilestone(m.message).title
-                }))}>
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(244,114,182,0.1)"/><stop offset="100%" stopColor="rgba(244,114,182,0.8)"/></linearGradient></defs>
-                  <YAxis hide domain={[0, 12]} /><XAxis hide />
-                  <Tooltip content={({ active, payload }) => (active && payload?.[0] ? <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-lg text-[10px] text-pink-100">{payload[0].payload.title}: {payload[0].value}</div> : null)} />
+                <LineChart data={(() => {
+                  const filtered = [...latestMilestones]
+                    .reverse()
+                    .filter((m) => {
+                      const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                      return daysAgo <= 7;
+                    });
+                  
+                  // Find the start of the earliest day (midnight) in the filtered range
+                  const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
+                  const dayStart = new Date(earliestDate);
+                  dayStart.setHours(0, 0, 0, 0); // midnight of the earliest day
+                  const dayStartMs = dayStart.getTime();
+
+                  return filtered.map((m, i) => {
+                    const milestone = parseMilestone(m.message);
+                    // timePosition = hours elapsed since midnight of the first day
+                    const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
+
+                    return {
+                      val: parseFloat(milestone.rating) || 0,
+                      timePosition: hoursSinceDayStart,
+                      index: i,
+                      title: milestone.title,
+                      rating: milestone.rating,
+                      notes: milestone.notes,
+                      type: milestone.type,
+                      intention: milestone.intention,
+                      date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                      time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                      timeAgo: getTimeDifference(new Date(m.created_at)),
+                      dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
+                      dayStartMs,
+                    };
+                  });
+                })()}
+                  >
+                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient></defs>
+                  <YAxis hide domain={[5, 10]} />
+                  <XAxis 
+                    dataKey="timePosition" 
+                    domain={[0, 'dataMax + 2']}
+                    type="number"
+                    ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
+                    tickFormatter={(value) => {
+                      // Compute the actual day-of-week for each tick using latestMilestones from closure.
+                      // value = hours since midnight of the earliest day in the filtered range.
+                      const filtered = [...latestMilestones]
+                        .reverse()
+                        .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
+                      if (filtered.length === 0) return '';
+                      const earliest = new Date(filtered[0].created_at);
+                      earliest.setHours(0, 0, 0, 0);
+                      const tickDate = new Date(earliest.getTime() + value * 3600000);
+                      const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                      return days[tickDate.getDay()];
+                    }}
+                    tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
+                    interval={0}
+                  />
+                  <Tooltip content={({ active, payload }) => (active && payload?.[0] ? 
+                    <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
+                      <div className="font-bold text-white">{payload[0].payload.title}</div>
+                      <div>التقييم: {payload[0].payload.rating}</div>
+                      {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                      {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
+                      <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
+                    </div> 
+                    : null)} 
+                  />
                   <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  <Line type="monotone" dataKey="val" stroke="url(#lineG)" strokeWidth={2} dot={false} animationDuration={3000} />
+                  {/* Day boundary lines — each 24h represents one full calendar day starting from midnight */}
+                  <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="val" 
+                    stroke="url(#lineG)"  
+                    strokeWidth={2}
+                    dot={(props: any) => {
+                      const { cx, cy, payload } = props;
+                      
+                      const iconType = payload.type;
+                      const iconColor = 
+                        iconType === 'sacred' ? '#ef4444' :
+                        iconType === 'heart' ? '#f472b6' :
+                        iconType === 'imaginary' ? '#a855f7' :
+                        iconType === 'normal' ? '#3b82f6' :
+                        iconType === 'nursing' ? '#d97706' :
+                        '#6b7280';
+                      
+                      return (
+                        <g key={`dot-${cx}-${cy}`}>
+                          {/* Icon inside */}
+                          <g transform={`translate(${cx - 3}, ${cy - 3})`}>
+                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {/* Fallback for any other type */}
+                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                          </g>
+                        </g>
+                      );
+                    }}
+                    animationDuration={3000} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Milestones Vertical List */}
+          {showMilestones && latestMilestones.length > 0 && (
+            <div className="mt-12 w-full space-y-4">
+              <div className="mb-6 w-full flex justify-center border-b border-white/5 pb-4">
+                <h2 className="text-xl font-bold text-pink-300">نعمة الأنيما</h2>
+              </div>
+              <div className="space-y-3">
+                {latestMilestones.map((m) => {
+                  const milestone = parseMilestone(m.message);
+                  return (
+                    <div key={m.id} className="w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-pink-600/10 via-rose-500/8 to-orange-500/5 backdrop-blur-xl border border-pink-400/15 p-4 text-right hover:border-pink-400/30 transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {getMilestoneIcon(milestone.type)}
+                          <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
+                        </div>
+                        <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
+                      </div>
+                      {milestone.intention && (
+                        <div className="pt-2 border-t border-white/10 text-xs text-white/80 font-medium">
+                          <span className="text-pink-300/60 ml-1">النية:</span>
+                          {milestone.intention}
+                        </div>
+                      )}
+                      {milestone.notes && (
+                        <div className="pt-1.5 text-xs text-yellow-100/70 italic leading-relaxed">
+                          {milestone.notes}
+                        </div>
+                      )}
+                      <div className="mt-3 flex items-center gap-2 text-[9px] text-white/30 border-t border-white/5 pt-2">
+                        <span>{new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}</span>
+                        <span className="opacity-50">•</span>
+                        <span>{new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -701,6 +912,17 @@ const Anima = () => {
           <SheetFooter className="px-6 pb-8 gap-3">
             <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
             <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
+          <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
+            <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
