@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2, ListTodo, CheckCircle2 } from "lucide-react";
+import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2, Copy } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip, ReferenceLine } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
@@ -20,12 +20,6 @@ interface AnimaCard {
   order_index: number;
 }
 
-interface AnimaTask {
-  id: string;
-  title: string;
-  progress: number;
-}
-
 const defaultCards: AnimaCard[] = [
   { id: "1", emoji: "", title: "إشباع عاطفي", description: "", order_index: 0 },
   { id: "2", emoji: "", title: "إشباع جنسي", description: "", order_index: 1 },
@@ -38,192 +32,71 @@ const defaultCards: AnimaCard[] = [
 const Anima = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
   const [selectedCard, setSelectedCard] = useState<AnimaCard | null>(null);
   const [isEditingCard, setIsEditingCard] = useState(false);
   const [editingCard, setEditingCard] = useState<AnimaCard | null>(null);
-  const [animaMessage, setAnimaMessage] = useState(() => "");
-  const [isLiked, setIsLiked] = useState(() => false);
-  const [qualityRating, setQualityRating] = useState(5.0);
+  const [animaMessage, setAnimaMessage] = useState(() => localStorage.getItem("anima_message") || "");
+  const [isLiked, setIsLiked] = useState(() => localStorage.getItem("anima_liked") === "true");
+  const [qualityRating, setQualityRating] = useState(() => parseFloat(localStorage.getItem("anima_quality_rating") || "5.0"));
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
-  const [isEntering, setIsEntering] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [pressDuration, setPressDuration] = useState(0);
-  const [isPressing, setIsPressing] = useState(false);
-  const [pressStartTime, setPressStartTime] = useState<number | null>(null);
-  const [fadeOutTimer, setFadeOutTimer] = useState<NodeJS.Timeout | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-  const [showMilestones, setShowMilestones] = useState(true);
-  const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
-  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
-  const [newSexualWish, setNewSexualWish] = useState("");
   
-  const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
-    const saved = localStorage.getItem("anima_messages");
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  // Tasks State
-  const [isAddingTask, setIsAddingTask] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [localTasks, setLocalTasks] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_tasks");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Calendar State
-  const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
-  const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
-  const [localCalendarItems, setLocalCalendarItems] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_calendar");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localWishes, setLocalWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localSexualWishes, setLocalSexualWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_sexual_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [showSexualWishes, setShowSexualWishes] = useState(true);
+  // Local Storage Keys
+  const CARDS_KEY = "anima_local_cards";
+  const WISHES_KEY = "anima_local_wishes";
+  const RATING_KEY = "anima_quality_rating";
 
   const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
-    const saved = localStorage.getItem("anima_cards");
+    const saved = localStorage.getItem(CARDS_KEY);
+    return saved ? JSON.parse(saved) : defaultCards;
+  });
+
+  const [localWishes, setLocalWishes] = useState<{id: string, title: string}[]>(() => {
+    const saved = localStorage.getItem(WISHES_KEY);
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Persistent Storage Effects
   useEffect(() => {
-    localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
-  }, [localWishes]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_sexual_wishes", JSON.stringify(localSexualWishes));
-  }, [localSexualWishes]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
-  }, [localTasks]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_calendar", JSON.stringify(localCalendarItems));
-  }, [localCalendarItems]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_cards", JSON.stringify(localCards));
+    localStorage.setItem(CARDS_KEY, JSON.stringify(localCards));
   }, [localCards]);
 
   useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
+    localStorage.setItem(WISHES_KEY, JSON.stringify(localWishes));
+  }, [localWishes]);
 
   useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
-
-  // Sorted Tasks Logic (Lowest progress first)
-  const sortedTasks = useMemo(() => {
-    return [...localTasks].sort((a, b) => a.progress - b.progress);
-  }, [localTasks]);
-
-  // Sorted Calendar Items Logic (Lowest progress first)
-  const sortedCalendarItems = useMemo(() => {
-    return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
-  }, [localCalendarItems]);
-
-  const handleHeartStart = () => {
-    const startTime = Date.now();
-    setPressStartTime(startTime);
-    setIsPressing(true);
-    if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      setPressDuration(Math.min(elapsed / 100, 10));
-    }, 50);
-    setLongPressTimer(timer);
-  };
-
-  const handleHeartEnd = () => {
-    if (longPressTimer) {
-      clearInterval(longPressTimer as unknown as number);
-      setLongPressTimer(null);
-    }
-    setIsPressing(false);
-    setPressStartTime(null);
-    
-    // Fade out over 60 seconds
-    const maxDuration = pressDuration;
-    const fadeStartTime = Date.now();
-    const fadeDuration = 60000; // 60 seconds
-    
-    if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
-    const fadeTimer = setInterval(() => {
-      const elapsed = Date.now() - fadeStartTime;
-      const progress = Math.min(elapsed / fadeDuration, 1);
-      setPressDuration(Math.max(0, maxDuration * (1 - progress)));
-      
-      if (progress >= 1) {
-        clearInterval(fadeTimer);
-        setFadeOutTimer(null);
-      }
-    }, 50);
-    setFadeOutTimer(fadeTimer as unknown as NodeJS.Timeout);
-  };
+    localStorage.setItem(RATING_KEY, qualityRating.toString());
+  }, [qualityRating]);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [user, loading, navigate]);
+    localStorage.setItem("anima_message", animaMessage);
+  }, [animaMessage]);
+
+  useEffect(() => {
+    localStorage.setItem("anima_liked", isLiked.toString());
+  }, [isLiked]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Cleanup fade out timer on unmount
-  useEffect(() => {
-    return () => {
-      if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
-    };
-  }, [fadeOutTimer]);
+  const handleHeartStart = () => {
+    const timer = setTimeout(() => navigate(-1), 800);
+    setLongPressTimer(timer);
+  };
 
-  // Database Queries
-  const { data: dbCards = [] } = useQuery({
-    queryKey: ['animaCards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('anima_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
+  const handleHeartEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
 
-  const { data: ratingData } = useQuery({
-    queryKey: ['animaQualityRating', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('anima_quality_rating')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user
-  });
-
+  // Fetch milestones from Supabase (still needed for the chart)
   const { data: latestMilestones = [] } = useQuery({
     queryKey: ['latestMilestones', user?.id],
     queryFn: async () => {
@@ -234,6 +107,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .like('message', '%__MILESTONE__%')
         .order('created_at', { ascending: false });
+
       if (error) throw error;
       return data || [];
     },
@@ -242,83 +116,13 @@ const Anima = () => {
 
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState(0);
 
-  // Task Handlers
-  const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
-    const newTask: AnimaTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      progress: 0
-    };
-    setLocalTasks([...localTasks, newTask]);
-    setNewTaskTitle("");
-    setIsAddingTask(false);
-    toast.success('تمت إضافة المهمة');
-  };
-
-  const handleUpdateTaskProgress = (id: string, progress: number) => {
-    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, progress } : t));
-  };
-
-  const handleDeleteTask = (id: string) => {
-    setLocalTasks(prev => prev.filter(t => t.id !== id));
-    toast.success('تم حذف المهمة');
-  };
-
-  // Calendar Handlers
-  const handleAddCalendarItem = () => {
-    if (!newCalendarItemTitle.trim()) return;
-    const newItem: AnimaTask = {
-      id: `calendar-${Date.now()}`,
-      title: newCalendarItemTitle.trim(),
-      progress: 0
-    };
-    setLocalCalendarItems([...localCalendarItems, newItem]);
-    setNewCalendarItemTitle("");
-    setIsAddingCalendarItem(false);
-    toast.success('تمت إضافة عنصر التقويم');
-  };
-
-  const handleUpdateCalendarProgress = (id: string, progress: number) => {
-    setLocalCalendarItems(prev => prev.map(c => c.id === id ? { ...c, progress } : c));
-  };
-
-  const handleDeleteCalendarItem = (id: string) => {
-    setLocalCalendarItems(prev => prev.filter(c => c.id !== id));
-    toast.success('تم حذف عنصر التقويم');
-  };
-
-  // Sexual Wish Handlers
-  const handleAddSexualWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `sexual-wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalSexualWishes(prev => [newWishObj, ...prev]);
-    setNewWish("");
-    setIsAddingWish(false);
-    toast.success('تمت إضافة الأمنية الجنسية');
-  };
-
-  const handleToggleSexualWishCompleted = (id: string) => {
-    setLocalSexualWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
-  };
-
-  const handleDeleteSexualWish = (id: string) => {
-    setLocalSexualWishes(prev => prev.filter(w => w.id !== id));
-    toast.success('تم حذف الأمنية الجنسية');
-  };
-
-  // Wish Handlers
   const handleAddLocalWish = (wish: string) => {
     if (!wish.trim()) return;
-    const newWishObj = { id: `wish-${Date.now()}`, title: wish.trim(), completed: false };
+    const newWishObj = { id: `wish-${Date.now()}`, title: wish.trim() };
     setLocalWishes(prev => [newWishObj, ...prev]);
     setNewWish("");
     setIsAddingWish(false);
-    toast.success('تمت إضافة الأمنية');
-  };
-
-  const handleToggleWishCompleted = (id: string) => {
-    setLocalWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+    toast.success('تمت إضافة الأمنية محلياً');
   };
 
   const handleDeleteLocalWish = (id: string) => {
@@ -326,819 +130,319 @@ const Anima = () => {
     toast.success('تم حذف الأمنية');
   };
 
-  const handleAddLocalCard = (card: AnimaCard) => {
-    const newCard: AnimaCard = {
-      ...card,
-      id: card.id.startsWith('temp-') ? `card-${Date.now()}` : card.id,
-      order_index: localCards.length
-    };
-    setLocalCards(prev => [...prev, newCard]);
-    setIsEditingCard(false);
-    setEditingCard(null);
-    toast.success('تمت إضافة البطاقة');
-  };
-
-  const handleUpdateLocalCard = (card: AnimaCard) => {
-    setLocalCards(prev => prev.map(c => c.id === card.id ? card : c));
+  const handleSaveCard = (card: AnimaCard) => {
+    if (card.id.startsWith('temp-')) {
+      setLocalCards(prev => [...prev, { ...card, id: `card-${Date.now()}` }]);
+    } else {
+      setLocalCards(prev => prev.map(c => c.id === card.id ? card : c));
+    }
     setIsEditingCard(false);
     setSelectedCard(null);
-    toast.success('تم تحديث البطاقة');
+    toast.success('تم حفظ التعديلات محلياً');
   };
 
-  const handleDeleteLocalCard = (id: string) => {
-    setLocalCards(prev => prev.filter(c => c.id !== id));
-    toast.success('تم حذف البطاقة');
-  };
-
-  const handleAddMessage = () => {
-    if (!newMessage.trim()) return;
-    const message = {
-      id: `msg-${Date.now()}`,
-      text: newMessage,
-      timestamp: Date.now(),
-      likes: 0
-    };
-    setAnimaMessages(prev => [message, ...prev]);
-    setNewMessage("");
-    toast.success('تمت إضافة الرسالة');
-  };
-
-  const handleToggleLike = (id: string) => {
-    setAnimaMessages(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
-  };
-
-  const handleDeleteMessage = (id: string) => {
-    setAnimaMessages(prev => prev.filter(m => m.id !== id));
-    toast.success('تم حذف الرسالة');
-  };
-
-  const handleMilestoneClick = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
-      setIsExiting(false);
-    }, 1000);
-  };
-
-  // Mutation for database updates
-  const updateQualityRatingMutation = useMutation({
-    mutationFn: async (rating: number) => {
-      if (!user) throw new Error('No user');
-      const { error } = await supabase.from('anima_quality_rating').upsert({
-        user_id: user.id,
-        rating,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['animaQualityRating', user?.id] })
-  });
-
-  const updateCardMutation = useMutation({
-    mutationFn: async (card: AnimaCard) => {
-      if (!user) throw new Error('No user');
-      if (card.id.startsWith('temp-')) {
-        const { error } = await supabase.from('anima_cards').insert({
-          user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: card.order_index
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('anima_cards').update({
-          title: card.title, description: card.description, emoji: card.emoji, updated_at: new Date().toISOString()
-        }).eq('id', card.id).eq('user_id', user.id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaCards', user?.id] });
+  const handleDeleteCard = (id: string) => {
+    if (window.confirm('هل أنت متأكد من حذف هذه البطاقة؟')) {
+      setLocalCards(prev => prev.filter(c => c.id !== id));
       setIsEditingCard(false);
       setSelectedCard(null);
-      toast.success('تم الحفظ');
+      toast.success('تم حذف البطاقة');
     }
-  });
+  };
 
-  const cardsToDisplay = localCards.length > 0 ? localCards : (dbCards.length > 0 ? dbCards : defaultCards);
-
-  useEffect(() => {
-    if (ratingData && 'balance_rating' in ratingData) {
-      setQualityRating((ratingData as any).balance_rating ?? 5.0);
-    } else if (ratingData && 'rating' in ratingData) {
-      setQualityRating((ratingData as any).rating ?? 5.0);
-    }
-  }, [ratingData]);
-
-  // Milestone Auto-advance
-  useEffect(() => {
-    if (latestMilestones.length === 0) return;
-    // Reset to first milestone when autoplay is disabled
-    if (!isAutoPlayEnabled) {
-      setCurrentMilestoneIndex(0);
-      return;
-    }
-    
-    const interval = setInterval(() => {
-      setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
-    }, 14000);
-    return () => clearInterval(interval);
-  }, [latestMilestones.length, isAutoPlayEnabled]);
-
-  useEffect(() => {
-    setIsEntering(false);
-    setCardMounted(false);
-    const enterTimer = setTimeout(() => setIsEntering(true), 50);
-    const mountTimer = setTimeout(() => {
-      setCardMounted(true);
-      setIsEntering(false);
-    }, 600);
-    return () => {
-      clearTimeout(enterTimer);
-      clearTimeout(mountTimer);
-    };
-  }, [currentMilestoneIndex]);
-
-  const parseMilestone = (message: string) => {
-    const content = message.replace('__MILESTONE__', '');
+  const parseMilestone = (msg: string) => {
+    const content = msg.replace('__MILESTONE__', '');
     const parts = content.split('|');
-    const isSacredFmt = parts.length > 5;
-    
     return {
       title: parts[0] || 'جماع',
-      rating: parts[1] || '-',
-      notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[5] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[6] || '') : (parts[4] || '')
+      rating: parts[1] || '0',
+      notes: parts[2] || '',
+      type: parts[3] || 'normal',
+      intention: parts[4] || ''
     };
   };
 
   const getMilestoneIcon = (type: string) => {
     switch (type) {
-      case 'sacred': return <Flame className="w-3.5 h-3.5 text-transparent fill-transparent" style={{ filter: 'drop-shadow(0 0 8px rgba(255,140,0,0.8))' }} />;
-      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-500" />;
-      case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-500" />;
-      case 'nursing': return <span className="text-amber-700 text-[10px]">💧</span>;
-      case 'normal': return <Zap className="w-3.5 h-3.5 text-blue-500" />;
-      default: return <Zap className="w-3.5 h-3.5 text-blue-500" />;
+      case 'sacred': return <Flame className="w-4 h-4 text-amber-400" />;
+      case 'heart': return <HeartHandshake className="w-4 h-4 text-pink-400" />;
+      case 'imaginary': return <Brain className="w-4 h-4 text-purple-400" />;
+      default: return <Zap className="w-4 h-4 text-blue-400" />;
     }
   };
 
-  const getTimeDifference = (date: Date) => {
-    const diffMs = new Date().getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'منذ قليل';
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    const diffHours = Math.floor(diffMs / 3600000);
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    return `منذ ${Math.floor(diffMs / 86400000)} يوم`;
-  };
+  useEffect(() => {
+    if (latestMilestones.length === 0) return;
+    const interval = setInterval(() => {
+      setIsExiting(true);
+      setTimeout(() => {
+        setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
+        setIsExiting(false);
+      }, 3000);
+    }, 14000);
+    return () => clearInterval(interval);
+  }, [latestMilestones.length]);
 
-  if (loading || !user) return null;
+  useEffect(() => {
+    setCardMounted(false);
+    const timer = setTimeout(() => setCardMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, [currentMilestoneIndex]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden" dir="rtl">
-      <div className="fixed inset-0 anima-bg" />
-      <div className="fixed top-1/4 right-1/4 w-64 h-64 rounded-full anima-orb anima-orb-pink" />
-      <div className="fixed bottom-1/3 left-1/4 w-48 h-48 rounded-full anima-orb anima-orb-purple" />
-      <div className="fixed top-1/2 left-1/2 w-32 h-32 rounded-full anima-orb anima-orb-rose" />
+    <div className="min-h-screen bg-[#0a0508] text-white overflow-x-hidden font-sans selection:bg-pink-500/30">
+      {/* Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-600/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
-        <div className={`max-w-sm w-full transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          
-          {/* Header */}
-          <div className="flex flex-col items-center mb-10">
-            <div className="relative mb-4">
-              <div className="absolute rounded-full" style={{
-                inset: `-${Math.round((qualityRating + pressDuration) * 4)}px`,
-                background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
-                filter: `blur(${12 + qualityRating * 2 + pressDuration * 3}px)`,
-                opacity: Math.max(0.08, (qualityRating + pressDuration) / 10),
-                transition: 'all 0.1s ease',
-              }} />
-              <div 
-                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
-              >
-                <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
-              </div>
-            </div>
+      <div className="relative z-10 max-w-lg mx-auto px-6 pt-12 pb-24 flex flex-col items-center">
+        {/* Breathing Logo */}
+        <div 
+          className="relative mb-12 cursor-pointer group"
+          onMouseDown={handleHeartStart}
+          onMouseUp={handleHeartEnd}
+          onMouseLeave={handleHeartEnd}
+          onTouchStart={handleHeartStart}
+          onTouchEnd={handleHeartEnd}
+        >
+          <div className="absolute inset-0 bg-pink-500/20 blur-2xl rounded-full anima-pulse-slow" />
+          <div className="relative w-24 h-24 flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl transition-transform duration-700 group-hover:scale-110">
+            <Heart className="w-10 h-10 text-pink-500 fill-pink-500/20 anima-pulse-slow" />
           </div>
+        </div>
 
-          {/* Quality Slider */}
-          <div className="mb-6 pb-3 border-b border-white/10 w-full">
-            <Slider
-              value={[qualityRating]}
-              onValueChange={(val) => { setQualityRating(val[0]); updateQualityRatingMutation.mutate(val[0]); }}
-              max={10} min={0} step={0.1}
-              className="w-full"
-              rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
-            />
-          </div>
-
-          {/* Messages Section */}
-          <div className="mb-6 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
+        {/* Anima Message Card */}
+        <div className="w-full mb-12 group">
+          <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl transition-all duration-500 hover:bg-white/10 hover:border-pink-500/30">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-pink-400" />
-                <h3 className="text-sm font-medium text-pink-200/80">رسائل من الأنيما</h3>
+                <span className="text-[11px] font-bold tracking-widest text-pink-300/80 uppercase">رسالة من الأنيما</span>
               </div>
-            </div>
-            
-            {/* Messages Display */}
-            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-              {animaMessages.length > 0 ? (
-                animaMessages.map((msg) => (
-                  <div key={msg.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button 
-                          onClick={() => handleToggleLike(msg.id)}
-                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-pink-400 bg-pink-500/10" : "text-white/20 hover:text-pink-400"}`}
-                        >
-                          <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
-                          <span className="text-[10px] font-medium">{msg.likes}</span>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-3 text-xs text-white/20">لا توجد رسائل حالياً</p>
-              )}
-            </div>
-
-            {/* Message Input */}
-            <div className="flex gap-2">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddMessage();
-                  }
-                }}
-                placeholder="اكتب رسالة من الأنيما..."
-                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                rows={2}
-              />
-              <button
-                onClick={handleAddMessage}
-                disabled={!newMessage.trim()}
-                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+              <button 
+                onClick={() => setIsLiked(!isLiked)}
+                className={`p-2 rounded-full transition-all duration-500 ${isLiked ? 'bg-pink-500/20 text-pink-500 scale-110' : 'bg-white/5 text-white/20 hover:text-pink-400'}`}
               >
-                <Plus className="w-5 h-5" />
+                <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
               </button>
             </div>
+            <Textarea 
+              value={animaMessage}
+              onChange={(e) => setAnimaMessage(e.target.value)}
+              placeholder="اكتب رسالتك هنا..."
+              className="w-full bg-transparent border-none text-white text-right placeholder:text-white/10 focus:ring-0 resize-none min-h-[100px] text-sm leading-relaxed"
+              dir="rtl"
+            />
           </div>
+        </div>
 
-          {/* Sexual Wishes Section */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">مهام الأنيما الجنسية</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    const wish = prompt('اكتب المهمة الجنسية:');
-                    if (wish && wish.trim()) {
-                      handleAddSexualWish(wish.trim());
-                    }
+        {/* Milestones Carousel */}
+        {latestMilestones.length > 0 && (
+          <div className="w-full mb-12 h-[120px]">
+            {(() => {
+              const milestone = parseMilestone(latestMilestones[currentMilestoneIndex].message);
+              const date = new Date(latestMilestones[currentMilestoneIndex].created_at);
+              const timeDiff = date.toLocaleDateString('ar-EG', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+              
+              return (
+                <div 
+                  key={currentMilestoneIndex}
+                  className={`relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 text-right group`}
+                  style={{ 
+                    opacity: !isExiting && cardMounted ? 1 : 0,
+                    transition: 'opacity 3000ms ease-in-out'
                   }}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
+                  dir="rtl"
                 >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setShowSexualWishes(!showSexualWishes)}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
-                >
-                  <span className="text-xs font-medium">▼</span>
-                </button>
-              </div>
-            </div>
-            
-            {showSexualWishes && (
-              <div className="space-y-3 animate-in slide-in-from-top duration-200">
-                {localSexualWishes.map((wish) => (
-                  <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-pink-500/10 border-pink-500/30" : "bg-pink-500/5 border-pink-400/20 hover:border-pink-500/30"}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className={`text-sm leading-relaxed flex-1 ${
-                        wish.completed
-                          ? "text-white/50 line-through"
-                          : "text-white/90"
-                      }`}>{wish.title}</p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleSexualWishCompleted(wish.id)}
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            wish.completed
-                              ? "bg-pink-500 border-pink-500"
-                              : "border-pink-400/30 hover:border-pink-400"
-                          }`}
-                        >
-                          {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                        </button>
-                        <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {localSexualWishes.length === 0 && (
-                  <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام جنسية حالياً</p>
-                )}
-              </div>
-            )}
-
-            {/* Sexual Wish Dialog */}
-            {isAddingSexualWish && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
-                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة مهمة جنسية جديدة</h3>
-                  <textarea
-                    value={newSexualWish}
-                    onChange={(e) => setNewSexualWish(e.target.value)}
-                    placeholder="اكتب المهمة الجنسية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddSexualWish(newSexualWish); }}
-                      disabled={!newSexualWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة مهمة جنسية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingSexualWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Wishes Section */}
-          <div className="mb-12 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما العامة</h2>
-              </div>
-              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              {localWishes.slice(3).map((wish) => (
-                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`text-sm leading-relaxed flex-1 ${
-                      wish.completed
-                        ? "text-white/50 line-through"
-                        : "text-white/90"
-                    }`}>{wish.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleToggleWishCompleted(wish.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          wish.completed
-                            ? "bg-green-500 border-green-500"
-                            : "border-white/20 hover:border-green-400"
-                        }`}
-                      >
-                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                      </button>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Regular Wish Dialog */}
-          {isAddingWish && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
-              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية عامة جديدة</h3>
-                <textarea
-                    value={newWish}
-                    onChange={(e) => setNewWish(e.target.value)}
-                    placeholder="اكتب الأمنية العامة..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
-                      disabled={!newWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة أمنية عامة
-                    </button>
-                    <button
-                      onClick={() => setIsAddingWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {/* Treatment Section (Therapy Tasks) */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">علاج الأنيما</h2>
-              </div>
-              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{task.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[task.progress]}
-                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                </div>
-              ))}
-              {localTasks.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
-              )}
-            </div>
-          </div>
-
-          {/* Calendar Section */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-green-400" />
-                <h2 className="text-lg font-bold text-green-100">تقويم الأنيما</h2>
-              </div>
-              <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedCalendarItems.map((item) => (
-                <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${item.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{item.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteCalendarItem(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[item.progress]}
-                    onValueChange={(val) => handleUpdateCalendarProgress(item.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
-                  />
-                </div>
-              ))}
-              {localCalendarItems.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد عناصر تقويم حالياً</p>
-              )}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-3">
-              {cardsToDisplay.map((item, i) => (
-                <div key={item.id} className="group relative">
-                  <button 
-                    onClick={() => {
-                      setSelectedCard(item);
-                      setEditingCard({ ...item });
-                      setIsEditingCard(true);
-                    }}
-                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
-                  >
-                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
-                  </button>
-                  {localCards.find(c => c.id === item.id) && (
-                    <button
-                      onClick={() => handleDeleteLocalCard(item.id)}
-                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={() => {
-            setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
-            setIsEditingCard(true);
-          }} className="w-full mt-4 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 text-white/40 hover:text-white/60 transition-all">
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">إضافة بطاقة</span>
-          </button>
-
-          {/* Chart Section */}
-          {latestMilestones.length > 1 && (
-            <div className="mt-20 w-full h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={(() => {
-                  const filtered = [...latestMilestones]
-                    .reverse()
-                    .filter((m) => {
-                      const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
-                      return daysAgo <= 7;
-                    });
-                  
-                  // Find the start of the earliest day (midnight) in the filtered range
-                  const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
-                  const dayStart = new Date(earliestDate);
-                  dayStart.setHours(0, 0, 0, 0); // midnight of the earliest day
-                  const dayStartMs = dayStart.getTime();
-
-                  return filtered.map((m, i) => {
-                    const milestone = parseMilestone(m.message);
-                    // timePosition = hours elapsed since midnight of the first day
-                    const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
-
-                    return {
-                      val: parseFloat(milestone.rating) || 0,
-                      timePosition: hoursSinceDayStart,
-                      index: i,
-                      title: milestone.title,
-                      rating: milestone.rating,
-                      notes: milestone.notes,
-                      type: milestone.type,
-                      intention: milestone.intention,
-                      date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                      time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                      timeAgo: getTimeDifference(new Date(m.created_at)),
-                      dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
-                      dayStartMs,
-                    };
-                  });
-                })()}
-                  >
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)"/><stop offset="50%" stopColor="rgba(255,69,0,0.6)"/><stop offset="100%" stopColor="rgba(255,0,0,0.8)"/></linearGradient></defs>
-                  <YAxis hide domain={[5, 10]} />
-                  <XAxis 
-                    dataKey="timePosition" 
-                    domain={[0, 'dataMax + 2']}
-                    type="number"
-                    ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
-                    tickFormatter={(value) => {
-                      // Compute the actual day-of-week for each tick using latestMilestones from closure.
-                      // value = hours since midnight of the earliest day in the filtered range.
-                      const filtered = [...latestMilestones]
-                        .reverse()
-                        .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
-                      if (filtered.length === 0) return '';
-                      const earliest = new Date(filtered[0].created_at);
-                      earliest.setHours(0, 0, 0, 0);
-                      const tickDate = new Date(earliest.getTime() + value * 3600000);
-                      const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                      return days[tickDate.getDay()];
-                    }}
-                    tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
-                    interval={0}
-                  />
-                  <Tooltip content={({ active, payload }) => (active && payload?.[0] ? 
-                    <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
-                      <div className="font-bold text-white">{payload[0].payload.title}</div>
-                      <div>التقييم: {payload[0].payload.rating}</div>
-                      {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
-                      {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
-                      <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
-                    </div> 
-                    : null)} 
-                  />
-                  <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  {/* Day boundary lines — each 24h represents one full calendar day starting from midnight */}
-                  <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <Line 
-                    type="monotone" 
-                    dataKey="val" 
-                    stroke="url(#lineG)"  
-                    strokeWidth={2}
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      
-                      const iconType = payload.type;
-                      const iconColor = 
-                        iconType === 'sacred' ? '#ef4444' :
-                        iconType === 'heart' ? '#f472b6' :
-                        iconType === 'imaginary' ? '#a855f7' :
-                        iconType === 'normal' ? '#3b82f6' :
-                        iconType === 'nursing' ? '#d97706' :
-                        '#6b7280';
-                      
-                      return (
-                        <g key={`dot-${cx}-${cy}`}>
-                          {/* Icon inside */}
-                          <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
-                            {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {/* Fallback for any other type */}
-                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                          </g>
-                        </g>
-                      );
-                    }}
-                    animationDuration={3000} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Milestones Vertical List */}
-          {showMilestones && latestMilestones.length > 0 && (
-            <div className="mt-12 w-full space-y-4">
-              <div className="mb-6 w-full flex justify-center border-b border-white/5 pb-4">
-                <h2 className="text-xl font-bold text-pink-300">نعمة الأنيما</h2>
-              </div>
-              <div className="space-y-3">
-                {latestMilestones.map((m) => {
-                  const milestone = parseMilestone(m.message);
-                  return (
-                    <div key={m.id} className="w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-pink-600/10 via-rose-500/8 to-orange-500/5 backdrop-blur-xl border border-pink-400/15 p-4 text-right hover:border-pink-400/30 transition-all">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                  <div className="relative p-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
                           {getMilestoneIcon(milestone.type)}
-                          <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
+                          <h3 className="text-sm font-bold text-white leading-tight">{milestone.title}</h3>
                         </div>
-                        <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
+                        <p className="text-[11px] text-pink-200 mt-0.5">{timeDiff}</p>
                       </div>
-                      {milestone.intention && (
-                        <div className="pt-2 border-t border-white/10 text-xs text-white/80 font-medium">
-                          <span className="text-pink-300/60 ml-1">النية:</span>
-                          {milestone.intention}
-                        </div>
-                      )}
-                      {milestone.notes && (
-                        <div className="pt-1.5 text-xs text-yellow-100/70 italic leading-relaxed">
-                          {milestone.notes}
-                        </div>
-                      )}
-                      <div className="mt-3 flex items-center gap-2 text-[9px] text-white/30 border-t border-white/5 pt-2">
-                        <span>{new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}</span>
-                        <span className="opacity-50">•</span>
-                        <span>{new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                      <div className="flex flex-col items-center justify-center flex-shrink-0">
+                        <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">
+                          {milestone.rating}
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    {milestone.intention && (
+                      <div className="pt-1.5 border-t border-white/20">
+                        <p className="text-xs text-white/85 leading-relaxed font-medium">{milestone.intention}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Info cards */}
+        <div className="grid grid-cols-2 gap-3 w-full">
+          {localCards.map((item, i) => (
+            <button
+              key={item.id}
+              onClick={() => setSelectedCard(item)}
+              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-pink-400/30 transition-all duration-500 group cursor-pointer text-center anima-float-card"
+              style={{ animationDelay: `${i * 0.5}s` }}
+              dir="rtl"
+            >
+              <h3 className="text-[13px] font-medium text-pink-100/90 group-hover:text-white transition-colors">{item.title}</h3>
+            </button>
+          ))}
+        </div>
+        
+        {/* Add New Card Button */}
+        <div className="mt-4 w-full">
+          <button
+            onClick={() => {
+              setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: localCards.length });
+              setIsEditingCard(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 hover:bg-white/10 transition-all duration-500 group cursor-pointer text-center"
+            dir="rtl"
+          >
+            <Plus className="w-5 h-5 text-white/40 group-hover:text-white/60" />
+            <span className="text-sm font-medium text-white/40 group-hover:text-white/60">إضافة بطاقة</span>
+          </button>
+        </div>
+
+        {/* Anima Wishes Section */}
+        <div className="mt-16 w-full">
+          <div className="flex items-center justify-between mb-6 px-2">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+              <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما مني</h2>
             </div>
-          )}
+            <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {localWishes.map((wish) => (
+              <div key={wish.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/10 hover:border-pink-500/30" dir="rtl">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-white/90 leading-relaxed flex-1">{wish.title}</p>
+                  <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chart Section */}
+        {latestMilestones.length > 1 && (
+          <div className="mt-20 w-full h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={[...latestMilestones].reverse().slice(6).map((m, i) => {
+                const milestone = parseMilestone(m.message);
+                return { 
+                  val: parseFloat(milestone.rating) || 0,
+                  date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                  title: milestone.title,
+                  intention: milestone.intention,
+                  notes: milestone.notes,
+                  id: i 
+                };
+              })}>
+                <defs>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="rgba(244, 114, 182, 0.1)" />
+                    <stop offset="100%" stopColor="rgba(244, 114, 182, 0.8)" />
+                  </linearGradient>
+                </defs>
+                <YAxis hide domain={[0, 12]} />
+                <XAxis hide />
+                <Tooltip content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-xl text-[10px] text-pink-100 shadow-2xl max-w-[200px] flex flex-col gap-1.5" dir="rtl">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-1 mb-1">
+                          <span className="font-bold text-pink-300">{data.title}</span>
+                          <span className="text-[9px] text-white/40">{data.date}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/60">التقييم:</span>
+                          <span className="font-bold text-white">{data.val}</span>
+                        </div>
+                        {data.intention && <div className="text-white/80 mt-1 border-t border-white/5 pt-1">النية: {data.intention}</div>}
+                        {data.notes && <div className="text-white/40 italic mt-0.5">ملاحظات: {data.notes}</div>}
+                      </div>
+                    );
+                  }
+                  return null;
+                }} />
+                <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />
+                <Line type="monotone" dataKey="val" stroke="url(#lineGradient)" strokeWidth={3} dot={{ r: 4, fill: '#db2777', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#f472b6', stroke: '#fff', strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Quality Rating Slider */}
+        <div className="mt-12 w-full max-w-xs">
+          <div className="flex justify-between items-center mb-4 px-2">
+            <span className="text-[11px] font-bold tracking-widest text-white/30 uppercase">توازن الأنيما</span>
+            <span className="text-lg font-black text-pink-500">{qualityRating.toFixed(1)}</span>
+          </div>
+          <Slider 
+            value={[qualityRating]} 
+            onValueChange={([v]) => setQualityRating(v)} 
+            max={10} 
+            step={0.1} 
+            className="w-full" 
+          />
         </div>
       </div>
 
-      {/* Sheets (Wishes, Tasks, Cards) */}
-      <div>
-        <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-pink-500">إضافة</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
-              setEditingCard({ ...selectedCard! });
-              setIsEditingCard(true);
-            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
-            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
-            <div className="px-6 py-6 space-y-4">
-              <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
-              <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
-            </div>
-            <SheetFooter className="px-6 pb-6 gap-3">
-              <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
-              <Button 
-                onClick={() => {
-                  if (!editingCard) return;
-                  // Check if it's a new card (temp id)
-                  if (editingCard.id.startsWith('temp-')) {
-                    handleAddLocalCard(editingCard);
-                  } else if (localCards.find(c => c.id === editingCard.id)) {
-                    // It's a local card
-                    handleUpdateLocalCard(editingCard);
-                  } else {
-                    // It's a database card
-                    updateCardMutation.mutate(editingCard);
-                  }
-                }} 
-                className="flex-1 bg-pink-500"
-              >
-                حفظ
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* Edit Card Sheet */}
+      <Sheet open={!!selectedCard || isEditingCard} onOpenChange={(open) => { if (!open) { setSelectedCard(null); setIsEditingCard(false); setEditingCard(null); } }}>
+        <SheetContent side="bottom" className="h-auto rounded-t-3xl bg-black/95 backdrop-blur-2xl border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6 pb-4" dir="rtl">
+            <SheetTitle className="text-xl font-bold">تعديل البطاقة</SheetTitle>
+          </SheetHeader>
+          <div className="px-6 py-4 space-y-4">
+            <Input 
+              value={editingCard?.title || selectedCard?.title || ""} 
+              onChange={(e) => {
+                if (selectedCard) setSelectedCard({ ...selectedCard, title: e.target.value });
+                if (editingCard) setEditingCard({ ...editingCard, title: e.target.value });
+              }}
+              placeholder="عنوان البطاقة"
+              className="bg-white/5 border-white/10 text-white text-right"
+              dir="rtl"
+            />
+          </div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => { setSelectedCard(null); setIsEditingCard(false); }} className="flex-1 text-white/50">إلغاء</Button>
+            <Button onClick={() => handleSaveCard((editingCard || selectedCard)!)} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white">حفظ</Button>
+            {(selectedCard || editingCard) && !editingCard?.id.startsWith('temp-') && (
+              <Button variant="destructive" onClick={() => handleDeleteCard((selectedCard || editingCard)!.id)} className="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30">حذف</Button>
+            )}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <style>{`
-        .anima-bg { background: linear-gradient(135deg, hsl(330,40%,8%) 0%, hsl(280,35%,10%) 30%, hsl(320,30%,7%) 60%, hsl(270,40%,9%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
-        @keyframes anima-gradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        .anima-orb { filter: blur(80px); animation: anima-orb-drift 12s ease-in-out infinite; }
-        .anima-orb-pink { background: radial-gradient(circle, hsl(330,60%,40%) 0%, transparent 70%); opacity: 0.2; }
-        .anima-orb-purple { background: radial-gradient(circle, hsl(270,50%,40%) 0%, transparent 70%); opacity: 0.15; animation-delay: -4s; }
-        .anima-orb-rose { background: radial-gradient(circle, hsl(350,50%,45%) 0%, transparent 70%); opacity: 0.12; animation-delay: -8s; }
-        @keyframes anima-orb-drift { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.1); } 66% { transform: translate(-20px,15px) scale(0.9); } }
-        .anima-pulse { animation: anima-pulse-anim 6s ease-in-out infinite; }
-        @keyframes anima-pulse-anim { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(236,72,153,0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(236,72,153,0.2); } }
-        .anima-float-card { animation: anima-card-float 8s ease-in-out infinite; }
-        @keyframes anima-card-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        [role="slider"] { display: none !important; }
-        .relative.w-full.touch-none.select-none.flex.items-center [data-orientation="horizontal"] { border-radius: 9999px !important; overflow: hidden; }
-        [data-orientation="horizontal"] > span { border-radius: 9999px !important; }
+        @keyframes anima-pulse-slow {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .anima-pulse-slow { animation: anima-pulse-slow 6s ease-in-out infinite; }
+        @keyframes anima-float-card {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        .anima-float-card { animation: anima-float-card 8s ease-in-out infinite; }
       `}</style>
     </div>
   );
