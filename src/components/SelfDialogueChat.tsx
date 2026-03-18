@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -303,7 +303,7 @@ export function SelfDialogueChat() {
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('nurturing');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
-  const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing'>('normal');
+  const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal'>('normal');
   const [milestoneNotes, setMilestoneNotes] = useState('');
    const [displayCount, setDisplayCount] = useState(20);
    const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
@@ -316,9 +316,6 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
-  const [isEditingMilestone, setIsEditingMilestone] = useState(false);
-  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
-  const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
   const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
 
@@ -754,16 +751,10 @@ export function SelfDialogueChat() {
               type = parts.length > 3 ? parts[3] : 'normal';
               intention = parts.length > 4 ? parts[4] : '';
             }
-            // Get base color by type, then interpolate with rating
-            let baseColor = { r: 100, g: 150, b: 220 }; // normal (blue)
-            if (type === 'sacred') baseColor = { r: 220, g: 80, b: 40 }; // red-orange
-            else if (type === 'heart') baseColor = { r: 220, g: 100, b: 150 }; // pink
-            else if (type === 'imaginary') baseColor = { r: 180, g: 100, b: 200 }; // purple
-            else if (type === 'nursing') baseColor = { r: 180, g: 140, b: 80 }; // tan/wheat
-            
-            const r = baseColor.r;
-            const g = baseColor.g;
-            const b = baseColor.b;
+            // Color interpolation: 0=red, 5=orange, 10=golden
+            const r = rating <= 5 ? 220 : Math.round(220 + (rating - 5) * (212 - 220) / 5);
+            const g = rating <= 5 ? Math.round(30 + rating * (140 - 30) / 5) : Math.round(140 + (rating - 5) * (175 - 140) / 5);
+            const b = rating <= 5 ? 30 : Math.round(30 + (rating - 5) * (55 - 30) / 5);
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
             const milestoneDate = new Date(msg.created_at);
             const dateStr = milestoneDate.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -782,16 +773,6 @@ export function SelfDialogueChat() {
                     <Star className="h-3.5 w-3.5 drop-shadow-md flex-shrink-0" style={{ color: ratingColor, fill: ratingColor }} />
                     <span className="text-sm font-semibold" style={{ color: ratingColor }}>{milestoneTitle}</span>
                     <span className="text-[9px] font-bold min-w-[22px] h-[22px] flex items-center justify-center rounded-full flex-shrink-0" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openMilestoneEditDialog(msg);
-                      }}
-                      className="p-1 hover:bg-white/10 rounded transition-colors ml-auto"
-                      title="تعديل الجماع"
-                    >
-                      <Edit2 className="h-3 w-3" style={{ color: ratingColor }} />
-                    </button>
                   </div>
                   <div className="relative text-[8px] text-white/30 mt-0.5">{dateStr} • {timeStr}</div>
                   <div className="relative flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-[8px] text-white/35 mt-0.5 max-w-[240px]" dir="rtl">
@@ -1157,7 +1138,7 @@ export function SelfDialogueChat() {
     }
   };
 
-  const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' = 'normal') => {
+  const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
     setMilestoneNotes('');
@@ -1167,65 +1148,6 @@ export function SelfDialogueChat() {
     setMilestoneComfort(5);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
-    setIsEditingMilestone(false);
-    setEditingMilestoneId(null);
-    setShowMilestoneDialog(true);
-  };
-
-  const openMilestoneEditDialog = (milestoneMessage: DialogueMessage) => {
-    const content = milestoneMessage.message.replace('__MILESTONE__', '');
-    const parts = content.split('|');
-    const isSacredFmt = parts.length > 8;
-    
-    // Parse milestone data
-    const title = parts[0] || '';
-    const rating = parseFloat(parts[1] || '5');
-    
-    // Determine type
-    let type: 'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' = 'normal';
-    if (isSacredFmt) {
-      type = (parts[8] as any) || 'normal';
-    } else {
-      type = (parts[3] as any) || 'normal';
-    }
-    
-    // Extract other fields
-    let notes = '';
-    let intention = '';
-    let pleasure = 5;
-    let saturation = 5;
-    let comfort = 5;
-    let afterglow = false;
-    let sacred = false;
-    let intentionAch = 5;
-    
-    if (isSacredFmt) {
-      pleasure = parseFloat(parts[2] || '5');
-      saturation = parseFloat(parts[3] || '5');
-      comfort = parseFloat(parts[4] || '5');
-      intentionAch = parseFloat(parts[5] || '5');
-      afterglow = parts[6] === '1';
-      sacred = parts[7] === '1';
-      intention = parts[9] || '';
-    } else {
-      notes = parts[2] || '';
-      intention = parts[4] || '';
-      intentionAch = rating;
-    }
-    
-    // Set all states
-    setMilestoneType(type);
-    setMilestoneIntention(intention);
-    setMilestoneNotes(notes);
-    setMilestoneIntentionAchievement(intentionAch);
-    setMilestonePleasure(pleasure);
-    setMilestoneSaturation(saturation);
-    setMilestoneComfort(comfort);
-    setMilestoneAfterglow(afterglow);
-    setMilestoneSacred(sacred);
-    setIsEditingMilestone(true);
-    setEditingMilestoneId(milestoneMessage.id);
-    setEditingMilestoneCreatedAt(milestoneMessage.created_at);
     setShowMilestoneDialog(true);
   };
 
@@ -1239,13 +1161,14 @@ export function SelfDialogueChat() {
 
   const insertMilestone = async () => {
     if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
     
     const typeNames = {
       sacred: 'جماع مقدس',
       heart: 'جماع قلبي',
       imaginary: 'جماع خيالي',
-      normal: 'جماع عادي',
-      nursing: 'جماع ارضاعي'
+      normal: 'جماع عادي'
     };
     
     const milestoneName = typeNames[milestoneType];
@@ -1257,86 +1180,40 @@ export function SelfDialogueChat() {
     // Format: __MILESTONE__title|rating|notes|type|intention
     milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
     
-    // If editing, update existing milestone
-    if (isEditingMilestone && editingMilestoneId) {
-      try {
-        console.log('Updating milestone:', { editingMilestoneId, userId: user?.id, content: milestoneContent });
-        
-        const { data, error } = await supabase
-          .from('self_dialogue_messages')
-          .update({
-            message: milestoneContent
-          })
-          .eq('id', editingMilestoneId);
-
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw error;
-        }
-
-        console.log('Update successful:', data);
-
-        // Update local state
-        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
-        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
-        
-        setShowMilestoneDialog(false);
-        setIsEditingMilestone(false);
-        setEditingMilestoneId(null);
-        setEditingMilestoneCreatedAt(null);
-        setMilestoneIntention('');
-        setMilestoneNotes('');
-        setMilestoneIntentionAchievement(5);
-        setMilestonePleasure(5);
-        setMilestoneSaturation(5);
-        setMilestoneComfort(5);
-        setMilestoneAfterglow(false);
-        setMilestoneSacred(false);
-        toast.success('تم تحديث الإنجاز بنجاح!');
-      } catch (error) {
-        console.error('Error updating milestone:', error);
-        toast.error('فشل تحديث الإنجاز');
-      }
-    } else {
-      // Create new milestone
-      const tempId = crypto.randomUUID();
-      globalMessageSeq++;
-      
-      const milestoneMessage: DialogueMessage = {
-        id: tempId,
+    const milestoneMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: milestoneContent,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, milestoneMessage]);
+    setAllMessages(prev => [...prev, milestoneMessage]);
+    setShowMilestoneDialog(false);
+    setMilestoneIntention('');
+    setMilestoneNotes('');
+    setMilestoneIntentionAchievement(5);
+    setMilestonePleasure(5);
+    setMilestoneSaturation(5);
+    setMilestoneComfort(5);
+    setMilestoneAfterglow(false);
+    setMilestoneSacred(false);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
         sender: 'me',
         message: milestoneContent,
-        created_at: new Date().toISOString(),
-        status: 'pending',
-        localSeq: globalMessageSeq,
+        created_at: milestoneMessage.created_at,
+        session_title: sessionTitle || null,
         chat_mode: 'self'
-      };
-      setMessages(prev => [...prev, milestoneMessage]);
-      setAllMessages(prev => [...prev, milestoneMessage]);
-      setShowMilestoneDialog(false);
-      setMilestoneIntention('');
-      setMilestoneNotes('');
-      setMilestoneIntentionAchievement(5);
-      setMilestonePleasure(5);
-      setMilestoneSaturation(5);
-      setMilestoneComfort(5);
-      setMilestoneAfterglow(false);
-      setMilestoneSacred(false);
-      try {
-        await supabase.from('self_dialogue_messages').insert({
-          user_id: user.id,
-          sender: 'me',
-          message: milestoneContent,
-          created_at: milestoneMessage.created_at,
-          session_title: sessionTitle || null,
-          chat_mode: 'self'
-        });
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
-        toast.success('تم إضافة الإنجاز بنجاح!');
-      } catch { 
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
-        toast.error('فشل إضافة الإنجاز');
-      }
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+      toast.success('تم إضافة الإنجاز بنجاح!');
+    } catch { 
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+      toast.error('فشل إضافة الإنجاز');
     }
   };
 
@@ -1399,6 +1276,27 @@ export function SelfDialogueChat() {
 النية: ${intention}`;
     navigator.clipboard.writeText(text);
     toast.success('تم نسخ البيانات');
+  };
+
+  const copyFullChat = () => {
+    if (allMessages.length === 0) return;
+    
+    const chatText = allMessages
+      .filter(m => !m.message.startsWith('__')) // استبعاد الرسائل التقنية مثل SPACER و MILESTONE
+      .map(m => {
+        const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
+        const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        return `[${time}] ${sender}: ${m.message}`;
+      })
+      .join('\n');
+      
+    if (!chatText) {
+      toast.error('لا توجد رسائل نصية لنسخها');
+      return;
+    }
+    
+    navigator.clipboard.writeText(chatText);
+    toast.success('تم نسخ كامل الدردشة بنجاح');
   };
 
   const deleteMilestone = async (id: string) => {
@@ -1633,7 +1531,7 @@ export function SelfDialogueChat() {
                       variant="ghost"
                       size="sm"
                       onClick={() => openMilestoneDialog('sacred')}
-                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1"
+                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="إضافة جماع مقدس"
                     >
                       <Flame className="h-3 w-3" />
@@ -1668,16 +1566,6 @@ export function SelfDialogueChat() {
                     >
                       <Zap className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('nursing')}
-                      className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1"
-                      title="إضافة جماع ارضاعي"
-                    >
-                      <Droplets className="h-3 w-3" />
-                    </Button>
 
                     <Button
                       variant="ghost"
@@ -1705,7 +1593,7 @@ export function SelfDialogueChat() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowMilestoneTable(true)}
-                      className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1"
+                      className="h-7 px-2 text-[10px] text-amber-400/60 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
                       title="جدول الجماعات"
                     >
                       <Table2 className="h-3 w-3" />
@@ -1713,17 +1601,17 @@ export function SelfDialogueChat() {
                   )}
 
 
-                  {/* Copy Today's Conversation */}
-                  {displayedMessages.length > 0 && (
+                  {/* Copy Full Chat Button */}
+                  {allMessages.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={copyTodayConversation}
+                      onClick={copyFullChat}
                       className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="نسخ محادثة اليوم"
+                      title="نسخ كامل الدردشة"
                     >
                       <Copy className="h-3 w-3" />
-                      نسخ المحادثة
+                      نسخ الدردشة
                     </Button>
                   )}
 
@@ -1744,7 +1632,7 @@ export function SelfDialogueChat() {
                           </Button>
                         </div>
                         <div className="overflow-y-auto flex-1 space-y-2">
-                          {[...milestoneMessages].reverse().map(m => {
+                          {milestoneMessages.map(m => {
                             const date = new Date(m.created_at);
                             const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
                             const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
@@ -1802,10 +1690,7 @@ export function SelfDialogueChat() {
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-xs font-semibold text-amber-300">{title}</span>
                                   <div className="flex items-center gap-1">
-                                    <span className="text-[10px] font-bold text-red-500 bg-red-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
-                                    <button onClick={() => { setShowMilestoneTable(false); openMilestoneEditDialog(m); }} className="p-1 text-white/30 hover:text-amber-300 transition-colors" title="تعديل">
-                                      <Edit2 className="h-3 w-3" />
-                                    </button>
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
                                     <button onClick={() => copyMilestoneData(m)} className="p-1 text-white/30 hover:text-white/60">
                                       <Copy className="h-3 w-3" />
                                     </button>
@@ -1828,89 +1713,13 @@ export function SelfDialogueChat() {
 
                   {/* Milestone Rating Dialog */}
                   {showMilestoneDialog && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowMilestoneDialog(false); setIsEditingMilestone(false); setEditingMilestoneId(null); setEditingMilestoneCreatedAt(null); }}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneDialog(false)}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <h3 className="text-center text-sm font-semibold text-white/80">
-                          {isEditingMilestone ? 'تعديل' : 'تقييم'} {milestoneType === 'sacred' ? 'الجماع المقدس' : 
+                          تقييم {milestoneType === 'sacred' ? 'الجماع المقدس' : 
                                    milestoneType === 'heart' ? 'الجماع القلبي' :
-                                   milestoneType === 'imaginary' ? 'الجماع الخيالي' :
-                                   milestoneType === 'nursing' ? 'الجماع الإرضاعي' : 'الجماع العادي'}
+                                   milestoneType === 'imaginary' ? 'الجماع الخيالي' : 'الجماع العادي'}
                         </h3>
-                        
-                        {/* Type Selector for Editing */}
-                        {isEditingMilestone && (
-                          <div className="flex justify-center gap-2 pb-2 border-b border-white/10">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMilestoneType('sacred')}
-                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
-                                milestoneType === 'sacred'
-                                  ? 'text-red-500 bg-red-500/20 border border-red-500/50 hover:bg-red-500/30'
-                                  : 'text-red-500/50 hover:text-red-400 hover:bg-red-500/10'
-                              }`}
-                              title="جماع مقدس"
-                            >
-                              <Flame className="h-3 w-3" />
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMilestoneType('heart')}
-                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
-                                milestoneType === 'heart'
-                                  ? 'text-pink-400 bg-pink-500/20 border border-pink-400/50 hover:bg-pink-500/30'
-                                  : 'text-pink-400/50 hover:text-pink-300 hover:bg-pink-500/10'
-                              }`}
-                              title="جماع قلبي"
-                            >
-                              <HeartHandshake className="h-3 w-3" />
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMilestoneType('imaginary')}
-                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
-                                milestoneType === 'imaginary'
-                                  ? 'text-purple-400 bg-purple-500/20 border border-purple-400/50 hover:bg-purple-500/30'
-                                  : 'text-purple-400/50 hover:text-purple-300 hover:bg-purple-500/10'
-                              }`}
-                              title="جماع خيالي"
-                            >
-                              <Brain className="h-3 w-3" />
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMilestoneType('normal')}
-                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
-                                milestoneType === 'normal'
-                                  ? 'text-blue-400 bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500/30'
-                                  : 'text-blue-400/50 hover:text-blue-300 hover:bg-blue-500/10'
-                              }`}
-                              title="جماع عادي"
-                            >
-                              <Zap className="h-3 w-3" />
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMilestoneType('nursing')}
-                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
-                                milestoneType === 'nursing'
-                                  ? 'text-amber-700 bg-amber-600/20 border border-amber-700/50 hover:bg-amber-600/30'
-                                  : 'text-amber-700/50 hover:text-amber-600 hover:bg-amber-600/10'
-                              }`}
-                              title="جماع ارضاعي"
-                            >
-                              <Droplets className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
                         
                         {/* Simple Interface for All Types */}
                         <>
@@ -1961,16 +1770,11 @@ export function SelfDialogueChat() {
                             onClick={insertMilestone}
                             className="flex-1 h-9 text-xs bg-amber-500/30 hover:bg-amber-500/40 border border-amber-400/30 text-amber-200"
                           >
-                            {isEditingMilestone ? 'حفظ التعديل' : 'حفظ الجماع'}
+                            حفظ
                           </Button>
                           <Button
                             variant="ghost"
-                            onClick={() => {
-                              setShowMilestoneDialog(false);
-                              setIsEditingMilestone(false);
-                              setEditingMilestoneId(null);
-                              setEditingMilestoneCreatedAt(null);
-                            }}
+                            onClick={() => setShowMilestoneDialog(false)}
                             className="h-9 text-xs text-white/50 hover:text-white"
                           >
                             إلغاء
