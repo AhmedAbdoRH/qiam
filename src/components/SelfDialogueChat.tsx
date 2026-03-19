@@ -1278,22 +1278,46 @@ export function SelfDialogueChat() {
     toast.success('تم نسخ البيانات');
   };
 
-  const copyFullChat = () => {
-    if (allMessages.length === 0) return;
-    
-    const chatText = allMessages
-      .filter(m => !m.message.startsWith('__')) // استبعاد الرسائل التقنية مثل SPACER و MILESTONE
+  const copyTodayConversation = () => {
+    const today = new Date().toDateString();
+    const todayMessages = allMessages.filter(m => 
+      new Date(m.created_at).toDateString() === today && 
+      !m.message.startsWith('__')
+    );
+
+    if (todayMessages.length === 0) {
+      toast.error('لا توجد رسائل اليوم لنسخها');
+      return;
+    }
+
+    const chatText = todayMessages
       .map(m => {
         const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
         const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
         return `[${time}] ${sender}: ${m.message}`;
       })
       .join('\n');
-      
-    if (!chatText) {
+
+    navigator.clipboard.writeText(chatText);
+    toast.success('تم نسخ محادثة اليوم بنجاح');
+  };
+
+  const copyFullChat = () => {
+    const textMessages = allMessages.filter(m => !m.message.startsWith('__'));
+    
+    if (textMessages.length === 0) {
       toast.error('لا توجد رسائل نصية لنسخها');
       return;
     }
+    
+    const chatText = textMessages
+      .map(m => {
+        const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
+        const date = new Date(m.created_at).toLocaleDateString('ar-SA');
+        const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        return `[${date} ${time}] ${sender}: ${m.message}`;
+      })
+      .join('\n');
     
     navigator.clipboard.writeText(chatText);
     toast.success('تم نسخ كامل الدردشة بنجاح');
@@ -1601,18 +1625,30 @@ export function SelfDialogueChat() {
                   )}
 
 
-                  {/* Copy Full Chat Button */}
+                  {/* Copy Buttons */}
                   {allMessages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={copyFullChat}
-                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="نسخ كامل الدردشة"
-                    >
-                      <Copy className="h-3 w-3" />
-                      نسخ الدردشة
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyTodayConversation}
+                        className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
+                        title="نسخ محادثة اليوم"
+                      >
+                        <Copy className="h-3 w-3" />
+                        نسخ اليوم
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyFullChat}
+                        className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
+                        title="نسخ كامل الدردشة"
+                      >
+                        <Download className="h-3 w-3" />
+                        نسخ الكل
+                      </Button>
+                    </div>
                   )}
 
                   {/* Milestone Table View */}
