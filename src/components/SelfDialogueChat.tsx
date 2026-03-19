@@ -284,7 +284,7 @@ let globalMessageSeq = 0;
 
 export function SelfDialogueChat() {
   const { user, signOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
