@@ -331,10 +331,18 @@ export function SelfDialogueChat() {
   
   // Transition properties for Anima navigation
   const [isTransitioningToAnima, setIsTransitioningToAnima] = useState(false);
+  const [currentAnimaPage, setCurrentAnimaPage] = useState<'anima' | 'nurturing'>(() => (localStorage.getItem('current_anima_page') as 'anima' | 'nurturing') || 'anima');
   const animaNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animaNavFiredRef = useRef(false);
   
   const navigate = useNavigate();
+
+  const toggleAnimaPage = () => {
+    const next = currentAnimaPage === 'anima' ? 'nurturing' : 'anima';
+    setCurrentAnimaPage(next);
+    localStorage.setItem('current_anima_page', next);
+    toast(next === 'anima' ? 'تم التبديل لصفحة الأنيما 💖' : 'تم التبديل لصفحة الراعية الحنون 🤎');
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -2045,7 +2053,7 @@ export function SelfDialogueChat() {
                             animaNavFiredRef.current = false;
                             return;
                           }
-                          toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
+                          toggleAnimaPage();
                         }}
                         onMouseDown={(e) => {
                           e.preventDefault();
@@ -2054,7 +2062,7 @@ export function SelfDialogueChat() {
                             animaNavFiredRef.current = true;
                             setIsTransitioningToAnima(true);
                             setTimeout(() => {
-                              navigate('/anima');
+                              navigate(currentAnimaPage === 'anima' ? '/anima' : '/nurturing');
                             }, 1100);
                           }, 600);
                         }}
@@ -2066,15 +2074,15 @@ export function SelfDialogueChat() {
                             animaNavFiredRef.current = true;
                             setIsTransitioningToAnima(true);
                             setTimeout(() => {
-                              navigate('/anima');
+                              navigate(currentAnimaPage === 'anima' ? '/anima' : '/nurturing');
                             }, 1100);
                           }, 600);
                         }}
                         onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                        className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
-                        title="طوّل الضغطة للانتقال لصفحة الأنيما"
+                        className={`group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 bg-transparent active:scale-95 ${currentAnimaPage === 'anima' ? 'text-pink-300/40 hover:text-pink-300' : 'text-amber-600/40 hover:text-amber-600'}`}
+                        title={currentAnimaPage === 'anima' ? "طوّل الضغطة للانتقال لصفحة الأنيما" : "طوّل الضغطة للانتقال لصفحة الراعية"}
                       >
-                        <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
+                        <Heart className={`h-3.5 w-3.5 ${currentAnimaPage === 'anima' ? 'fill-pink-300/20' : 'fill-amber-600/20'}`} />
                       </button>
                     </div>
 
