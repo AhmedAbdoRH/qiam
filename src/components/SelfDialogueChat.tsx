@@ -334,6 +334,8 @@ export function SelfDialogueChat() {
   const [currentAnimaPage, setCurrentAnimaPage] = useState<'anima' | 'nurturing'>(() => (localStorage.getItem('current_anima_page') as 'anima' | 'nurturing') || 'anima');
   const animaNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animaNavFiredRef = useRef(false);
+  const nurturingNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nurturingNavFiredRef = useRef(false);
   
   const navigate = useNavigate();
 
@@ -2045,45 +2047,88 @@ export function SelfDialogueChat() {
                         </button>
                       </div>
 
-                      {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (animaNavFiredRef.current) {
+                      {/* أزرار الوصول المباشر لصفحات الأنيما والراعية */}
+                      <div className="flex items-center gap-1">
+                        {/* زر الأنيما (وردي) */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (animaNavFiredRef.current) {
+                              animaNavFiredRef.current = false;
+                              return;
+                            }
+                            toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             animaNavFiredRef.current = false;
-                            return;
-                          }
-                          toggleAnimaPage();
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          animaNavFiredRef.current = false;
-                          animaNavLongPressRef.current = setTimeout(() => {
-                            animaNavFiredRef.current = true;
-                            setIsTransitioningToAnima(true);
-                            setTimeout(() => {
-                              navigate(currentAnimaPage === 'anima' ? '/anima' : '/nurturing');
-                            }, 1100);
-                          }, 600);
-                        }}
-                        onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                        onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                        onTouchStart={() => {
-                          animaNavFiredRef.current = false;
-                          animaNavLongPressRef.current = setTimeout(() => {
-                            animaNavFiredRef.current = true;
-                            setIsTransitioningToAnima(true);
-                            setTimeout(() => {
-                              navigate(currentAnimaPage === 'anima' ? '/anima' : '/nurturing');
-                            }, 1100);
-                          }, 600);
-                        }}
-                        onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                        className={`group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 bg-transparent active:scale-95 ${currentAnimaPage === 'anima' ? 'text-pink-300/40 hover:text-pink-300' : 'text-amber-600/40 hover:text-amber-600'}`}
-                        title={currentAnimaPage === 'anima' ? "طوّل الضغطة للانتقال لصفحة الأنيما" : "طوّل الضغطة للانتقال لصفحة الراعية"}
-                      >
-                        <Heart className={`h-3.5 w-3.5 ${currentAnimaPage === 'anima' ? 'fill-pink-300/20' : 'fill-amber-600/20'}`} />
-                      </button>
+                            animaNavLongPressRef.current = setTimeout(() => {
+                              animaNavFiredRef.current = true;
+                              setIsTransitioningToAnima(true);
+                              setTimeout(() => {
+                                navigate('/anima');
+                              }, 1100);
+                            }, 600);
+                          }}
+                          onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                          onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                          onTouchStart={() => {
+                            animaNavFiredRef.current = false;
+                            animaNavLongPressRef.current = setTimeout(() => {
+                              animaNavFiredRef.current = true;
+                              setIsTransitioningToAnima(true);
+                              setTimeout(() => {
+                                navigate('/anima');
+                              }, 1100);
+                            }, 600);
+                          }}
+                          onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                          className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
+                          title="طوّل الضغطة للانتقال لصفحة الأنيما"
+                        >
+                          <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
+                        </button>
+
+                        {/* زر الراعية (بني) */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (nurturingNavFiredRef.current) {
+                              nurturingNavFiredRef.current = false;
+                              return;
+                            }
+                            toast('طوّل الضغطة للانتقال لصفحة الراعية 🤎');
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            nurturingNavFiredRef.current = false;
+                            nurturingNavLongPressRef.current = setTimeout(() => {
+                              nurturingNavFiredRef.current = true;
+                              setIsTransitioningToAnima(true);
+                              setTimeout(() => {
+                                navigate('/nurturing');
+                              }, 1100);
+                            }, 600);
+                          }}
+                          onMouseUp={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
+                          onMouseLeave={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
+                          onTouchStart={() => {
+                            nurturingNavFiredRef.current = false;
+                            nurturingNavLongPressRef.current = setTimeout(() => {
+                              nurturingNavFiredRef.current = true;
+                              setIsTransitioningToAnima(true);
+                              setTimeout(() => {
+                                navigate('/nurturing');
+                              }, 1100);
+                            }, 600);
+                          }}
+                          onTouchEnd={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
+                          className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-amber-600/40 hover:text-amber-600 bg-transparent active:scale-95"
+                          title="طوّل الضغطة للانتقال لصفحة الراعية"
+                        >
+                          <Heart className="h-3.5 w-3.5 fill-amber-600/20" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
