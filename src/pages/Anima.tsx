@@ -594,27 +594,14 @@ const Anima = () => {
                 <Plus className="w-5 h-5" />
               </button>
             </div>
-          </div>
-
           {/* Sexual Wishes Section */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">مهام الأنيما الجنسية</h2>
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما الجنسية</h2>
               </div>
               <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    const wish = prompt('اكتب المهمة الجنسية:');
-                    if (wish && wish.trim()) {
-                      handleAddSexualWish(wish.trim());
-                    }
-                  }}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
                 <button 
                   onClick={() => setShowSexualWishes(!showSexualWishes)}
                   className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
