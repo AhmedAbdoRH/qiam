@@ -333,6 +333,7 @@ export function SelfDialogueChat() {
   const pinInputRef = useRef<HTMLInputElement>(null);
   const modeButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressFiredRef = useRef(false);
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleLongPressFiredRef = useRef(false);
@@ -415,6 +416,13 @@ export function SelfDialogueChat() {
         return `[${time}] 🛀 دش دافئ حميمي`;
       }
 
+<<<<<<< HEAD
+      if (msg.message === '__SELFHUG__') {
+        return `[${time}] 🦋 حضن ذاتي`;
+      }
+
+=======
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
       if (msg.message.startsWith('__FALL__')) {
         const content = msg.message.replace('__FALL__|', '');
         const parts = content.split('|');
@@ -452,6 +460,60 @@ export function SelfDialogueChat() {
       console.error('Failed to copy conversation: ', err);
       toast.error('فشل نسخ المحادثة');
     });
+  };
+
+  const getTodayMessagesOnly = () => {
+    // Get today's date at 3 AM
+    const now = new Date();
+    const todayAt3AM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 3, 0, 0);
+    
+    // If current time is before 3 AM, get yesterday's 3 AM
+    if (now < todayAt3AM) {
+      todayAt3AM.setDate(todayAt3AM.getDate() - 1);
+    }
+    
+    // Get messages from 3 AM onwards, excluding special messages and spacers
+    const todayMsgs = allMessages.filter(msg => 
+      new Date(msg.created_at) >= todayAt3AM && 
+      !msg.message.startsWith('__SPACER__') &&
+      !msg.message.startsWith('__MILESTONE__') &&
+      msg.message !== '__KISS__' &&
+      msg.message !== '__TOUCH__' &&
+      msg.message !== '__SHOWER__' &&
+      msg.message !== '__SELFHUG__'
+    );
+    
+    const conversation = todayMsgs.map(msg => {
+      const time = formatTime(msg.created_at);
+      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
+      return `[${time}] ${senderName}: ${msg.message}`;
+    }).join('\n\n');
+    
+    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('ar-SA')})\n` + '='.repeat(40) + '\n\n';
+    return header + conversation;
+  };
+
+  const copyTodayMessagesOnly = () => {
+    const conversation = getTodayMessagesOnly();
+    navigator.clipboard.writeText(conversation).then(() => {
+      toast.success('تم نسخ رسائل اليوم فقط');
+    }).catch(err => {
+      console.error('Failed to copy messages: ', err);
+      toast.error('فشل نسخ الرسائل');
+    });
+  };
+
+  const handleCopyButtonMouseDown = () => {
+    copyButtonLongPressRef.current = setTimeout(() => {
+      copyTodayMessagesOnly();
+    }, 600);
+  };
+
+  const handleCopyButtonMouseUp = () => {
+    if (copyButtonLongPressRef.current) {
+      clearTimeout(copyButtonLongPressRef.current);
+      copyButtonLongPressRef.current = null;
+    }
   };
 
   const syncPendingMessages = useCallback(async () => {
@@ -724,6 +786,37 @@ export function SelfDialogueChat() {
             );
           }
 
+<<<<<<< HEAD
+          // Render shower label
+          if (msg.message === '__SHOWER__') {
+            const showerDate = new Date(msg.created_at);
+            const showerTime = showerDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-cyan-400 text-sm">🛀</span>
+                    <span className="text-xs text-cyan-300/70">{showerTime}</span>
+                  </div>
+                  <p className="text-xs text-cyan-200 mt-0.5">دش دافئ حميمي</p>
+                </div>
+              </div>
+            );
+          }
+
+          // Render self-hug label
+          if (msg.message === '__SELFHUG__') {
+            const selfhugDate = new Date(msg.created_at);
+            const selfhugTime = selfhugDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-sm">🦋</span>
+                    <span className="text-xs text-amber-300/70">{selfhugTime}</span>
+                  </div>
+                  <p className="text-xs text-amber-200 mt-0.5">حضن ذاتي</p>
+=======
           // Render fall event
           if (msg.message.startsWith('__FALL__')) {
             const fallContent = msg.message.replace('__FALL__|', '');
@@ -739,6 +832,7 @@ export function SelfDialogueChat() {
                     <span className="text-xs text-red-300/70">{fallTime}</span>
                   </div>
                   <p className="text-xs text-red-200 leading-relaxed">{fallDescription}</p>
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                 </div>
               </div>
             );
@@ -786,6 +880,10 @@ export function SelfDialogueChat() {
             else if (type === 'heart') baseColor = { r: 220, g: 100, b: 150 }; // pink
             else if (type === 'imaginary') baseColor = { r: 180, g: 100, b: 200 }; // purple
             else if (type === 'nursing') baseColor = { r: 180, g: 140, b: 80 }; // tan/wheat
+<<<<<<< HEAD
+            else if (type === 'fall') baseColor = { r: 127, g: 29, b: 29 }; // dark red
+=======
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
             
             const r = baseColor.r;
             const g = baseColor.g;
@@ -802,6 +900,10 @@ export function SelfDialogueChat() {
                 case 'heart': return <HeartHandshake className="h-4 w-4 flex-shrink-0" />;
                 case 'imaginary': return <Brain className="h-4 w-4 flex-shrink-0" />;
                 case 'nursing': return <span className="text-lg leading-none flex-shrink-0">💧</span>;
+<<<<<<< HEAD
+                case 'fall': return <span className="text-lg leading-none flex-shrink-0">🛑</span>;
+=======
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                 default: return <Zap className="h-4 w-4 flex-shrink-0" />;
               }
             };
@@ -1189,6 +1291,72 @@ export function SelfDialogueChat() {
     }
   };
 
+<<<<<<< HEAD
+  const insertShowerLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const showerMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__SHOWER__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, showerMessage]);
+    setAllMessages(prev => [...prev, showerMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__SHOWER__',
+        created_at: showerMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
+  const insertSelfHugLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const selfhugMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__SELFHUG__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, selfhugMessage]);
+    setAllMessages(prev => [...prev, selfhugMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__SELFHUG__',
+        created_at: selfhugMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
+  const openFallDialog = () => {
+    openMilestoneDialog('fall');
+  };
+
+=======
   const openFallDialog = () => {
     setFallDescription('');
     setShowFallDialog(true);
@@ -1256,12 +1424,13 @@ export function SelfDialogueChat() {
       toast.error('فشل تسجيل السقوط');
     }
   };
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
 
   const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' | 'fall' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
     setMilestoneNotes('');
-    setMilestoneIntentionAchievement(5);
+    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 5);
     setMilestonePleasure(5);
     setMilestoneSaturation(5);
     setMilestoneComfort(5);
@@ -1273,6 +1442,8 @@ export function SelfDialogueChat() {
   };
 
   const openMilestoneEditDialog = (milestoneMessage: DialogueMessage) => {
+<<<<<<< HEAD
+=======
     // Check if it's a fall event - convert to milestone format for editing
     if (milestoneMessage.message.startsWith('__FALL__')) {
       const fallContent = milestoneMessage.message.replace('__FALL__|', '');
@@ -1296,6 +1467,7 @@ export function SelfDialogueChat() {
       return;
     }
 
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
     const content = milestoneMessage.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
     const isSacredFmt = parts.length > 8;
@@ -1378,6 +1550,13 @@ export function SelfDialogueChat() {
     
     // For all types, use simple decimal rating
     finalRating = milestoneIntentionAchievement;
+<<<<<<< HEAD
+    
+    // Format: __MILESTONE__title|rating|notes|type|intention
+    // Fall now uses milestone format too, with 0 rating
+    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
+    
+=======
     
     // Handle fall type - convert to __FALL__ format
     if (milestoneType === 'fall') {
@@ -1387,6 +1566,7 @@ export function SelfDialogueChat() {
       milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
     }
     
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
     // If editing, update existing milestone
     if (isEditingMilestone && editingMilestoneId) {
       try {
@@ -1472,23 +1652,37 @@ export function SelfDialogueChat() {
 
   // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
+<<<<<<< HEAD
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__');
+=======
     return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message.startsWith('__FALL__'));
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'التقييم', 'الملاحظات', 'النية']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'الملاحظات', 'النية']];
     [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-']);
         return;
       }
       
       if (m.message === '__TOUCH__') {
-        rows.push([dateStr, timeStr, '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
+        return;
+      }
+
+      if (m.message === '__SHOWER__') {
+        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-']);
+        return;
+      }
+
+      if (m.message === '__SELFHUG__') {
+        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-']);
         return;
       }
 
@@ -1505,8 +1699,10 @@ export function SelfDialogueChat() {
       const isSacredFmt = parts.length > 8;
       const notes = isSacredFmt ? '' : (parts[2] || '');
       const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+      const type = parts[3] || 'normal';
       rows.push([
         dateStr, timeStr,
+        parts[0] || '',
         parts[1] || '',
         notes, intention
       ]);
@@ -1840,11 +2036,38 @@ export function SelfDialogueChat() {
                     <Button
                       variant="ghost"
                       size="sm"
+<<<<<<< HEAD
+                      onClick={insertShowerLabel}
+                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
+                      title="دش دافئ حميمي"
+                    >
+                      🛀
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertSelfHugLabel}
+                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      title="حضن ذاتي"
+                    >
+                      🦋
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+=======
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                       onClick={openFallDialog}
                       className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1"
                       title="سقوط"
                     >
+<<<<<<< HEAD
+                      🛑
+=======
                       📉
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                     </Button>
 
                   {/* Milestone Table Button */}
@@ -1867,8 +2090,18 @@ export function SelfDialogueChat() {
                       variant="ghost"
                       size="sm"
                       onClick={copyTodayConversation}
+<<<<<<< HEAD
+                      onMouseDown={handleCopyButtonMouseDown}
+                      onMouseUp={handleCopyButtonMouseUp}
+                      onMouseLeave={handleCopyButtonMouseUp}
+                      onTouchStart={handleCopyButtonMouseDown}
+                      onTouchEnd={handleCopyButtonMouseUp}
+                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                      title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
+=======
                       className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                       title="نسخ محادثة اليوم"
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -1942,11 +2175,57 @@ export function SelfDialogueChat() {
                               );
                             }
 
+<<<<<<< HEAD
+                            // Shower entry
+                            if (m.message === '__SHOWER__') {
+                              return (
+                                <div key={m.id} className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-cyan-300">🛀 دش دافئ حميمي</span>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`🛀 دش دافئ حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Self-hug entry
+                            if (m.message === '__SELFHUG__') {
+                              return (
+                                <div key={m.id} className="bg-amber-500/10 rounded-lg p-3 border border-amber-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-amber-300">🦋 حضن ذاتي</span>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`🦋 حضن ذاتي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Fall entry
+                            if (false) { // __FALL__ is now stored as __MILESTONE__ format
+                              const fallDescription = '';
+=======
                             // Fall entry
                             if (m.message.startsWith('__FALL__')) {
                               const fallContent = m.message.replace('__FALL__|', '');
                               const fallParts = fallContent.split('|');
                               const fallDescription = fallParts[1] || '';
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                               return (
                                 <div key={m.id} className="bg-red-500/10 rounded-lg p-3 border border-red-400/20 text-right" dir="rtl">
                                   <div className="flex items-center justify-between mb-1">
@@ -2176,6 +2455,8 @@ export function SelfDialogueChat() {
                               setEditingMilestoneId(null);
                               setEditingMilestoneCreatedAt(null);
                             }}
+<<<<<<< HEAD
+=======
                             className="h-9 text-xs text-white/50 hover:text-white"
                           >
                             إلغاء
@@ -2211,6 +2492,7 @@ export function SelfDialogueChat() {
                           <Button
                             variant="ghost"
                             onClick={() => { setShowFallDialog(false); setEditingFallId(null); }}
+>>>>>>> c072901c79bd49c158f8f85c2761c53a85b23da7
                             className="h-9 text-xs text-white/50 hover:text-white"
                           >
                             إلغاء
@@ -2219,6 +2501,7 @@ export function SelfDialogueChat() {
                       </div>
                     </div>
                   )}
+
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && (
                     <Button
