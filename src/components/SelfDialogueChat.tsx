@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets } from 'lucide-react';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 import { SelfDialogueIconNew } from './icons/SelfDialogueIconNew';
@@ -99,16 +99,16 @@ const styles = `
     50% { box-shadow: inset 0 1px 16px rgba(244,63,94,0.3), 0 0 24px rgba(244,63,94,0.2); }
   }
   .kiss-animated {
-    animation: kiss-sway 4s ease-in-out infinite, kiss-glow 4s ease-in-out infinite;
+    animation: kiss-sway 14s ease-in-out infinite, kiss-glow 14s ease-in-out infinite;
   }
   .kiss-animated.kiss-static {
     animation: none;
     transform: scale(1) rotate(0deg);
     opacity: 1;
   }
-  .kiss-heart-1 { animation: kiss-hearts 2.5s ease-in-out infinite; }
-  .kiss-heart-2 { animation: kiss-hearts 2.5s ease-in-out 0.5s infinite; }
-  .kiss-heart-3 { animation: kiss-hearts 2.5s ease-in-out 1s infinite; }
+  .kiss-heart-1 { animation: kiss-hearts 8s ease-in-out infinite; }
+  .kiss-heart-2 { animation: kiss-hearts 8s ease-in-out 1.5s infinite; }
+  .kiss-heart-3 { animation: kiss-hearts 8s ease-in-out 3s infinite; }
   .kiss-heart-static .kiss-heart-1,
   .kiss-heart-static .kiss-heart-2,
   .kiss-heart-static .kiss-heart-3 { animation: none; opacity: 0.5; }
@@ -284,7 +284,7 @@ let globalMessageSeq = 0;
 
 export function SelfDialogueChat() {
   const { user, signOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
@@ -303,7 +303,7 @@ export function SelfDialogueChat() {
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
   const [animaPersona, setAnimaPersona] = useState<'anima' | 'nurturing'>('nurturing');
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
-  const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal'>('normal');
+  const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' | 'fall'>('normal');
   const [milestoneNotes, setMilestoneNotes] = useState('');
    const [displayCount, setDisplayCount] = useState(20);
    const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
@@ -316,8 +316,16 @@ export function SelfDialogueChat() {
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
+  const [isEditingMilestone, setIsEditingMilestone] = useState(false);
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
   const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const milestoneLongPressFiredRef = useRef(false);
+
+  // Fall event states
+  const [showFallDialog, setShowFallDialog] = useState(false);
+  const [fallDescription, setFallDescription] = useState('');
+  const [editingFallId, setEditingFallId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -325,26 +333,17 @@ export function SelfDialogueChat() {
   const pinInputRef = useRef<HTMLInputElement>(null);
   const modeButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendLongPressFiredRef = useRef(false);
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleLongPressFiredRef = useRef(false);
   
   // Transition properties for Anima navigation
   const [isTransitioningToAnima, setIsTransitioningToAnima] = useState(false);
-  const [currentAnimaPage, setCurrentAnimaPage] = useState<'anima' | 'nurturing'>(() => (localStorage.getItem('current_anima_page') as 'anima' | 'nurturing') || 'anima');
   const animaNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animaNavFiredRef = useRef(false);
-  const nurturingNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const nurturingNavFiredRef = useRef(false);
   
   const navigate = useNavigate();
-
-  const toggleAnimaPage = () => {
-    const next = currentAnimaPage === 'anima' ? 'nurturing' : 'anima';
-    setCurrentAnimaPage(next);
-    localStorage.setItem('current_anima_page', next);
-    toast(next === 'anima' ? 'تم التبديل لصفحة الأنيما 💖' : 'تم التبديل لصفحة الراعية الحنون 🤎');
-  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -412,6 +411,21 @@ export function SelfDialogueChat() {
       if (msg.message === '__TOUCH__') {
         return `[${time}] 🤲 لمس حنون`;
       }
+
+      if (msg.message === '__SHOWER__') {
+        return `[${time}] 🛀 دش دافئ حميمي`;
+      }
+
+      if (msg.message === '__SELFHUG__') {
+        return `[${time}] 🦋 حضن ذاتي`;
+      }
+
+      if (msg.message.startsWith('__FALL__')) {
+        const content = msg.message.replace('__FALL__|', '');
+        const parts = content.split('|');
+        const description = parts[1] || '';
+        return `[${time}] � سقوط: ${description}`;
+      }
       
       if (msg.message.startsWith('__MILESTONE__')) {
         const content = msg.message.replace('__MILESTONE__', '');
@@ -443,6 +457,60 @@ export function SelfDialogueChat() {
       console.error('Failed to copy conversation: ', err);
       toast.error('فشل نسخ المحادثة');
     });
+  };
+
+  const getTodayMessagesOnly = () => {
+    // Get today's date at 3 AM
+    const now = new Date();
+    const todayAt3AM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 3, 0, 0);
+    
+    // If current time is before 3 AM, get yesterday's 3 AM
+    if (now < todayAt3AM) {
+      todayAt3AM.setDate(todayAt3AM.getDate() - 1);
+    }
+    
+    // Get messages from 3 AM onwards, excluding special messages and spacers
+    const todayMsgs = allMessages.filter(msg => 
+      new Date(msg.created_at) >= todayAt3AM && 
+      !msg.message.startsWith('__SPACER__') &&
+      !msg.message.startsWith('__MILESTONE__') &&
+      msg.message !== '__KISS__' &&
+      msg.message !== '__TOUCH__' &&
+      msg.message !== '__SHOWER__' &&
+      msg.message !== '__SELFHUG__'
+    );
+    
+    const conversation = todayMsgs.map(msg => {
+      const time = formatTime(msg.created_at);
+      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
+      return `[${time}] ${senderName}: ${msg.message}`;
+    }).join('\n\n');
+    
+    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('ar-SA')})\n` + '='.repeat(40) + '\n\n';
+    return header + conversation;
+  };
+
+  const copyTodayMessagesOnly = () => {
+    const conversation = getTodayMessagesOnly();
+    navigator.clipboard.writeText(conversation).then(() => {
+      toast.success('تم نسخ رسائل اليوم فقط');
+    }).catch(err => {
+      console.error('Failed to copy messages: ', err);
+      toast.error('فشل نسخ الرسائل');
+    });
+  };
+
+  const handleCopyButtonMouseDown = () => {
+    copyButtonLongPressRef.current = setTimeout(() => {
+      copyTodayMessagesOnly();
+    }, 600);
+  };
+
+  const handleCopyButtonMouseUp = () => {
+    if (copyButtonLongPressRef.current) {
+      clearTimeout(copyButtonLongPressRef.current);
+      copyButtonLongPressRef.current = null;
+    }
   };
 
   const syncPendingMessages = useCallback(async () => {
@@ -698,12 +766,7 @@ export function SelfDialogueChat() {
             const kissDate = new Date(msg.created_at);
             const kissTime = kissDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
             return (
-              <div key={msg.id} className="flex justify-center py-3"
-                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-              >
+              <div key={msg.id} className="flex justify-center py-3">
                 <KissLabel messageId={msg.id} timestamp={kissTime} />
               </div>
             );
@@ -714,13 +777,42 @@ export function SelfDialogueChat() {
             const touchDate = new Date(msg.created_at);
             const touchTime = touchDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
             return (
-              <div key={msg.id} className="flex justify-center py-3"
-                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-              >
+              <div key={msg.id} className="flex justify-center py-3">
                 <TouchLabel messageId={msg.id} timestamp={touchTime} />
+              </div>
+            );
+          }
+
+          // Render shower label
+          if (msg.message === '__SHOWER__') {
+            const showerDate = new Date(msg.created_at);
+            const showerTime = showerDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-cyan-400 text-sm">🛀</span>
+                    <span className="text-xs text-cyan-300/70">{showerTime}</span>
+                  </div>
+                  <p className="text-xs text-cyan-200 mt-0.5">دش دافئ حميمي</p>
+                </div>
+              </div>
+            );
+          }
+
+          // Render self-hug label
+          if (msg.message === '__SELFHUG__') {
+            const selfhugDate = new Date(msg.created_at);
+            const selfhugTime = selfhugDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-sm">🦋</span>
+                    <span className="text-xs text-amber-300/70">{selfhugTime}</span>
+                  </div>
+                  <p className="text-xs text-amber-200 mt-0.5">حضن ذاتي</p>
+                </div>
               </div>
             );
           }
@@ -761,28 +853,52 @@ export function SelfDialogueChat() {
               type = parts.length > 3 ? parts[3] : 'normal';
               intention = parts.length > 4 ? parts[4] : '';
             }
-            // Color interpolation: 0=red, 5=orange, 10=golden
-            const r = rating <= 5 ? 220 : Math.round(220 + (rating - 5) * (212 - 220) / 5);
-            const g = rating <= 5 ? Math.round(30 + rating * (140 - 30) / 5) : Math.round(140 + (rating - 5) * (175 - 140) / 5);
-            const b = rating <= 5 ? 30 : Math.round(30 + (rating - 5) * (55 - 30) / 5);
+            // Get base color by type, then interpolate with rating
+            let baseColor = { r: 100, g: 150, b: 220 }; // normal (blue)
+            if (type === 'sacred') baseColor = { r: 220, g: 80, b: 40 }; // red-orange
+            else if (type === 'heart') baseColor = { r: 220, g: 100, b: 150 }; // pink
+            else if (type === 'imaginary') baseColor = { r: 180, g: 100, b: 200 }; // purple
+            else if (type === 'nursing') baseColor = { r: 180, g: 140, b: 80 }; // tan/wheat
+            else if (type === 'fall') baseColor = { r: 127, g: 29, b: 29 }; // dark red
+            
+            const r = baseColor.r;
+            const g = baseColor.g;
+            const b = baseColor.b;
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
             const milestoneDate = new Date(msg.created_at);
             const dateStr = milestoneDate.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
             const timeStr = milestoneDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            
+            // Get icon based on type
+            const getMilestoneIconElement = () => {
+              switch (type) {
+                case 'sacred': return <Flame className="h-4 w-4 flex-shrink-0" />;
+                case 'heart': return <HeartHandshake className="h-4 w-4 flex-shrink-0" />;
+                case 'imaginary': return <Brain className="h-4 w-4 flex-shrink-0" />;
+                case 'nursing': return <span className="text-lg leading-none flex-shrink-0">💧</span>;
+                case 'fall': return <span className="text-lg leading-none flex-shrink-0">🛑</span>;
+                default: return <Zap className="h-4 w-4 flex-shrink-0" />;
+              }
+            };
+            
             return (
-              <div key={msg.id} className="flex justify-center py-3"
-                onMouseDown={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onMouseUp={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-                onMouseLeave={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-                onTouchStart={() => { milestoneLongPressFiredRef.current = false; milestoneLongPressRef.current = setTimeout(() => { milestoneLongPressFiredRef.current = true; handleDeleteMessage(msg.id); }, 600); }}
-                onTouchEnd={() => { if (milestoneLongPressRef.current) { clearTimeout(milestoneLongPressRef.current); milestoneLongPressRef.current = null; } }}
-              >
+              <div key={msg.id} className="flex justify-center py-3">
                 <div className="relative flex flex-col items-center gap-1">
                   <div className="absolute -inset-1 rounded-xl blur-md" style={{ background: `${ratingColor}22` }} />
                   <div className="relative flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border" dir="rtl" style={{ borderColor: `${ratingColor}66`, background: `${ratingColor}15` }}>
-                    <Star className="h-3.5 w-3.5 drop-shadow-md flex-shrink-0" style={{ color: ratingColor, fill: ratingColor }} />
+                    <div style={{ color: ratingColor }}>{getMilestoneIconElement()}</div>
                     <span className="text-sm font-semibold" style={{ color: ratingColor }}>{milestoneTitle}</span>
                     <span className="text-[9px] font-bold min-w-[22px] h-[22px] flex items-center justify-center rounded-full flex-shrink-0" style={{ background: `${ratingColor}30`, color: ratingColor }}>{rating}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openMilestoneEditDialog(msg);
+                      }}
+                      className="p-1 hover:bg-white/10 rounded transition-colors ml-auto"
+                      title="تعديل الجماع"
+                    >
+                      <Edit2 className="h-3 w-3" style={{ color: ratingColor }} />
+                    </button>
                   </div>
                   <div className="relative text-[8px] text-white/30 mt-0.5">{dateStr} • {timeStr}</div>
                   <div className="relative flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-[8px] text-white/35 mt-0.5 max-w-[240px]" dir="rtl">
@@ -1148,16 +1264,140 @@ export function SelfDialogueChat() {
     }
   };
 
-  const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' = 'normal') => {
+  const insertShowerLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const showerMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__SHOWER__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, showerMessage]);
+    setAllMessages(prev => [...prev, showerMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__SHOWER__',
+        created_at: showerMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
+  const insertSelfHugLabel = async () => {
+    if (!user) return;
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const selfhugMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: '__SELFHUG__',
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, selfhugMessage]);
+    setAllMessages(prev => [...prev, selfhugMessage]);
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: '__SELFHUG__',
+        created_at: selfhugMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+    }
+  };
+
+  const openFallDialog = () => {
+    openMilestoneDialog('fall');
+  };
+
+
+  const openMilestoneDialog = (type: 'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' | 'fall' = 'normal') => {
     setMilestoneType(type);
     setMilestoneIntention('');
     setMilestoneNotes('');
-    setMilestoneIntentionAchievement(5);
+    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 5);
     setMilestonePleasure(5);
     setMilestoneSaturation(5);
     setMilestoneComfort(5);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
+    setIsEditingMilestone(false);
+    setEditingMilestoneId(null);
+    setShowMilestoneDialog(true);
+  };
+
+  const openMilestoneEditDialog = (milestoneMessage: DialogueMessage) => {
+    const content = milestoneMessage.message.replace('__MILESTONE__', '');
+    const parts = content.split('|');
+    const isSacredFmt = parts.length > 8;
+    
+    // Parse milestone data
+    const title = parts[0] || '';
+    const rating = parseFloat(parts[1] || '5');
+    
+    // Determine type
+    let type: 'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' | 'fall' = 'normal';
+    if (isSacredFmt) {
+      type = (parts[8] as any) || 'normal';
+    } else {
+      type = (parts[3] as any) || 'normal';
+    }
+    
+    // Extract other fields
+    let notes = '';
+    let intention = '';
+    let pleasure = 5;
+    let saturation = 5;
+    let comfort = 5;
+    let afterglow = false;
+    let sacred = false;
+    let intentionAch = 5;
+    
+    if (isSacredFmt) {
+      pleasure = parseFloat(parts[2] || '5');
+      saturation = parseFloat(parts[3] || '5');
+      comfort = parseFloat(parts[4] || '5');
+      intentionAch = parseFloat(parts[5] || '5');
+      afterglow = parts[6] === '1';
+      sacred = parts[7] === '1';
+      intention = parts[9] || '';
+    } else {
+      notes = parts[2] || '';
+      intention = parts[4] || '';
+      intentionAch = rating;
+    }
+    
+    // Set all states
+    setMilestoneType(type);
+    setMilestoneIntention(intention);
+    setMilestoneNotes(notes);
+    setMilestoneIntentionAchievement(intentionAch);
+    setMilestonePleasure(pleasure);
+    setMilestoneSaturation(saturation);
+    setMilestoneComfort(comfort);
+    setMilestoneAfterglow(afterglow);
+    setMilestoneSacred(sacred);
+    setIsEditingMilestone(true);
+    setEditingMilestoneId(milestoneMessage.id);
+    setEditingMilestoneCreatedAt(milestoneMessage.created_at);
     setShowMilestoneDialog(true);
   };
 
@@ -1171,14 +1411,14 @@ export function SelfDialogueChat() {
 
   const insertMilestone = async () => {
     if (!user) return;
-    const tempId = crypto.randomUUID();
-    globalMessageSeq++;
     
     const typeNames = {
       sacred: 'جماع مقدس',
       heart: 'جماع قلبي',
       imaginary: 'جماع خيالي',
-      normal: 'جماع عادي'
+      normal: 'جماع عادي',
+      nursing: 'جماع ارضاعي',
+      fall: 'سقوط'
     };
     
     const milestoneName = typeNames[milestoneType];
@@ -1187,65 +1427,123 @@ export function SelfDialogueChat() {
     
     // For all types, use simple decimal rating
     finalRating = milestoneIntentionAchievement;
+    
     // Format: __MILESTONE__title|rating|notes|type|intention
+    // Fall now uses milestone format too, with 0 rating
     milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
     
-    const milestoneMessage: DialogueMessage = {
-      id: tempId,
-      sender: 'me',
-      message: milestoneContent,
-      created_at: new Date().toISOString(),
-      status: 'pending',
-      localSeq: globalMessageSeq,
-      chat_mode: 'self'
-    };
-    setMessages(prev => [...prev, milestoneMessage]);
-    setAllMessages(prev => [...prev, milestoneMessage]);
-    setShowMilestoneDialog(false);
-    setMilestoneIntention('');
-    setMilestoneNotes('');
-    setMilestoneIntentionAchievement(5);
-    setMilestonePleasure(5);
-    setMilestoneSaturation(5);
-    setMilestoneComfort(5);
-    setMilestoneAfterglow(false);
-    setMilestoneSacred(false);
-    try {
-      await supabase.from('self_dialogue_messages').insert({
-        user_id: user.id,
+    // If editing, update existing milestone
+    if (isEditingMilestone && editingMilestoneId) {
+      try {
+        console.log('Updating milestone:', { editingMilestoneId, userId: user?.id, content: milestoneContent });
+        
+        const { data, error } = await supabase
+          .from('self_dialogue_messages')
+          .update({
+            message: milestoneContent
+          })
+          .eq('id', editingMilestoneId);
+
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw error;
+        }
+
+        console.log('Update successful:', data);
+
+        // Update local state
+        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
+        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
+        
+        setShowMilestoneDialog(false);
+        setIsEditingMilestone(false);
+        setEditingMilestoneId(null);
+        setEditingMilestoneCreatedAt(null);
+        setMilestoneIntention('');
+        setMilestoneNotes('');
+        setMilestoneIntentionAchievement(5);
+        setMilestonePleasure(5);
+        setMilestoneSaturation(5);
+        setMilestoneComfort(5);
+        setMilestoneAfterglow(false);
+        setMilestoneSacred(false);
+        toast.success('تم تحديث الإنجاز بنجاح!');
+      } catch (error) {
+        console.error('Error updating milestone:', error);
+        toast.error('فشل تحديث الإنجاز');
+      }
+    } else {
+      // Create new milestone
+      const tempId = crypto.randomUUID();
+      globalMessageSeq++;
+      
+      const milestoneMessage: DialogueMessage = {
+        id: tempId,
         sender: 'me',
         message: milestoneContent,
-        created_at: milestoneMessage.created_at,
-        session_title: sessionTitle || null,
+        created_at: new Date().toISOString(),
+        status: 'pending',
+        localSeq: globalMessageSeq,
         chat_mode: 'self'
-      });
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
-      toast.success('تم إضافة الإنجاز بنجاح!');
-    } catch { 
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
-      toast.error('فشل إضافة الإنجاز');
+      };
+      setMessages(prev => [...prev, milestoneMessage]);
+      setAllMessages(prev => [...prev, milestoneMessage]);
+      setShowMilestoneDialog(false);
+      setMilestoneIntention('');
+      setMilestoneNotes('');
+      setMilestoneIntentionAchievement(5);
+      setMilestonePleasure(5);
+      setMilestoneSaturation(5);
+      setMilestoneComfort(5);
+      setMilestoneAfterglow(false);
+      setMilestoneSacred(false);
+      try {
+        await supabase.from('self_dialogue_messages').insert({
+          user_id: user.id,
+          sender: 'me',
+          message: milestoneContent,
+          created_at: milestoneMessage.created_at,
+          session_title: sessionTitle || null,
+          chat_mode: 'self'
+        });
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+        toast.success('تم إضافة الإنجاز بنجاح!');
+      } catch { 
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+        toast.error('فشل إضافة الإنجاز');
+      }
     }
   };
 
   // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__');
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__');
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'التقييم', 'الملاحظات', 'النية']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'الملاحظات', 'النية']];
     [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('ar-SA');
       const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-']);
         return;
       }
       
       if (m.message === '__TOUCH__') {
-        rows.push([dateStr, timeStr, '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
+        return;
+      }
+
+      if (m.message === '__SHOWER__') {
+        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-']);
+        return;
+      }
+
+      if (m.message === '__SELFHUG__') {
+        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-']);
         return;
       }
       
@@ -1254,8 +1552,10 @@ export function SelfDialogueChat() {
       const isSacredFmt = parts.length > 8;
       const notes = isSacredFmt ? '' : (parts[2] || '');
       const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+      const type = parts[3] || 'normal';
       rows.push([
         dateStr, timeStr,
+        parts[0] || '',
         parts[1] || '',
         notes, intention
       ]);
@@ -1286,51 +1586,6 @@ export function SelfDialogueChat() {
 النية: ${intention}`;
     navigator.clipboard.writeText(text);
     toast.success('تم نسخ البيانات');
-  };
-
-  const copyTodayConversation = () => {
-    const today = new Date().toDateString();
-    const todayMessages = allMessages.filter(m => 
-      new Date(m.created_at).toDateString() === today && 
-      !m.message.startsWith('__')
-    );
-
-    if (todayMessages.length === 0) {
-      toast.error('لا توجد رسائل اليوم لنسخها');
-      return;
-    }
-
-    const chatText = todayMessages
-      .map(m => {
-        const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
-        const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-        return `[${time}] ${sender}: ${m.message}`;
-      })
-      .join('\n');
-
-    navigator.clipboard.writeText(chatText);
-    toast.success('تم نسخ محادثة اليوم بنجاح');
-  };
-
-  const copyFullChat = () => {
-    const textMessages = allMessages.filter(m => !m.message.startsWith('__'));
-    
-    if (textMessages.length === 0) {
-      toast.error('لا توجد رسائل نصية لنسخها');
-      return;
-    }
-    
-    const chatText = textMessages
-      .map(m => {
-        const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
-        const date = new Date(m.created_at).toLocaleDateString('ar-SA');
-        const time = new Date(m.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-        return `[${date} ${time}] ${sender}: ${m.message}`;
-      })
-      .join('\n');
-    
-    navigator.clipboard.writeText(chatText);
-    toast.success('تم نسخ كامل الدردشة بنجاح');
   };
 
   const deleteMilestone = async (id: string) => {
@@ -1565,7 +1820,7 @@ export function SelfDialogueChat() {
                       variant="ghost"
                       size="sm"
                       onClick={() => openMilestoneDialog('sacred')}
-                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1"
                       title="إضافة جماع مقدس"
                     >
                       <Flame className="h-3 w-3" />
@@ -1600,6 +1855,16 @@ export function SelfDialogueChat() {
                     >
                       <Zap className="h-3 w-3" />
                     </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openMilestoneDialog('nursing')}
+                      className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1"
+                      title="إضافة جماع ارضاعي"
+                    >
+                      <Droplets className="h-3 w-3" />
+                    </Button>
 
                     <Button
                       variant="ghost"
@@ -1621,13 +1886,43 @@ export function SelfDialogueChat() {
                       🤲
                     </Button>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertShowerLabel}
+                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
+                      title="دش دافئ حميمي"
+                    >
+                      🛀
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertSelfHugLabel}
+                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      title="حضن ذاتي"
+                    >
+                      🦋
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={openFallDialog}
+                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1"
+                      title="سقوط"
+                    >
+                      🛑
+                    </Button>
+
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowMilestoneTable(true)}
-                      className="h-7 px-2 text-[10px] text-amber-400/60 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
+                      className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1"
                       title="جدول الجماعات"
                     >
                       <Table2 className="h-3 w-3" />
@@ -1635,30 +1930,22 @@ export function SelfDialogueChat() {
                   )}
 
 
-                  {/* Copy Buttons */}
-                  {allMessages.length > 0 && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={copyTodayConversation}
-                        className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                        title="نسخ محادثة اليوم"
-                      >
-                        <Copy className="h-3 w-3" />
-                        نسخ اليوم
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={copyFullChat}
-                        className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
-                        title="نسخ كامل الدردشة"
-                      >
-                        <Download className="h-3 w-3" />
-                        نسخ الكل
-                      </Button>
-                    </div>
+                  {/* Copy Today's Conversation */}
+                  {displayedMessages.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyTodayConversation}
+                      onMouseDown={handleCopyButtonMouseDown}
+                      onMouseUp={handleCopyButtonMouseUp}
+                      onMouseLeave={handleCopyButtonMouseUp}
+                      onTouchStart={handleCopyButtonMouseDown}
+                      onTouchEnd={handleCopyButtonMouseUp}
+                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                      title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
                   )}
 
                   {/* Milestone Table View */}
@@ -1678,7 +1965,7 @@ export function SelfDialogueChat() {
                           </Button>
                         </div>
                         <div className="overflow-y-auto flex-1 space-y-2">
-                          {milestoneMessages.map(m => {
+                          {[...milestoneMessages].reverse().map(m => {
                             const date = new Date(m.created_at);
                             const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
                             const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
@@ -1690,11 +1977,14 @@ export function SelfDialogueChat() {
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-semibold text-rose-300">💋 بوس حميمي</span>
                                     <div className="flex items-center gap-1">
-                                      <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                        <Copy className="h-3 w-3" />
+                                      <button onClick={() => { setShowMilestoneTable(false); openMilestoneEditDialog(m); }} className="p-1 text-white/30 hover:text-rose-300 transition-colors" title="تعديل">
+                                        <Edit2 className="h-3 w-3" />
                                       </button>
                                       <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
                                         <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`💋 بوس حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
                                       </button>
                                     </div>
                                   </div>
@@ -1710,15 +2000,84 @@ export function SelfDialogueChat() {
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-semibold text-purple-300">🤲 لمس حنون</span>
                                     <div className="flex items-center gap-1">
-                                      <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                        <Copy className="h-3 w-3" />
+                                      <button onClick={() => { setShowMilestoneTable(false); openMilestoneEditDialog(m); }} className="p-1 text-white/30 hover:text-purple-300 transition-colors" title="تعديل">
+                                        <Edit2 className="h-3 w-3" />
                                       </button>
                                       <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
                                         <Trash2 className="h-3 w-3" />
                                       </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`🤲 لمس حنون - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
                                     </div>
                                   </div>
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Shower entry
+                            if (m.message === '__SHOWER__') {
+                              return (
+                                <div key={m.id} className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-cyan-300">🛀 دش دافئ حميمي</span>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`🛀 دش دافئ حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Self-hug entry
+                            if (m.message === '__SELFHUG__') {
+                              return (
+                                <div key={m.id} className="bg-amber-500/10 rounded-lg p-3 border border-amber-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-amber-300">🦋 حضن ذاتي</span>
+                                    <div className="flex items-center gap-1">
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`🦋 حضن ذاتي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+                                </div>
+                              );
+                            }
+
+                            // Fall entry
+                            if (false) { // __FALL__ is now stored as __MILESTONE__ format
+                              const fallDescription = '';
+                              return (
+                                <div key={m.id} className="bg-red-500/10 rounded-lg p-3 border border-red-400/20 text-right" dir="rtl">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-red-300">� سقوط</span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[10px] font-bold text-red-500 bg-red-500/20 px-1.5 py-0.5 rounded-full">0</span>
+                                      <button onClick={() => { setShowMilestoneTable(false); openMilestoneEditDialog(m); }} className="p-1 text-white/30 hover:text-red-300 transition-colors" title="تعديل">
+                                        <Edit2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                      <button onClick={() => { navigator.clipboard.writeText(`� سقوط - ${dateStr} ${timeStr}: ${fallDescription}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                        <Copy className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="text-[9px] text-white/40 mb-1">{dateStr} • {timeStr}</div>
+                                  <div className="text-[9px] text-red-200">{fallDescription}</div>
                                 </div>
                               );
                             }
@@ -1736,7 +2095,10 @@ export function SelfDialogueChat() {
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-xs font-semibold text-amber-300">{title}</span>
                                   <div className="flex items-center gap-1">
-                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
+                                    <span className="text-[10px] font-bold text-red-500 bg-red-500/20 px-1.5 py-0.5 rounded-full">{rating}</span>
+                                    <button onClick={() => { setShowMilestoneTable(false); openMilestoneEditDialog(m); }} className="p-1 text-white/30 hover:text-amber-300 transition-colors" title="تعديل">
+                                      <Edit2 className="h-3 w-3" />
+                                    </button>
                                     <button onClick={() => copyMilestoneData(m)} className="p-1 text-white/30 hover:text-white/60">
                                       <Copy className="h-3 w-3" />
                                     </button>
@@ -1759,52 +2121,148 @@ export function SelfDialogueChat() {
 
                   {/* Milestone Rating Dialog */}
                   {showMilestoneDialog && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneDialog(false)}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowMilestoneDialog(false); setIsEditingMilestone(false); setEditingMilestoneId(null); setEditingMilestoneCreatedAt(null); }}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <h3 className="text-center text-sm font-semibold text-white/80">
-                          تقييم {milestoneType === 'sacred' ? 'الجماع المقدس' : 
+                          {isEditingMilestone ? 'تعديل' : 'تقييم'} {milestoneType === 'sacred' ? 'الجماع المقدس' : 
                                    milestoneType === 'heart' ? 'الجماع القلبي' :
-                                   milestoneType === 'imaginary' ? 'الجماع الخيالي' : 'الجماع العادي'}
+                                   milestoneType === 'imaginary' ? 'الجماع الخيالي' :
+                                   milestoneType === 'nursing' ? 'الجماع الإرضاعي' :
+                                   milestoneType === 'fall' ? 'السقوط' : 'الجماع العادي'}
                         </h3>
+                        
+                        {/* Type Selector for Editing */}
+                        {isEditingMilestone && (
+                          <div className="flex justify-center gap-2 pb-2 border-b border-white/10">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('sacred')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'sacred'
+                                  ? 'text-red-500 bg-red-500/20 border border-red-500/50 hover:bg-red-500/30'
+                                  : 'text-red-500/50 hover:text-red-400 hover:bg-red-500/10'
+                              }`}
+                              title="جماع مقدس"
+                            >
+                              <Flame className="h-3 w-3" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('heart')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'heart'
+                                  ? 'text-pink-400 bg-pink-500/20 border border-pink-400/50 hover:bg-pink-500/30'
+                                  : 'text-pink-400/50 hover:text-pink-300 hover:bg-pink-500/10'
+                              }`}
+                              title="جماع قلبي"
+                            >
+                              <HeartHandshake className="h-3 w-3" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('imaginary')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'imaginary'
+                                  ? 'text-purple-400 bg-purple-500/20 border border-purple-400/50 hover:bg-purple-500/30'
+                                  : 'text-purple-400/50 hover:text-purple-300 hover:bg-purple-500/10'
+                              }`}
+                              title="جماع خيالي"
+                            >
+                              <Brain className="h-3 w-3" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('normal')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'normal'
+                                  ? 'text-blue-400 bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500/30'
+                                  : 'text-blue-400/50 hover:text-blue-300 hover:bg-blue-500/10'
+                              }`}
+                              title="جماع عادي"
+                            >
+                              <Zap className="h-3 w-3" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('nursing')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'nursing'
+                                  ? 'text-amber-700 bg-amber-600/20 border border-amber-700/50 hover:bg-amber-600/30'
+                                  : 'text-amber-700/50 hover:text-amber-600 hover:bg-amber-600/10'
+                              }`}
+                              title="جماع ارضاعي"
+                            >
+                              <Droplets className="h-3 w-3" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMilestoneType('fall')}
+                              className={`h-7 px-2 text-[10px] gap-1 transition-all ${
+                                milestoneType === 'fall'
+                                  ? 'text-red-500 bg-red-500/20 border border-red-500/50 hover:bg-red-500/30'
+                                  : 'text-red-500/50 hover:text-red-400 hover:bg-red-500/10'
+                              }`}
+                              title="سقوط"
+                            >
+                              📉
+                            </Button>
+                          </div>
+                        )}
                         
                         {/* Simple Interface for All Types */}
                         <>
-                          {/* Intention Notes */}
-                          <div className="flex flex-col gap-1.5">
-                            <span className="text-xs text-white/60">نية الجماع</span>
-                            <Input
-                              value={milestoneIntention}
-                              onChange={(e) => setMilestoneIntention(e.target.value)}
-                              placeholder="اكتب نيتك..."
-                              className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
-                              dir="rtl"
-                            />
-                          </div>
+                          {/* Show only notes for fall type */}
+                          {milestoneType !== 'fall' && (
+                            <>
+                              {/* Intention Notes */}
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-xs text-white/60">نية الجماع</span>
+                                <Input
+                                  value={milestoneIntention}
+                                  onChange={(e) => setMilestoneIntention(e.target.value)}
+                                  placeholder="اكتب نيتك..."
+                                  className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
+                                  dir="rtl"
+                                />
+                              </div>
 
-                          {/* Simple Rating Slider */}
-                          <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs text-white/60">التقييم (من ٠ إلى ١٠)</span>
-                              <span className="xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
-                            </div>
-                            <Slider
-                              value={[milestoneIntentionAchievement]}
-                              onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
-                              min={0}
-                              max={10}
-                              step={0.1}
-                              className="w-full"
-                              rangeClassName="bg-white"
-                            />
-                          </div>
+                              {/* Simple Rating Slider */}
+                              <div className="flex flex-col gap-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-white/60">التقييم (من ٠ إلى ١٠)</span>
+                                  <span className="xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
+                                </div>
+                                <Slider
+                                  value={[milestoneIntentionAchievement]}
+                                  onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
+                                  min={0}
+                                  max={10}
+                                  step={0.1}
+                                  className="w-full"
+                                  rangeClassName="bg-white"
+                                />
+                              </div>
+                            </>
+                          )}
 
                           {/* Notes Field */}
                           <div className="flex flex-col gap-1.5">
-                            <span className="text-xs text-white/60">ملحوظات</span>
+                            <span className="text-xs text-white/60">{milestoneType === 'fall' ? 'وصف السقوط' : 'ملحوظات'}</span>
                             <textarea
                               value={milestoneNotes}
                               onChange={(e) => setMilestoneNotes(e.target.value)}
-                              placeholder="اكتب أي ملاحظات..."
+                              placeholder={milestoneType === 'fall' ? 'وصف السقوط والأسباب...' : 'اكتب أي ملاحظات...'}
                               className="h-16 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25 resize-none"
                               dir="rtl"
                             />
@@ -1814,13 +2272,22 @@ export function SelfDialogueChat() {
                         <div className="flex gap-2">
                           <Button
                             onClick={insertMilestone}
-                            className="flex-1 h-9 text-xs bg-amber-500/30 hover:bg-amber-500/40 border border-amber-400/30 text-amber-200"
+                            className={`flex-1 h-9 text-xs ${
+                              milestoneType === 'fall'
+                                ? 'bg-red-600/30 hover:bg-red-600/40 border border-red-500/30 text-red-200'
+                                : 'bg-amber-500/30 hover:bg-amber-500/40 border border-amber-400/30 text-amber-200'
+                            }`}
                           >
-                            حفظ
+                            {isEditingMilestone ? 'حفظ التعديل' : milestoneType === 'fall' ? 'حفظ السقوط' : 'حفظ الجماع'}
                           </Button>
                           <Button
                             variant="ghost"
-                            onClick={() => setShowMilestoneDialog(false)}
+                            onClick={() => {
+                              setShowMilestoneDialog(false);
+                              setIsEditingMilestone(false);
+                              setEditingMilestoneId(null);
+                              setEditingMilestoneCreatedAt(null);
+                            }}
                             className="h-9 text-xs text-white/50 hover:text-white"
                           >
                             إلغاء
@@ -1829,6 +2296,7 @@ export function SelfDialogueChat() {
                       </div>
                     </div>
                   )}
+
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && (
                     <Button
@@ -2047,88 +2515,45 @@ export function SelfDialogueChat() {
                         </button>
                       </div>
 
-                      {/* أزرار الوصول المباشر لصفحات الأنيما والراعية */}
-                      <div className="flex items-center gap-1">
-                        {/* زر الأنيما (وردي) */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (animaNavFiredRef.current) {
-                              animaNavFiredRef.current = false;
-                              return;
-                            }
-                            toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
+                      {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (animaNavFiredRef.current) {
                             animaNavFiredRef.current = false;
-                            animaNavLongPressRef.current = setTimeout(() => {
-                              animaNavFiredRef.current = true;
-                              setIsTransitioningToAnima(true);
-                              setTimeout(() => {
-                                navigate('/anima');
-                              }, 1100);
-                            }, 600);
-                          }}
-                          onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                          onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                          onTouchStart={() => {
-                            animaNavFiredRef.current = false;
-                            animaNavLongPressRef.current = setTimeout(() => {
-                              animaNavFiredRef.current = true;
-                              setIsTransitioningToAnima(true);
-                              setTimeout(() => {
-                                navigate('/anima');
-                              }, 1100);
-                            }, 600);
-                          }}
-                          onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-                          className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
-                          title="طوّل الضغطة للانتقال لصفحة الأنيما"
-                        >
-                          <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
-                        </button>
-
-                        {/* زر الراعية (بني) */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (nurturingNavFiredRef.current) {
-                              nurturingNavFiredRef.current = false;
-                              return;
-                            }
-                            toast('طوّل الضغطة للانتقال لصفحة الراعية 🤎');
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            nurturingNavFiredRef.current = false;
-                            nurturingNavLongPressRef.current = setTimeout(() => {
-                              nurturingNavFiredRef.current = true;
-                              setIsTransitioningToAnima(true);
-                              setTimeout(() => {
-                                navigate('/nurturing');
-                              }, 1100);
-                            }, 600);
-                          }}
-                          onMouseUp={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
-                          onMouseLeave={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
-                          onTouchStart={() => {
-                            nurturingNavFiredRef.current = false;
-                            nurturingNavLongPressRef.current = setTimeout(() => {
-                              nurturingNavFiredRef.current = true;
-                              setIsTransitioningToAnima(true);
-                              setTimeout(() => {
-                                navigate('/nurturing');
-                              }, 1100);
-                            }, 600);
-                          }}
-                          onTouchEnd={() => { if (nurturingNavLongPressRef.current) clearTimeout(nurturingNavLongPressRef.current); }}
-                          className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-amber-600/40 hover:text-amber-600 bg-transparent active:scale-95"
-                          title="طوّل الضغطة للانتقال لصفحة الراعية"
-                        >
-                          <Heart className="h-3.5 w-3.5 fill-amber-600/20" />
-                        </button>
-                      </div>
+                            return;
+                          }
+                          toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          animaNavFiredRef.current = false;
+                          animaNavLongPressRef.current = setTimeout(() => {
+                            animaNavFiredRef.current = true;
+                            setIsTransitioningToAnima(true);
+                            setTimeout(() => {
+                              navigate('/anima');
+                            }, 1100);
+                          }, 600);
+                        }}
+                        onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        onTouchStart={() => {
+                          animaNavFiredRef.current = false;
+                          animaNavLongPressRef.current = setTimeout(() => {
+                            animaNavFiredRef.current = true;
+                            setIsTransitioningToAnima(true);
+                            setTimeout(() => {
+                              navigate('/anima');
+                            }, 1100);
+                          }, 600);
+                        }}
+                        onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
+                        className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
+                        title="طوّل الضغطة للانتقال لصفحة الأنيما"
+                      >
+                        <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
+                      </button>
                     </div>
 
                     <div className="flex flex-col gap-2">

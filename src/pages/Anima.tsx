@@ -59,8 +59,6 @@ const Anima = () => {
   const [newMessage, setNewMessage] = useState("");
   const [showMilestones, setShowMilestones] = useState(true);
   const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
-  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
-  const [newSexualWish, setNewSexualWish] = useState("");
   
   const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
     const saved = localStorage.getItem("anima_messages");
@@ -88,13 +86,6 @@ const Anima = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [localSexualWishes, setLocalSexualWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_sexual_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [showSexualWishes, setShowSexualWishes] = useState(true);
-
   const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
     const saved = localStorage.getItem("anima_cards");
     return saved ? JSON.parse(saved) : [];
@@ -104,10 +95,6 @@ const Anima = () => {
   useEffect(() => {
     localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
   }, [localWishes]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_sexual_wishes", JSON.stringify(localSexualWishes));
-  }, [localSexualWishes]);
 
   useEffect(() => {
     localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
@@ -288,25 +275,6 @@ const Anima = () => {
     toast.success('تم حذف عنصر التقويم');
   };
 
-  // Sexual Wish Handlers
-  const handleAddSexualWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `sexual-wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalSexualWishes(prev => [newWishObj, ...prev]);
-    setNewWish("");
-    setIsAddingWish(false);
-    toast.success('تمت إضافة الأمنية الجنسية');
-  };
-
-  const handleToggleSexualWishCompleted = (id: string) => {
-    setLocalSexualWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
-  };
-
-  const handleDeleteSexualWish = (id: string) => {
-    setLocalSexualWishes(prev => prev.filter(w => w.id !== id));
-    toast.success('تم حذف الأمنية الجنسية');
-  };
-
   // Wish Handlers
   const handleAddLocalWish = (wish: string) => {
     if (!wish.trim()) return;
@@ -421,9 +389,9 @@ const Anima = () => {
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
-      setQualityRating((ratingData as any).balance_rating ?? 5.0);
+      setQualityRating(ratingData.balance_rating ?? 5.0);
     } else if (ratingData && 'rating' in ratingData) {
-      setQualityRating((ratingData as any).rating ?? 5.0);
+      setQualityRating(ratingData.rating ?? 5.0);
     }
   }, [ratingData]);
 
@@ -472,10 +440,11 @@ const Anima = () => {
 
   const getMilestoneIcon = (type: string) => {
     switch (type) {
-      case 'sacred': return <Flame className="w-3.5 h-3.5 text-transparent fill-transparent" style={{ filter: 'drop-shadow(0 0 8px rgba(255,140,0,0.8))' }} />;
-      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-500" />;
+      case 'sacred': return <Flame className="w-3.5 h-3.5 text-red-500 fill-red-500" />;
+      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-yellow-700" />;
       case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-500" />;
       case 'nursing': return <span className="text-amber-700 text-[10px]">💧</span>;
+      case 'fall': return <span className="text-red-900 text-[10px]">⬇️</span>;
       case 'normal': return <Zap className="w-3.5 h-3.5 text-blue-500" />;
       default: return <Zap className="w-3.5 h-3.5 text-blue-500" />;
     }
@@ -508,17 +477,20 @@ const Anima = () => {
             <div className="relative mb-4">
               <div className="absolute rounded-full" style={{
                 inset: `-${Math.round((qualityRating + pressDuration) * 4)}px`,
-                background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
+                background: `radial-gradient(circle, rgba(212, 165, 32, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
                 filter: `blur(${12 + qualityRating * 2 + pressDuration * 3}px)`,
                 opacity: Math.max(0.08, (qualityRating + pressDuration) / 10),
                 transition: 'all 0.1s ease',
               }} />
               <div 
-                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+                onMouseDown={handleHeartStart} onMouseUp={handleHeartEnd} onMouseLeave={handleHeartEnd}
+                onTouchStart={handleHeartStart} onTouchEnd={handleHeartEnd}
+                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-yellow-700/30 to-yellow-600/30 backdrop-blur-xl border border-yellow-600/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
               >
-                <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
+                <Heart className="h-20 w-20 text-yellow-100 fill-yellow-100/60 pointer-events-none" />
               </div>
             </div>
+            <h1 className="text-3xl font-bold text-center text-yellow-600 select-none">الأنيما</h1>
           </div>
 
           {/* Quality Slider */}
@@ -528,7 +500,7 @@ const Anima = () => {
               onValueChange={(val) => { setQualityRating(val[0]); updateQualityRatingMutation.mutate(val[0]); }}
               max={10} min={0} step={0.1}
               className="w-full"
-              rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
+              rangeClassName="bg-gradient-to-r from-yellow-400 to-yellow-200"
             />
           </div>
 
@@ -536,8 +508,8 @@ const Anima = () => {
           <div className="mb-6 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <h3 className="text-sm font-medium text-pink-200/80"></h3>
+                <Sparkles className="w-4 h-4 text-yellow-700" />
+                <h3 className="text-sm font-medium text-yellow-700/80">رسائل من الأنيما</h3>
               </div>
             </div>
             
@@ -551,7 +523,7 @@ const Anima = () => {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button 
                           onClick={() => handleToggleLike(msg.id)}
-                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-pink-400 bg-pink-500/10" : "text-white/20 hover:text-pink-400"}`}
+                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-yellow-700 bg-yellow-700/10" : "text-white/20 hover:text-yellow-700"}`}
                         >
                           <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
                           <span className="text-[10px] font-medium">{msg.likes}</span>
@@ -589,92 +561,11 @@ const Anima = () => {
               <button
                 onClick={handleAddMessage}
                 disabled={!newMessage.trim()}
-                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                className="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600/30 hover:bg-yellow-700/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-yellow-600"
               >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
-          {/* Sexual Wishes Section */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما الجنسية</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setShowSexualWishes(!showSexualWishes)}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
-                >
-                  <span className="text-xs font-medium">▼</span>
-                </button>
-              </div>
-            </div>
-            
-            {showSexualWishes && (
-              <div className="space-y-3 animate-in slide-in-from-top duration-200">
-                {localSexualWishes.map((wish) => (
-                  <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-pink-500/10 border-pink-500/30" : "bg-pink-500/5 border-pink-400/20 hover:border-pink-500/30"}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className={`text-sm leading-relaxed flex-1 ${
-                        wish.completed
-                          ? "text-white/50 line-through"
-                          : "text-white/90"
-                      }`}>{wish.title}</p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleSexualWishCompleted(wish.id)}
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            wish.completed
-                              ? "bg-pink-500 border-pink-500"
-                              : "border-pink-400/30 hover:border-pink-400"
-                          }`}
-                        >
-                          {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                        </button>
-                        <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {localSexualWishes.length === 0 && (
-                  <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام جنسية حالياً</p>
-                )}
-              </div>
-            )}
-
-            {/* Sexual Wish Dialog */}
-            {isAddingSexualWish && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
-                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة مهمة جنسية جديدة</h3>
-                  <textarea
-                    value={newSexualWish}
-                    onChange={(e) => setNewSexualWish(e.target.value)}
-                    placeholder="اكتب المهمة الجنسية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddSexualWish(newSexualWish); }}
-                      disabled={!newSexualWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة مهمة جنسية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingSexualWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Wishes Section */}
@@ -682,14 +573,14 @@ const Anima = () => {
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما العامة</h2>
+                <h2 className="text-lg font-bold text-yellow-700">أمنيات الأنيما</h2>
               </div>
-              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
+              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-yellow-700">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3">
-              {localWishes.slice(3).map((wish) => (
+              {localWishes.map((wish) => (
                 <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
                   <div className="flex items-center justify-between gap-3">
                     <p className={`text-sm leading-relaxed flex-1 ${
@@ -718,43 +609,12 @@ const Anima = () => {
             </div>
           </div>
 
-          {/* Regular Wish Dialog */}
-          {isAddingWish && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
-              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية عامة جديدة</h3>
-                <textarea
-                    value={newWish}
-                    onChange={(e) => setNewWish(e.target.value)}
-                    placeholder="اكتب الأمنية العامة..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
-                      disabled={!newWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة أمنية عامة
-                    </button>
-                    <button
-                      onClick={() => setIsAddingWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
           {/* Treatment Section (Therapy Tasks) */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">علاج الأنيما</h2>
+                <ListTodo className="w-5 h-5 text-yellow-700" />
+                <h2 className="text-lg font-bold text-yellow-100">تطبيب الطفل الداخلي</h2>
               </div>
               <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
                 <Plus className="w-4 h-4" />
@@ -795,8 +655,8 @@ const Anima = () => {
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-green-400" />
-                <h2 className="text-lg font-bold text-green-100">تقويم الأنيما</h2>
+                <ListTodo className="w-5 h-5 text-yellow-700" />
+                <h2 className="text-lg font-bold text-yellow-100">رعاية الطفل الداخلي</h2>
               </div>
               <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
                 <Plus className="w-4 h-4" />
@@ -836,7 +696,55 @@ const Anima = () => {
           <div className="relative">
             <div className="grid grid-cols-2 gap-3">
               {cardsToDisplay.map((item, i) => (
-                <div key={item.id} className="group relative">
+                <div key={item.id} className={`group relative ${i === 0 && latestMilestones.length > 0 && showMilestones ? 'col-span-2' : ''}`}>
+                  {i === 0 && latestMilestones.length > 0 && showMilestones && (
+                    <div className="mb-3">
+                      {(() => {
+                        const currentMilestone = latestMilestones[currentMilestoneIndex];
+                        const milestone = parseMilestone(currentMilestone.message);
+                        return (
+                          <div>
+                            <button 
+                              onClick={() => {}}
+                              className="w-full relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 p-2.5 text-left hover:border-pink-400/40 transition-all opacity-100 scale-100">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-1.5">
+                                  {getMilestoneIcon(milestone.type)}
+                                  <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
+                                </div>
+                                <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
+                              </div>
+                              {milestone.intention && <div className="pt-1.5 border-t border-white/20 text-xs text-white/85 font-medium">{milestone.intention}</div>}
+                              {milestone.notes && <div className="pt-1 text-xs text-yellow-100/80 line-clamp-2 italic">{milestone.notes}</div>}
+                            </button>
+                            {/* Auto-play Button Below Milestone */}
+                            <button
+                              onClick={() => setIsAutoPlayEnabled(!isAutoPlayEnabled)}
+                              className={`mt-1 p-1 rounded-md transition-all duration-300 flex items-center justify-center ${
+                                isAutoPlayEnabled 
+                                  ? 'text-yellow-600 hover:text-yellow-700' 
+                                  : 'text-white/30 hover:text-white/50'
+                              }`}
+                              title={isAutoPlayEnabled ? 'إيقاف التشغيل التلقائي' : 'تشغيل التشغيل التلقائي'}
+                            >
+                              {isAutoPlayEnabled ? (
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M5.5 3a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0V4.5A1.5 1.5 0 0 0 5.5 3zm9 0a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0V4.5A1.5 1.5 0 0 0 14.5 3z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })()}
+                      <div className="mt-4 mb-3 w-full flex justify-center">
+                        <h2 className="text-xl font-bold text-yellow-700">نعمة الأنيما</h2>
+                      </div>
+                    </div>
+                  )}
                   <button 
                     onClick={() => {
                       setSelectedCard(item);
@@ -845,7 +753,7 @@ const Anima = () => {
                     }}
                     className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
                   >
-                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
+                    <h3 className="text-[13px] font-medium text-yellow-600/90">{item.title}</h3>
                   </button>
                   {localCards.find(c => c.id === item.id) && (
                     <button
@@ -909,7 +817,7 @@ const Anima = () => {
                   });
                 })()}
                   >
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)"/><stop offset="50%" stopColor="rgba(255,69,0,0.6)"/><stop offset="100%" stopColor="rgba(255,0,0,0.8)"/></linearGradient></defs>
+                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient></defs>
                   <YAxis hide domain={[5, 10]} />
                   <XAxis 
                     dataKey="timePosition" 
@@ -967,19 +875,21 @@ const Anima = () => {
                         iconType === 'imaginary' ? '#a855f7' :
                         iconType === 'normal' ? '#3b82f6' :
                         iconType === 'nursing' ? '#d97706' :
+                        iconType === 'fall' ? '#7f1d1d' :
                         '#6b7280';
                       
                       return (
                         <g key={`dot-${cx}-${cy}`}>
                           {/* Icon inside */}
                           <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
+                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'fall' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {/* Fallback for any other type */}
-                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing', 'fall'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                           </g>
                         </g>
                       );
@@ -990,137 +900,94 @@ const Anima = () => {
               </ResponsiveContainer>
             </div>
           )}
-
-          {/* Milestones Vertical List */}
-          {showMilestones && latestMilestones.length > 0 && (
-            <div className="mt-12 w-full space-y-4">
-              <div className="mb-6 w-full flex justify-center border-b border-white/5 pb-4">
-                <h2 className="text-xl font-bold text-pink-300">نعمة الأنيما</h2>
-              </div>
-              <div className="space-y-3">
-                {latestMilestones.map((m) => {
-                  const milestone = parseMilestone(m.message);
-                  return (
-                    <div key={m.id} className="w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-pink-600/10 via-rose-500/8 to-orange-500/5 backdrop-blur-xl border border-pink-400/15 p-4 text-right hover:border-pink-400/30 transition-all">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {getMilestoneIcon(milestone.type)}
-                          <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
-                        </div>
-                        <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
-                      </div>
-                      {milestone.intention && (
-                        <div className="pt-2 border-t border-white/10 text-xs text-white/80 font-medium">
-                          <span className="text-pink-300/60 ml-1">النية:</span>
-                          {milestone.intention}
-                        </div>
-                      )}
-                      {milestone.notes && (
-                        <div className="pt-1.5 text-xs text-yellow-100/70 italic leading-relaxed">
-                          {milestone.notes}
-                        </div>
-                      )}
-                      <div className="mt-3 flex items-center gap-2 text-[9px] text-white/30 border-t border-white/5 pt-2">
-                        <span>{new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}</span>
-                        <span className="opacity-50">•</span>
-                        <span>{new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Sheets (Wishes, Tasks, Cards) */}
-      <div>
-        <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-pink-500">إضافة</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+      <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
+          <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
+            <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-yellow-700">إضافة</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-        <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+      <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
+          <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
+            <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-        <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+      <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
+          <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
+            <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-        <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
-              setEditingCard({ ...selectedCard! });
-              setIsEditingCard(true);
-            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
-            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
-          </SheetContent>
-        </Sheet>
+      <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
+            setEditingCard({ ...selectedCard! });
+            setIsEditingCard(true);
+          }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
+          <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
+        </SheetContent>
+      </Sheet>
 
-        <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
-            <div className="px-6 py-6 space-y-4">
-              <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
-              <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
-            </div>
-            <SheetFooter className="px-6 pb-6 gap-3">
-              <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
-              <Button 
-                onClick={() => {
-                  if (!editingCard) return;
-                  // Check if it's a new card (temp id)
-                  if (editingCard.id.startsWith('temp-')) {
-                    handleAddLocalCard(editingCard);
-                  } else if (localCards.find(c => c.id === editingCard.id)) {
-                    // It's a local card
-                    handleUpdateLocalCard(editingCard);
-                  } else {
-                    // It's a database card
-                    updateCardMutation.mutate(editingCard);
-                  }
-                }} 
-                className="flex-1 bg-pink-500"
-              >
-                حفظ
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      </div>
+      <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
+          <div className="px-6 py-6 space-y-4">
+            <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
+            <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
+          </div>
+          <SheetFooter className="px-6 pb-6 gap-3">
+            <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
+            <Button 
+              onClick={() => {
+                if (!editingCard) return;
+                // Check if it's a new card (temp id)
+                if (editingCard.id.startsWith('temp-')) {
+                  handleAddLocalCard(editingCard);
+                } else if (localCards.find(c => c.id === editingCard.id)) {
+                  // It's a local card
+                  handleUpdateLocalCard(editingCard);
+                } else {
+                  // It's a database card
+                  updateCardMutation.mutate(editingCard);
+                }
+              }} 
+              className="flex-1 bg-yellow-700"
+            >
+              حفظ
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <style>{`
-        .anima-bg { background: linear-gradient(135deg, hsl(330,40%,8%) 0%, hsl(280,35%,10%) 30%, hsl(320,30%,7%) 60%, hsl(270,40%,9%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
+        .anima-bg { background: linear-gradient(135deg, hsl(20,40%,12%) 0%, hsl(22,42%,14%) 30%, hsl(18,38%,10%) 60%, hsl(20,40%,13%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
         @keyframes anima-gradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         .anima-orb { filter: blur(80px); animation: anima-orb-drift 12s ease-in-out infinite; }
-        .anima-orb-pink { background: radial-gradient(circle, hsl(330,60%,40%) 0%, transparent 70%); opacity: 0.2; }
-        .anima-orb-purple { background: radial-gradient(circle, hsl(270,50%,40%) 0%, transparent 70%); opacity: 0.15; animation-delay: -4s; }
-        .anima-orb-rose { background: radial-gradient(circle, hsl(350,50%,45%) 0%, transparent 70%); opacity: 0.12; animation-delay: -8s; }
+        .anima-orb-pink { background: radial-gradient(circle, hsl(20,50%,45%) 0%, transparent 70%); opacity: 0.2; }
+        .anima-orb-purple { background: radial-gradient(circle, hsl(25,45%,42%) 0%, transparent 70%); opacity: 0.15; animation-delay: -4s; }
+        .anima-orb-rose { background: radial-gradient(circle, hsl(20,48%,48%) 0%, transparent 70%); opacity: 0.12; animation-delay: -8s; }
         @keyframes anima-orb-drift { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.1); } 66% { transform: translate(-20px,15px) scale(0.9); } }
         .anima-pulse { animation: anima-pulse-anim 6s ease-in-out infinite; }
-        @keyframes anima-pulse-anim { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(236,72,153,0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(236,72,153,0.2); } }
+        @keyframes anima-pulse-anim { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(212, 165, 32, 0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(212, 165, 32, 0.2); } }
         .anima-float-card { animation: anima-card-float 8s ease-in-out infinite; }
         @keyframes anima-card-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         [role="slider"] { display: none !important; }
