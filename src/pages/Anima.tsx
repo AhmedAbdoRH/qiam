@@ -49,11 +49,11 @@ const Anima = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [pressDuration, setPressDuration] = useState(0);
   const [isPressing, setIsPressing] = useState(false);
   const [pressStartTime, setPressStartTime] = useState<number | null>(null);
-  const [fadeOutTimer, setFadeOutTimer] = useState<NodeJS.Timeout | null>(null);
+  const [fadeOutTimer, setFadeOutTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -62,72 +62,106 @@ const Anima = () => {
   const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
   const [newSexualWish, setNewSexualWish] = useState("");
   
-  const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
-    const saved = localStorage.getItem("anima_messages");
-    return saved ? JSON.parse(saved) : [];
-  });
-  
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [localTasks, setLocalTasks] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_tasks");
-    return saved ? JSON.parse(saved) : [];
-  });
 
   // Calendar State
   const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
-  const [localCalendarItems, setLocalCalendarItems] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_calendar");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localWishes, setLocalWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localSexualWishes, setLocalSexualWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_sexual_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
 
   const [showSexualWishes, setShowSexualWishes] = useState(true);
 
-  const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
-    const saved = localStorage.getItem("anima_cards");
-    return saved ? JSON.parse(saved) : [];
+  // Database queries for all data
+  const { data: animaMessages = [] } = useQuery({
+    queryKey: ['animaMessages', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(m => ({ id: m.id, text: m.text, timestamp: new Date(m.created_at).getTime(), likes: m.likes }));
+    },
+    enabled: !!user
   });
 
-  // Persistent Storage Effects
-  useEffect(() => {
-    localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
-  }, [localWishes]);
+  const { data: localTasks = [] } = useQuery({
+    queryKey: ['animaTasks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(t => ({ id: t.id, title: t.title, progress: Number(t.progress) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_sexual_wishes", JSON.stringify(localSexualWishes));
-  }, [localSexualWishes]);
+  const { data: localCalendarItems = [] } = useQuery({
+    queryKey: ['animaCalendar', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_calendar')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
-  }, [localTasks]);
+  const { data: localWishes = [] } = useQuery({
+    queryKey: ['animaWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_calendar", JSON.stringify(localCalendarItems));
-  }, [localCalendarItems]);
+  const { data: localSexualWishes = [] } = useQuery({
+    queryKey: ['animaSexualWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_sexual_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_cards", JSON.stringify(localCards));
-  }, [localCards]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
+  const { data: localCards = [] } = useQuery({
+    queryKey: ['animaPageCards', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_page_cards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
 
   // Sorted Tasks Logic (Lowest progress first)
   const sortedTasks = useMemo(() => {
@@ -175,7 +209,7 @@ const Anima = () => {
         setFadeOutTimer(null);
       }
     }, 50);
-    setFadeOutTimer(fadeTimer as unknown as NodeJS.Timeout);
+    setFadeOutTimer(fadeTimer);
   };
 
   useEffect(() => {
@@ -193,21 +227,7 @@ const Anima = () => {
     };
   }, [fadeOutTimer]);
 
-  // Database Queries
-  const { data: dbCards = [] } = useQuery({
-    queryKey: ['animaCards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('anima_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
+  // Database Queries (dbCards removed - using localCards from anima_page_cards)
 
   const { data: ratingData } = useQuery({
     queryKey: ['animaQualityRating', user?.id],
@@ -243,132 +263,156 @@ const Anima = () => {
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState(0);
 
   // Task Handlers
-  const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
-    const newTask: AnimaTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      progress: 0
-    };
-    setLocalTasks([...localTasks, newTask]);
+  const handleAddTask = async () => {
+    if (!newTaskTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_tasks').insert({ user_id: user.id, title: newTaskTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة المهمة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
     setNewTaskTitle("");
     setIsAddingTask(false);
     toast.success('تمت إضافة المهمة');
   };
 
-  const handleUpdateTaskProgress = (id: string, progress: number) => {
-    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, progress } : t));
+  const handleUpdateTaskProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
   };
 
-  const handleDeleteTask = (id: string) => {
-    setLocalTasks(prev => prev.filter(t => t.id !== id));
+  const handleDeleteTask = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
     toast.success('تم حذف المهمة');
   };
 
   // Calendar Handlers
-  const handleAddCalendarItem = () => {
-    if (!newCalendarItemTitle.trim()) return;
-    const newItem: AnimaTask = {
-      id: `calendar-${Date.now()}`,
-      title: newCalendarItemTitle.trim(),
-      progress: 0
-    };
-    setLocalCalendarItems([...localCalendarItems, newItem]);
+  const handleAddCalendarItem = async () => {
+    if (!newCalendarItemTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_calendar').insert({ user_id: user.id, title: newCalendarItemTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة عنصر التقويم'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     setNewCalendarItemTitle("");
     setIsAddingCalendarItem(false);
     toast.success('تمت إضافة عنصر التقويم');
   };
 
-  const handleUpdateCalendarProgress = (id: string, progress: number) => {
-    setLocalCalendarItems(prev => prev.map(c => c.id === id ? { ...c, progress } : c));
+  const handleUpdateCalendarProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
   };
 
-  const handleDeleteCalendarItem = (id: string) => {
-    setLocalCalendarItems(prev => prev.filter(c => c.id !== id));
+  const handleDeleteCalendarItem = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     toast.success('تم حذف عنصر التقويم');
   };
 
   // Sexual Wish Handlers
-  const handleAddSexualWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `sexual-wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalSexualWishes(prev => [newWishObj, ...prev]);
-    setNewWish("");
-    setIsAddingWish(false);
+  const handleAddSexualWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+    setNewSexualWish("");
+    setIsAddingSexualWish(false);
     toast.success('تمت إضافة الأمنية الجنسية');
   };
 
-  const handleToggleSexualWishCompleted = (id: string) => {
-    setLocalSexualWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  const handleToggleSexualWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localSexualWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_sexual_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
   };
 
-  const handleDeleteSexualWish = (id: string) => {
-    setLocalSexualWishes(prev => prev.filter(w => w.id !== id));
+  const handleDeleteSexualWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_sexual_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
     toast.success('تم حذف الأمنية الجنسية');
   };
 
   // Wish Handlers
-  const handleAddLocalWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalWishes(prev => [newWishObj, ...prev]);
+  const handleAddLocalWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_wishes').insert({ user_id: user.id, title: wish.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     setNewWish("");
     setIsAddingWish(false);
     toast.success('تمت إضافة الأمنية');
   };
 
-  const handleToggleWishCompleted = (id: string) => {
-    setLocalWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  const handleToggleWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
-  const handleDeleteLocalWish = (id: string) => {
-    setLocalWishes(prev => prev.filter(w => w.id !== id));
+  const handleDeleteLocalWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     toast.success('تم حذف الأمنية');
   };
 
-  const handleAddLocalCard = (card: AnimaCard) => {
-    const newCard: AnimaCard = {
-      ...card,
-      id: card.id.startsWith('temp-') ? `card-${Date.now()}` : card.id,
-      order_index: localCards.length
-    };
-    setLocalCards(prev => [...prev, newCard]);
+  const handleAddLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    const { error } = await supabase.from('anima_page_cards').insert({
+      user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: localCards.length
+    });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setEditingCard(null);
     toast.success('تمت إضافة البطاقة');
   };
 
-  const handleUpdateLocalCard = (card: AnimaCard) => {
-    setLocalCards(prev => prev.map(c => c.id === card.id ? card : c));
+  const handleUpdateLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').update({
+      title: card.title, description: card.description, emoji: card.emoji
+    }).eq('id', card.id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setSelectedCard(null);
     toast.success('تم تحديث البطاقة');
   };
 
-  const handleDeleteLocalCard = (id: string) => {
-    setLocalCards(prev => prev.filter(c => c.id !== id));
+  const handleDeleteLocalCard = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     toast.success('تم حذف البطاقة');
   };
 
-  const handleAddMessage = () => {
-    if (!newMessage.trim()) return;
-    const message = {
-      id: `msg-${Date.now()}`,
-      text: newMessage,
-      timestamp: Date.now(),
-      likes: 0
-    };
-    setAnimaMessages(prev => [message, ...prev]);
+  const handleAddMessage = async () => {
+    if (!newMessage.trim() || !user) return;
+    const { error } = await supabase.from('anima_messages').insert({ user_id: user.id, text: newMessage.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     setNewMessage("");
     toast.success('تمت إضافة الرسالة');
   };
 
-  const handleToggleLike = (id: string) => {
-    setAnimaMessages(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+  const handleToggleLike = async (id: string) => {
+    if (!user) return;
+    const msg = animaMessages.find(m => m.id === id);
+    if (!msg) return;
+    await supabase.from('anima_messages').update({ likes: msg.likes + 1 }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
   };
 
-  const handleDeleteMessage = (id: string) => {
-    setAnimaMessages(prev => prev.filter(m => m.id !== id));
+  const handleDeleteMessage = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_messages').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     toast.success('تم حذف الرسالة');
   };
 
@@ -394,30 +438,7 @@ const Anima = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['animaQualityRating', user?.id] })
   });
 
-  const updateCardMutation = useMutation({
-    mutationFn: async (card: AnimaCard) => {
-      if (!user) throw new Error('No user');
-      if (card.id.startsWith('temp-')) {
-        const { error } = await supabase.from('anima_cards').insert({
-          user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: card.order_index
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('anima_cards').update({
-          title: card.title, description: card.description, emoji: card.emoji, updated_at: new Date().toISOString()
-        }).eq('id', card.id).eq('user_id', user.id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaCards', user?.id] });
-      setIsEditingCard(false);
-      setSelectedCard(null);
-      toast.success('تم الحفظ');
-    }
-  });
-
-  const cardsToDisplay = localCards.length > 0 ? localCards : (dbCards.length > 0 ? dbCards : defaultCards);
+  const cardsToDisplay = localCards.length > 0 ? localCards : defaultCards;
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
@@ -1104,15 +1125,10 @@ const Anima = () => {
               <Button 
                 onClick={() => {
                   if (!editingCard) return;
-                  // Check if it's a new card (temp id)
                   if (editingCard.id.startsWith('temp-')) {
                     handleAddLocalCard(editingCard);
-                  } else if (localCards.find(c => c.id === editingCard.id)) {
-                    // It's a local card
-                    handleUpdateLocalCard(editingCard);
                   } else {
-                    // It's a database card
-                    updateCardMutation.mutate(editingCard);
+                    handleUpdateLocalCard(editingCard);
                   }
                 }} 
                 className="flex-1 bg-pink-500"
