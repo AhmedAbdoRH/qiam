@@ -277,132 +277,156 @@ const Anima = () => {
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState(0);
 
   // Task Handlers
-  const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
-    const newTask: AnimaTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      progress: 0
-    };
-    setLocalTasks([...localTasks, newTask]);
+  const handleAddTask = async () => {
+    if (!newTaskTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_tasks').insert({ user_id: user.id, title: newTaskTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة المهمة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
     setNewTaskTitle("");
     setIsAddingTask(false);
     toast.success('تمت إضافة المهمة');
   };
 
-  const handleUpdateTaskProgress = (id: string, progress: number) => {
-    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, progress } : t));
+  const handleUpdateTaskProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
   };
 
-  const handleDeleteTask = (id: string) => {
-    setLocalTasks(prev => prev.filter(t => t.id !== id));
+  const handleDeleteTask = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
     toast.success('تم حذف المهمة');
   };
 
   // Calendar Handlers
-  const handleAddCalendarItem = () => {
-    if (!newCalendarItemTitle.trim()) return;
-    const newItem: AnimaTask = {
-      id: `calendar-${Date.now()}`,
-      title: newCalendarItemTitle.trim(),
-      progress: 0
-    };
-    setLocalCalendarItems([...localCalendarItems, newItem]);
+  const handleAddCalendarItem = async () => {
+    if (!newCalendarItemTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_calendar').insert({ user_id: user.id, title: newCalendarItemTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة عنصر التقويم'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     setNewCalendarItemTitle("");
     setIsAddingCalendarItem(false);
     toast.success('تمت إضافة عنصر التقويم');
   };
 
-  const handleUpdateCalendarProgress = (id: string, progress: number) => {
-    setLocalCalendarItems(prev => prev.map(c => c.id === id ? { ...c, progress } : c));
+  const handleUpdateCalendarProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
   };
 
-  const handleDeleteCalendarItem = (id: string) => {
-    setLocalCalendarItems(prev => prev.filter(c => c.id !== id));
+  const handleDeleteCalendarItem = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     toast.success('تم حذف عنصر التقويم');
   };
 
   // Sexual Wish Handlers
-  const handleAddSexualWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `sexual-wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalSexualWishes(prev => [newWishObj, ...prev]);
-    setNewWish("");
-    setIsAddingWish(false);
+  const handleAddSexualWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+    setNewSexualWish("");
+    setIsAddingSexualWish(false);
     toast.success('تمت إضافة الأمنية الجنسية');
   };
 
-  const handleToggleSexualWishCompleted = (id: string) => {
-    setLocalSexualWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  const handleToggleSexualWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localSexualWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_sexual_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
   };
 
-  const handleDeleteSexualWish = (id: string) => {
-    setLocalSexualWishes(prev => prev.filter(w => w.id !== id));
+  const handleDeleteSexualWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_sexual_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
     toast.success('تم حذف الأمنية الجنسية');
   };
 
   // Wish Handlers
-  const handleAddLocalWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalWishes(prev => [newWishObj, ...prev]);
+  const handleAddLocalWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_wishes').insert({ user_id: user.id, title: wish.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     setNewWish("");
     setIsAddingWish(false);
     toast.success('تمت إضافة الأمنية');
   };
 
-  const handleToggleWishCompleted = (id: string) => {
-    setLocalWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  const handleToggleWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
-  const handleDeleteLocalWish = (id: string) => {
-    setLocalWishes(prev => prev.filter(w => w.id !== id));
+  const handleDeleteLocalWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     toast.success('تم حذف الأمنية');
   };
 
-  const handleAddLocalCard = (card: AnimaCard) => {
-    const newCard: AnimaCard = {
-      ...card,
-      id: card.id.startsWith('temp-') ? `card-${Date.now()}` : card.id,
-      order_index: localCards.length
-    };
-    setLocalCards(prev => [...prev, newCard]);
+  const handleAddLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    const { error } = await supabase.from('anima_page_cards').insert({
+      user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: localCards.length
+    });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setEditingCard(null);
     toast.success('تمت إضافة البطاقة');
   };
 
-  const handleUpdateLocalCard = (card: AnimaCard) => {
-    setLocalCards(prev => prev.map(c => c.id === card.id ? card : c));
+  const handleUpdateLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').update({
+      title: card.title, description: card.description, emoji: card.emoji
+    }).eq('id', card.id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setSelectedCard(null);
     toast.success('تم تحديث البطاقة');
   };
 
-  const handleDeleteLocalCard = (id: string) => {
-    setLocalCards(prev => prev.filter(c => c.id !== id));
+  const handleDeleteLocalCard = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     toast.success('تم حذف البطاقة');
   };
 
-  const handleAddMessage = () => {
-    if (!newMessage.trim()) return;
-    const message = {
-      id: `msg-${Date.now()}`,
-      text: newMessage,
-      timestamp: Date.now(),
-      likes: 0
-    };
-    setAnimaMessages(prev => [message, ...prev]);
+  const handleAddMessage = async () => {
+    if (!newMessage.trim() || !user) return;
+    const { error } = await supabase.from('anima_messages').insert({ user_id: user.id, text: newMessage.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     setNewMessage("");
     toast.success('تمت إضافة الرسالة');
   };
 
-  const handleToggleLike = (id: string) => {
-    setAnimaMessages(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+  const handleToggleLike = async (id: string) => {
+    if (!user) return;
+    const msg = animaMessages.find(m => m.id === id);
+    if (!msg) return;
+    await supabase.from('anima_messages').update({ likes: msg.likes + 1 }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
   };
 
-  const handleDeleteMessage = (id: string) => {
-    setAnimaMessages(prev => prev.filter(m => m.id !== id));
+  const handleDeleteMessage = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_messages').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     toast.success('تم حذف الرسالة');
   };
 
