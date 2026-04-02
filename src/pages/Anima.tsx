@@ -1125,15 +1125,10 @@ const Anima = () => {
               <Button 
                 onClick={() => {
                   if (!editingCard) return;
-                  // Check if it's a new card (temp id)
                   if (editingCard.id.startsWith('temp-')) {
                     handleAddLocalCard(editingCard);
-                  } else if (localCards.find(c => c.id === editingCard.id)) {
-                    // It's a local card
-                    handleUpdateLocalCard(editingCard);
                   } else {
-                    // It's a database card
-                    updateCardMutation.mutate(editingCard);
+                    handleUpdateLocalCard(editingCard);
                   }
                 }} 
                 className="flex-1 bg-pink-500"
