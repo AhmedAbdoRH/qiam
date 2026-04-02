@@ -1047,6 +1047,8 @@ const Anima = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
 
       {/* Sheets (Wishes, Tasks, Cards) */}
       <div>
