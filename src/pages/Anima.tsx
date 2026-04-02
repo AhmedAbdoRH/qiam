@@ -70,7 +70,7 @@ const Anima = () => {
   const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
 
-  const [showSexualWishes, setShowSexualWishes] = useState(true);
+  const [_showSexualWishes, _setShowSexualWishes] = useState(true);
 
   // Database queries for all data
   const { data: animaMessages = [] } = useQuery({
