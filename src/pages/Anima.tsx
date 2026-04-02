@@ -62,72 +62,106 @@ const Anima = () => {
   const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
   const [newSexualWish, setNewSexualWish] = useState("");
   
-  const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
-    const saved = localStorage.getItem("anima_messages");
-    return saved ? JSON.parse(saved) : [];
-  });
-  
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [localTasks, setLocalTasks] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_tasks");
-    return saved ? JSON.parse(saved) : [];
-  });
 
   // Calendar State
   const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
-  const [localCalendarItems, setLocalCalendarItems] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_calendar");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localWishes, setLocalWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [localSexualWishes, setLocalSexualWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_sexual_wishes");
-    return saved ? JSON.parse(saved) : [];
-  });
 
   const [showSexualWishes, setShowSexualWishes] = useState(true);
 
-  const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
-    const saved = localStorage.getItem("anima_cards");
-    return saved ? JSON.parse(saved) : [];
+  // Database queries for all data
+  const { data: animaMessages = [] } = useQuery({
+    queryKey: ['animaMessages', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(m => ({ id: m.id, text: m.text, timestamp: new Date(m.created_at).getTime(), likes: m.likes }));
+    },
+    enabled: !!user
   });
 
-  // Persistent Storage Effects
-  useEffect(() => {
-    localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
-  }, [localWishes]);
+  const { data: localTasks = [] } = useQuery({
+    queryKey: ['animaTasks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(t => ({ id: t.id, title: t.title, progress: Number(t.progress) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_sexual_wishes", JSON.stringify(localSexualWishes));
-  }, [localSexualWishes]);
+  const { data: localCalendarItems = [] } = useQuery({
+    queryKey: ['animaCalendar', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_calendar')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
-  }, [localTasks]);
+  const { data: localWishes = [] } = useQuery({
+    queryKey: ['animaWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_calendar", JSON.stringify(localCalendarItems));
-  }, [localCalendarItems]);
+  const { data: localSexualWishes = [] } = useQuery({
+    queryKey: ['animaSexualWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_sexual_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_cards", JSON.stringify(localCards));
-  }, [localCards]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
+  const { data: localCards = [] } = useQuery({
+    queryKey: ['animaPageCards', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_page_cards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
 
   // Sorted Tasks Logic (Lowest progress first)
   const sortedTasks = useMemo(() => {
