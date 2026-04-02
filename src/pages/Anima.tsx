@@ -49,11 +49,11 @@ const Anima = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [pressDuration, setPressDuration] = useState(0);
   const [isPressing, setIsPressing] = useState(false);
   const [pressStartTime, setPressStartTime] = useState<number | null>(null);
-  const [fadeOutTimer, setFadeOutTimer] = useState<NodeJS.Timeout | null>(null);
+  const [fadeOutTimer, setFadeOutTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -209,7 +209,7 @@ const Anima = () => {
         setFadeOutTimer(null);
       }
     }, 50);
-    setFadeOutTimer(fadeTimer as unknown as NodeJS.Timeout);
+    setFadeOutTimer(fadeTimer);
   };
 
   useEffect(() => {
@@ -227,21 +227,7 @@ const Anima = () => {
     };
   }, [fadeOutTimer]);
 
-  // Database Queries
-  const { data: dbCards = [] } = useQuery({
-    queryKey: ['animaCards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('anima_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
+  // Database Queries (dbCards removed - using localCards from anima_page_cards)
 
   const { data: ratingData } = useQuery({
     queryKey: ['animaQualityRating', user?.id],
@@ -452,30 +438,7 @@ const Anima = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['animaQualityRating', user?.id] })
   });
 
-  const updateCardMutation = useMutation({
-    mutationFn: async (card: AnimaCard) => {
-      if (!user) throw new Error('No user');
-      if (card.id.startsWith('temp-')) {
-        const { error } = await supabase.from('anima_cards').insert({
-          user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: card.order_index
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('anima_cards').update({
-          title: card.title, description: card.description, emoji: card.emoji, updated_at: new Date().toISOString()
-        }).eq('id', card.id).eq('user_id', user.id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaCards', user?.id] });
-      setIsEditingCard(false);
-      setSelectedCard(null);
-      toast.success('تم الحفظ');
-    }
-  });
-
-  const cardsToDisplay = localCards.length > 0 ? localCards : (dbCards.length > 0 ? dbCards : defaultCards);
+  const cardsToDisplay = localCards.length > 0 ? localCards : defaultCards;
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
