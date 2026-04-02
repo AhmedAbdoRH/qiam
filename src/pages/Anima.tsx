@@ -553,6 +553,42 @@ const Anima = () => {
             />
           </div>
 
+          {/* Cards Section (صفات الانيما) */}
+          <div className="relative mb-8">
+            <div className="grid grid-cols-2 gap-3">
+              {cardsToDisplay.map((item, i) => (
+                <div key={item.id} className="group relative">
+                  <button 
+                    onClick={() => {
+                      setSelectedCard(item);
+                      setEditingCard({ ...item });
+                      setIsEditingCard(true);
+                    }}
+                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
+                  >
+                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
+                  </button>
+                  {localCards.find(c => c.id === item.id) && (
+                    <button
+                      onClick={() => handleDeleteLocalCard(item.id)}
+                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => {
+            setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
+            setIsEditingCard(true);
+          }} className="w-full mb-8 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 text-white/40 hover:text-white/60 transition-all">
+            <Plus className="w-5 h-5" />
+            <span className="text-sm font-medium">إضافة بطاقة</span>
+          </button>
+
           {/* Messages Section */}
           <div className="mb-6 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -562,7 +598,6 @@ const Anima = () => {
               </div>
             </div>
             
-            {/* Messages Display */}
             <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
               {animaMessages.length > 0 ? (
                 animaMessages.map((msg) => (
@@ -592,7 +627,6 @@ const Anima = () => {
               )}
             </div>
 
-            {/* Message Input */}
             <div className="flex gap-2">
               <textarea
                 value={newMessage}
@@ -612,225 +646,17 @@ const Anima = () => {
                 disabled={!newMessage.trim()}
                 className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
               >
-                <Plus className="w-5 h-5" />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Sexual Wishes Section */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">مهام الأنيما الجنسية</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    const wish = prompt('اكتب المهمة الجنسية:');
-                    if (wish && wish.trim()) {
-                      handleAddSexualWish(wish.trim());
-                    }
-                  }}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setShowSexualWishes(!showSexualWishes)}
-                  className="p-2 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/20 text-pink-300 transition-all"
-                >
-                  <span className="text-xs font-medium">▼</span>
-                </button>
-              </div>
-            </div>
-            
-            {showSexualWishes && (
-              <div className="space-y-3 animate-in slide-in-from-top duration-200">
-                {localSexualWishes.map((wish) => (
-                  <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-pink-500/10 border-pink-500/30" : "bg-pink-500/5 border-pink-400/20 hover:border-pink-500/30"}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className={`text-sm leading-relaxed flex-1 ${
-                        wish.completed
-                          ? "text-white/50 line-through"
-                          : "text-white/90"
-                      }`}>{wish.title}</p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleSexualWishCompleted(wish.id)}
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            wish.completed
-                              ? "bg-pink-500 border-pink-500"
-                              : "border-pink-400/30 hover:border-pink-400"
-                          }`}
-                        >
-                          {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                        </button>
-                        <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {localSexualWishes.length === 0 && (
-                  <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام جنسية حالياً</p>
-                )}
-              </div>
-            )}
-
-            {/* Sexual Wish Dialog */}
-            {isAddingSexualWish && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
-                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة مهمة جنسية جديدة</h3>
-                  <textarea
-                    value={newSexualWish}
-                    onChange={(e) => setNewSexualWish(e.target.value)}
-                    placeholder="اكتب المهمة الجنسية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddSexualWish(newSexualWish); }}
-                      disabled={!newSexualWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة مهمة جنسية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingSexualWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Wishes Section */}
-          <div className="mb-12 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما العامة</h2>
-              </div>
-              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              {localWishes.slice(3).map((wish) => (
-                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`text-sm leading-relaxed flex-1 ${
-                      wish.completed
-                        ? "text-white/50 line-through"
-                        : "text-white/90"
-                    }`}>{wish.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleToggleWishCompleted(wish.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          wish.completed
-                            ? "bg-green-500 border-green-500"
-                            : "border-white/20 hover:border-green-400"
-                        }`}
-                      >
-                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                      </button>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Regular Wish Dialog */}
-          {isAddingWish && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
-              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية عامة جديدة</h3>
-                <textarea
-                    value={newWish}
-                    onChange={(e) => setNewWish(e.target.value)}
-                    placeholder="اكتب الأمنية العامة..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
-                      disabled={!newWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة أمنية عامة
-                    </button>
-                    <button
-                      onClick={() => setIsAddingWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {/* Treatment Section (Therapy Tasks) */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">علاج الأنيما</h2>
-              </div>
-              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{task.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[task.progress]}
-                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                </div>
-              ))}
-              {localTasks.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
-              )}
-            </div>
-          </div>
-
-          {/* Calendar Section */}
+          {/* Calendar Section - التذكية - تقويم */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <ListTodo className="w-5 h-5 text-green-400" />
-                <h2 className="text-lg font-bold text-green-100">تقويم الأنيما</h2>
+                <h2 className="text-lg font-bold text-green-100">التذكية - تقويم</h2>
               </div>
               <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
                 <Plus className="w-4 h-4" />
@@ -867,40 +693,206 @@ const Anima = () => {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-3">
-              {cardsToDisplay.map((item, i) => (
-                <div key={item.id} className="group relative">
-                  <button 
-                    onClick={() => {
-                      setSelectedCard(item);
-                      setEditingCard({ ...item });
-                      setIsEditingCard(true);
-                    }}
-                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
-                  >
-                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
-                  </button>
-                  {localCards.find(c => c.id === item.id) && (
-                    <button
-                      onClick={() => handleDeleteLocalCard(item.id)}
-                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
+          {/* Treatment Section - التذكية - الشفاء */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <ListTodo className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-bold text-blue-100">التذكية - الشفاء</h2>
+              </div>
+              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {sortedTasks.map((task) => (
+                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{task.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[task.progress]}
+                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
                 </div>
               ))}
+              {localTasks.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
+              )}
             </div>
           </div>
 
-          <button onClick={() => {
-            setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
-            setIsEditingCard(true);
-          }} className="w-full mt-4 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 text-white/40 hover:text-white/60 transition-all">
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">إضافة بطاقة</span>
-          </button>
+          {/* Wishes Section - أمنيات الأنيما */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما</h2>
+              </div>
+              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {localWishes.map((wish) => (
+                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className={`text-sm leading-relaxed flex-1 ${
+                      wish.completed
+                        ? "text-white/50 line-through"
+                        : "text-white/90"
+                    }`}>{wish.title}</p>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleToggleWishCompleted(wish.id)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          wish.completed
+                            ? "bg-green-500 border-green-500"
+                            : "border-white/20 hover:border-green-400"
+                        }`}
+                      >
+                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
+                      </button>
+                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {localWishes.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+              )}
+            </div>
+          </div>
+
+          {/* Regular Wish Dialog */}
+          {isAddingWish && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
+              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
+                <textarea
+                    value={newWish}
+                    onChange={(e) => setNewWish(e.target.value)}
+                    placeholder="اكتب الأمنية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
+                      disabled={!newWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                    >
+                      إضافة أمنية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* امنيات احمد من الانيما */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber-400 fill-amber-400/20" />
+                <h2 className="text-lg font-bold text-amber-100">امنيات احمد من الانيما</h2>
+              </div>
+              <button 
+                onClick={() => {
+                  const wish = prompt('اكتب الأمنية:');
+                  if (wish && wish.trim()) {
+                    handleAddSexualWish(wish.trim());
+                  }
+                }}
+                className="p-2 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/20 text-amber-300 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {localSexualWishes.map((wish) => (
+                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-amber-500/10 border-amber-500/30" : "bg-amber-500/5 border-amber-400/20 hover:border-amber-500/30"}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className={`text-sm leading-relaxed flex-1 ${
+                      wish.completed
+                        ? "text-white/50 line-through"
+                        : "text-white/90"
+                    }`}>{wish.title}</p>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleToggleSexualWishCompleted(wish.id)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          wish.completed
+                            ? "bg-amber-500 border-amber-500"
+                            : "border-amber-400/30 hover:border-amber-400"
+                        }`}
+                      >
+                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
+                      </button>
+                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {localSexualWishes.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+              )}
+            </div>
+
+            {/* Sexual Wish Dialog */}
+            {isAddingSexualWish && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
+                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
+                  <textarea
+                    value={newSexualWish}
+                    onChange={(e) => setNewSexualWish(e.target.value)}
+                    placeholder="اكتب الأمنية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-amber-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddSexualWish(newSexualWish); }}
+                      disabled={!newSexualWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-amber-500/20 border border-amber-400/30 hover:bg-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-amber-300"
+                    >
+                      إضافة أمنية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingSexualWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Chart Section */}
           {latestMilestones.length > 1 && (
@@ -914,15 +906,13 @@ const Anima = () => {
                       return daysAgo <= 7;
                     });
                   
-                  // Find the start of the earliest day (midnight) in the filtered range
                   const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
                   const dayStart = new Date(earliestDate);
-                  dayStart.setHours(0, 0, 0, 0); // midnight of the earliest day
+                  dayStart.setHours(0, 0, 0, 0);
                   const dayStartMs = dayStart.getTime();
 
                   return filtered.map((m, i) => {
                     const milestone = parseMilestone(m.message);
-                    // timePosition = hours elapsed since midnight of the first day
                     const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
 
                     return {
@@ -951,8 +941,6 @@ const Anima = () => {
                     type="number"
                     ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
                     tickFormatter={(value) => {
-                      // Compute the actual day-of-week for each tick using latestMilestones from closure.
-                      // value = hours since midnight of the earliest day in the filtered range.
                       const filtered = [...latestMilestones]
                         .reverse()
                         .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
@@ -977,7 +965,6 @@ const Anima = () => {
                     : null)} 
                   />
                   <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  {/* Day boundary lines — each 24h represents one full calendar day starting from midnight */}
                   <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
                   <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
                   <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
@@ -1005,14 +992,12 @@ const Anima = () => {
                       
                       return (
                         <g key={`dot-${cx}-${cy}`}>
-                          {/* Icon inside */}
                           <g transform={`translate(${cx - 3}, ${cy - 3})`}>
                             {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
                             {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                             {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {/* Fallback for any other type */}
                             {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
                           </g>
                         </g>
@@ -1028,9 +1013,6 @@ const Anima = () => {
           {/* Milestones Vertical List */}
           {showMilestones && latestMilestones.length > 0 && (
             <div className="mt-12 w-full space-y-4">
-              <div className="mb-6 w-full flex justify-center border-b border-white/5 pb-4">
-                <h2 className="text-xl font-bold text-pink-300">نعمة الأنيما</h2>
-              </div>
               <div className="space-y-3">
                 {latestMilestones.map((m) => {
                   const milestone = parseMilestone(m.message);
@@ -1065,8 +1047,6 @@ const Anima = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
 
       {/* Sheets (Wishes, Tasks, Cards) */}
       <div>
