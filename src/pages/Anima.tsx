@@ -71,7 +71,8 @@ const Anima = () => {
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
 
   const [_showSexualWishes, _setShowSexualWishes] = useState(true);
-  const [sweetNotes, setSweetNotes] = useState("");
+  const [sweetNotes, setSweetNotes] = useState<string[]>([]);
+  const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tagTarget, setTagTarget] = useState<{ type: 'task' | 'calendar'; id: string } | null>(null);
 
@@ -131,7 +132,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
     },
     enabled: !!user
   });
@@ -146,7 +147,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
     },
     enabled: !!user
   });
@@ -175,6 +176,16 @@ const Anima = () => {
   const sortedCalendarItems = useMemo(() => {
     return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
   }, [localCalendarItems]);
+
+  // Sorted Wishes Logic (Lowest progress first)
+  const sortedWishes = useMemo(() => {
+    return [...localWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+  }, [localWishes]);
+
+  // Sorted Sexual Wishes Logic (Lowest progress first)
+  const sortedSexualWishes = useMemo(() => {
+    return [...localSexualWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+  }, [localSexualWishes]);
 
   const handleHeartStart = () => {
     const startTime = Date.now();
@@ -286,7 +297,6 @@ const Anima = () => {
     if (!user) return;
     await supabase.from('anima_tasks').delete().eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
-    toast.success('تم حذف المهمة');
   };
 
   // Tag Handlers
@@ -316,17 +326,35 @@ const Anima = () => {
     queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
   };
 
-  // Sweet Notes persistence
+  // Sweet Notes persistence (now as array of notes)
   useEffect(() => {
     if (user) {
       const saved = localStorage.getItem(`sweetNotes_${user.id}`);
-      if (saved) setSweetNotes(saved);
+      if (saved) {
+        try {
+          setSweetNotes(JSON.parse(saved));
+        } catch {
+          setSweetNotes([]);
+        }
+      }
     }
   }, [user]);
 
-  const handleSweetNotesChange = (val: string) => {
-    setSweetNotes(val);
-    if (user) localStorage.setItem(`sweetNotes_${user.id}`, val);
+  const handleAddNote = () => {
+    if (!newNote.trim() || !user) return;
+    const updatedNotes = [newNote.trim(), ...sweetNotes];
+    setSweetNotes(updatedNotes);
+    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    setNewNote("");
+    toast.success('تمت إضافة الملاحظة');
+  };
+
+  const handleDeleteNote = (index: number) => {
+    if (!user) return;
+    const updatedNotes = sweetNotes.filter((_, i) => i !== index);
+    setSweetNotes(updatedNotes);
+    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    toast.success('تم حذف الملاحظة');
   };
 
   // Calendar Handlers
@@ -356,12 +384,12 @@ const Anima = () => {
   // Sexual Wish Handlers
   const handleAddSexualWish = async (wish: string) => {
     if (!wish.trim() || !user) return;
-    const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim() });
+    const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim(), progress: 0 });
     if (error) { toast.error('خطأ'); return; }
     queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
     setNewSexualWish("");
     setIsAddingSexualWish(false);
-    toast.success('تمت إضافة الأمنية الجنسية');
+    toast.success('تمت إضافة الأمنية');
   };
 
   const handleToggleSexualWishCompleted = async (id: string) => {
@@ -372,17 +400,23 @@ const Anima = () => {
     queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
   };
 
+  const handleUpdateSexualWishProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_sexual_wishes').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+  };
+
   const handleDeleteSexualWish = async (id: string) => {
     if (!user) return;
     await supabase.from('anima_sexual_wishes').delete().eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
-    toast.success('تم حذف الأمنية الجنسية');
+    toast.success('تم حذف الأمنية');
   };
 
   // Wish Handlers
   const handleAddLocalWish = async (wish: string) => {
     if (!wish.trim() || !user) return;
-    const { error } = await supabase.from('anima_wishes').insert({ user_id: user.id, title: wish.trim() });
+    const { error } = await supabase.from('anima_wishes').insert({ user_id: user.id, title: wish.trim(), progress: 0 });
     if (error) { toast.error('خطأ'); return; }
     queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     setNewWish("");
@@ -395,6 +429,12 @@ const Anima = () => {
     const wish = localWishes.find(w => w.id === id);
     if (!wish) return;
     await supabase.from('anima_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
+  };
+
+  const handleUpdateWishProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_wishes').update({ progress }).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
@@ -598,6 +638,14 @@ const Anima = () => {
 
           {/* Cards Section (صفات الانيما) */}
           <div className="relative mb-8">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <button onClick={() => {
+                setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
+                setIsEditingCard(true);
+              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {cardsToDisplay.map((item, i) => (
                 <div key={item.id} className="group relative">
@@ -623,14 +671,6 @@ const Anima = () => {
               ))}
             </div>
           </div>
-
-          <button onClick={() => {
-            setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
-            setIsEditingCard(true);
-          }} className="w-full mb-8 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 text-white/40 hover:text-white/60 transition-all">
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">إضافة بطاقة</span>
-          </button>
 
           {/* Messages Section */}
           <div className="mb-6 w-full">
@@ -818,7 +858,7 @@ const Anima = () => {
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
                 <h2 className="text-lg font-bold text-pink-100">أمنيات الانيما من احمد</h2>
               </div>
               <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
@@ -826,25 +866,27 @@ const Anima = () => {
               </button>
             </div>
             <div className="space-y-4">
-              {localWishes.map((wish) => (
+              {sortedWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
                       <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleToggleWishCompleted(wish.id)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${wish.completed ? "text-green-300 bg-green-500/10" : "text-white/30 bg-white/5 hover:text-green-300"}`}
-                      >
-                        {wish.completed ? "✓ تم" : "قيد التنفيذ"}
-                      </button>
+                      <span className="text-[10px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">{(wish.progress || 0).toFixed(1)}</span>
                       <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
+                  <Slider
+                    value={[wish.progress || 0]}
+                    onValueChange={(val) => handleUpdateWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
+                  />
                 </div>
               ))}
               {localWishes.length === 0 && (
@@ -888,42 +930,39 @@ const Anima = () => {
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400/20" />
-                <h2 className="text-lg font-bold text-amber-100">امنيات احمد من الانيما</h2>
+                <Star className="w-5 h-5 text-blue-400 fill-blue-400/20" />
+                <h2 className="text-lg font-bold text-blue-100">امنيات احمد من الانيما</h2>
               </div>
               <button 
-                onClick={() => {
-                  const wish = prompt('اكتب الأمنية:');
-                  if (wish && wish.trim()) {
-                    handleAddSexualWish(wish.trim());
-                  }
-                }}
-                className="p-2 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/20 text-amber-300 transition-all"
+                onClick={() => setIsAddingSexualWish(true)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             
             <div className="space-y-4">
-              {localSexualWishes.map((wish) => (
-                <div key={wish.id} className="bg-amber-500/5 backdrop-blur-xl border border-amber-400/20 rounded-2xl p-4 transition-all hover:bg-amber-500/8">
-                  <div className="flex items-center justify-between mb-1">
+              {sortedSexualWishes.map((wish) => (
+                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-amber-400" : "text-white/20"}`} />
+                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
                       <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleToggleSexualWishCompleted(wish.id)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${wish.completed ? "text-amber-300 bg-amber-500/10" : "text-white/30 bg-white/5 hover:text-amber-300"}`}
-                      >
-                        {wish.completed ? "✓ تم" : "قيد التنفيذ"}
-                      </button>
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{(wish.progress || 0).toFixed(1)}</span>
                       <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
+                  <Slider
+                    value={[wish.progress || 0]}
+                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
                 </div>
               ))}
               {localSexualWishes.length === 0 && (
@@ -932,135 +971,204 @@ const Anima = () => {
             </div>
           </div>
 
+          {/* Sexual Wish Dialog */}
+          {isAddingSexualWish && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
+              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
+                <textarea
+                    value={newSexualWish}
+                    onChange={(e) => setNewSexualWish(e.target.value)}
+                    placeholder="اكتب الأمنية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddSexualWish(newSexualWish); setIsAddingSexualWish(false); }}
+                      disabled={!newSexualWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
+                    >
+                      إضافة أمنية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingSexualWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           {/* ملاحظات جميله بيننا */}
           <div className="mb-8 w-full">
             <div className="flex items-center gap-2 mb-4 px-1">
               <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
               <h2 className="text-lg font-bold text-pink-100">ملاحظات جميله بيننا</h2>
             </div>
-            <textarea
-              value={sweetNotes}
-              onChange={(e) => handleSweetNotesChange(e.target.value)}
-              placeholder="اكتب ملاحظاتك هنا..."
-              className="w-full resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-4 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right min-h-[100px]"
-              rows={4}
-              dir="rtl"
-            />
+            
+            <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+              {sweetNotes.length > 0 ? (
+                sweetNotes.map((note, index) => (
+                  <div key={index} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note}</p>
+                      <button 
+                        onClick={() => handleDeleteNote(index)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-3 text-xs text-white/20">لا توجد ملاحظات حالياً</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNote();
+                  }
+                }}
+                placeholder="اكتب ملاحظة جميلة..."
+                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                rows={2}
+              />
+              <button
+                onClick={handleAddNote}
+                disabled={!newNote.trim()}
+                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Chart Section */}
           {latestMilestones.length > 1 && (
-            <div className="mt-8 w-full h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={(() => {
-                  const filtered = [...latestMilestones]
-                    .reverse()
-                    .filter((m) => {
-                      const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
-                      return daysAgo <= 7;
+            <div className="mt-8 w-full">
+              <h3 className="text-sm font-medium text-red-200/80 mb-3 px-1">الصحة الحميمية</h3>
+              <div className="h-[120px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={(() => {
+                    const filtered = [...latestMilestones]
+                      .reverse()
+                      .filter((m) => {
+                        const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                        return daysAgo <= 7;
+                      });
+                    
+                    const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
+                    const dayStart = new Date(earliestDate);
+                    dayStart.setHours(0, 0, 0, 0);
+                    const dayStartMs = dayStart.getTime();
+
+                    return filtered.map((m, i) => {
+                      const milestone = parseMilestone(m.message);
+                      const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
+
+                      return {
+                        val: parseFloat(milestone.rating) || 0,
+                        timePosition: hoursSinceDayStart,
+                        index: i,
+                        title: milestone.title,
+                        rating: milestone.rating,
+                        notes: milestone.notes,
+                        type: milestone.type,
+                        intention: milestone.intention,
+                        date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                        time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                        timeAgo: getTimeDifference(new Date(m.created_at)),
+                        dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
+                        dayStartMs,
+                      };
                     });
-                  
-                  const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
-                  const dayStart = new Date(earliestDate);
-                  dayStart.setHours(0, 0, 0, 0);
-                  const dayStartMs = dayStart.getTime();
-
-                  return filtered.map((m, i) => {
-                    const milestone = parseMilestone(m.message);
-                    const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
-
-                    return {
-                      val: parseFloat(milestone.rating) || 0,
-                      timePosition: hoursSinceDayStart,
-                      index: i,
-                      title: milestone.title,
-                      rating: milestone.rating,
-                      notes: milestone.notes,
-                      type: milestone.type,
-                      intention: milestone.intention,
-                      date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                      time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                      timeAgo: getTimeDifference(new Date(m.created_at)),
-                      dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
-                      dayStartMs,
-                    };
-                  });
-                })()}
-                  >
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)"/><stop offset="50%" stopColor="rgba(255,69,0,0.6)"/><stop offset="100%" stopColor="rgba(255,0,0,0.8)"/></linearGradient></defs>
-                  <YAxis hide domain={[5, 10]} />
-                  <XAxis 
-                    dataKey="timePosition" 
-                    domain={[0, 'dataMax + 2']}
-                    type="number"
-                    ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
-                    tickFormatter={(value) => {
-                      const filtered = [...latestMilestones]
-                        .reverse()
-                        .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
-                      if (filtered.length === 0) return '';
-                      const earliest = new Date(filtered[0].created_at);
-                      earliest.setHours(0, 0, 0, 0);
-                      const tickDate = new Date(earliest.getTime() + value * 3600000);
-                      const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                      return days[tickDate.getDay()];
-                    }}
-                    tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
-                    interval={0}
-                  />
-                  <Tooltip content={({ active, payload }) => (active && payload?.[0] ? 
-                    <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
-                      <div className="font-bold text-white">{payload[0].payload.title}</div>
-                      <div>التقييم: {payload[0].payload.rating}</div>
-                      {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
-                      {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
-                      <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
-                    </div> 
-                    : null)} 
-                  />
-                  <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <Line 
-                    type="monotone" 
-                    dataKey="val" 
-                    stroke="url(#lineG)"  
-                    strokeWidth={2}
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      
-                      const iconType = payload.type;
-                      const iconColor = 
-                        iconType === 'sacred' ? '#ef4444' :
-                        iconType === 'heart' ? '#f472b6' :
-                        iconType === 'imaginary' ? '#a855f7' :
-                        iconType === 'normal' ? '#3b82f6' :
-                        iconType === 'nursing' ? '#d97706' :
-                        '#6b7280';
-                      
-                      return (
-                        <g key={`dot-${cx}-${cy}`}>
-                          <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
-                            {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                  })()}
+                    >
+                    <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)"/><stop offset="50%" stopColor="rgba(255,69,0,0.6)"/><stop offset="100%" stopColor="rgba(255,0,0,0.8)"/></linearGradient></defs>
+                    <YAxis hide domain={[5, 10]} />
+                    <XAxis 
+                      dataKey="timePosition" 
+                      domain={[0, 'dataMax + 2']}
+                      type="number"
+                      ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
+                      tickFormatter={(value) => {
+                        const filtered = [...latestMilestones]
+                          .reverse()
+                          .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
+                        if (filtered.length === 0) return '';
+                        const earliest = new Date(filtered[0].created_at);
+                        earliest.setHours(0, 0, 0, 0);
+                        const tickDate = new Date(earliest.getTime() + value * 3600000);
+                        const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                        return days[tickDate.getDay()];
+                      }}
+                      tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
+                      interval={0}
+                    />
+                    <Tooltip content={({ active, payload }) => (active && payload?.[0] ? 
+                      <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
+                        <div className="font-bold text-white">{payload[0].payload.title}</div>
+                        <div>التقييم: {payload[0].payload.rating}</div>
+                        {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                        {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
+                        <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
+                      </div> 
+                      : null)} 
+                    />
+                    <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
+                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <Line 
+                      type="monotone" 
+                      dataKey="val" 
+                      stroke="url(#lineG)"  
+                      strokeWidth={2}
+                      dot={(props: any) => {
+                        const { cx, cy, payload } = props;
+                        
+                        const iconType = payload.type;
+                        const iconColor = 
+                          iconType === 'sacred' ? '#ef4444' :
+                          iconType === 'heart' ? '#f472b6' :
+                          iconType === 'imaginary' ? '#a855f7' :
+                          iconType === 'normal' ? '#3b82f6' :
+                          iconType === 'nursing' ? '#d97706' :
+                          '#6b7280';
+                        
+                        return (
+                          <g key={`dot-${cx}-${cy}`}>
+                            <g transform={`translate(${cx - 3}, ${cy - 3})`}>
+                              {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
+                              {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            </g>
                           </g>
-                        </g>
-                      );
-                    }}
-                    animationDuration={3000} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                        );
+                      }}
+                      animationDuration={3000} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
         </div>
@@ -1068,17 +1176,6 @@ const Anima = () => {
 
       {/* Sheets (Wishes, Tasks, Cards) */}
       <div>
-        <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
-          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
-            <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-            <SheetFooter className="px-6 pb-8 gap-3">
-              <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
-              <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-pink-500">إضافة</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-
         <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
           <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
             <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
