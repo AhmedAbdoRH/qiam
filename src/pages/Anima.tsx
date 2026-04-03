@@ -814,38 +814,33 @@ const Anima = () => {
             </div>
           </div>
 
-          {/* Wishes Section - أمنيات الأنيما */}
+          {/* Wishes Section - أمنيات الانيما من احمد */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الأنيما</h2>
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الانيما من احمد</h2>
               </div>
               <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {localWishes.map((wish) => (
-                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`text-sm leading-relaxed flex-1 ${
-                      wish.completed
-                        ? "text-white/50 line-through"
-                        : "text-white/90"
-                    }`}>{wish.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
+                      <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleToggleWishCompleted(wish.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          wish.completed
-                            ? "bg-green-500 border-green-500"
-                            : "border-white/20 hover:border-green-400"
-                        }`}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${wish.completed ? "text-green-300 bg-green-500/10" : "text-white/30 bg-white/5 hover:text-green-300"}`}
                       >
-                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
+                        {wish.completed ? "✓ تم" : "قيد التنفيذ"}
                       </button>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -909,27 +904,22 @@ const Anima = () => {
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               {localSexualWishes.map((wish) => (
-                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-amber-500/10 border-amber-500/30" : "bg-amber-500/5 border-amber-400/20 hover:border-amber-500/30"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`text-sm leading-relaxed flex-1 ${
-                      wish.completed
-                        ? "text-white/50 line-through"
-                        : "text-white/90"
-                    }`}>{wish.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                <div key={wish.id} className="bg-amber-500/5 backdrop-blur-xl border border-amber-400/20 rounded-2xl p-4 transition-all hover:bg-amber-500/8">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-amber-400" : "text-white/20"}`} />
+                      <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleToggleSexualWishCompleted(wish.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          wish.completed
-                            ? "bg-amber-500 border-amber-500"
-                            : "border-amber-400/30 hover:border-amber-400"
-                        }`}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${wish.completed ? "text-amber-300 bg-amber-500/10" : "text-white/30 bg-white/5 hover:text-amber-300"}`}
                       >
-                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
+                        {wish.completed ? "✓ تم" : "قيد التنفيذ"}
                       </button>
-                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
+                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -940,42 +930,27 @@ const Anima = () => {
                 <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
               )}
             </div>
+          </div>
 
-            {/* Sexual Wish Dialog */}
-            {isAddingSexualWish && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
-                <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                  <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
-                  <textarea
-                    value={newSexualWish}
-                    onChange={(e) => setNewSexualWish(e.target.value)}
-                    placeholder="اكتب الأمنية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-amber-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddSexualWish(newSexualWish); }}
-                      disabled={!newSexualWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-amber-500/20 border border-amber-400/30 hover:bg-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-amber-300"
-                    >
-                      إضافة أمنية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingSexualWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* ملاحظات جميله بيننا */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
+              <h2 className="text-lg font-bold text-pink-100">ملاحظات جميله بيننا</h2>
+            </div>
+            <textarea
+              value={sweetNotes}
+              onChange={(e) => handleSweetNotesChange(e.target.value)}
+              placeholder="اكتب ملاحظاتك هنا..."
+              className="w-full resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-4 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right min-h-[100px]"
+              rows={4}
+              dir="rtl"
+            />
           </div>
 
           {/* Chart Section */}
           {latestMilestones.length > 1 && (
-            <div className="mt-20 w-full h-[120px]">
+            <div className="mt-8 w-full h-[120px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={(() => {
                   const filtered = [...latestMilestones]
@@ -1086,44 +1061,6 @@ const Anima = () => {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Milestones Vertical List */}
-          {showMilestones && latestMilestones.length > 0 && (
-            <div className="mt-12 w-full space-y-4">
-              <div className="space-y-3">
-                {latestMilestones.map((m) => {
-                  const milestone = parseMilestone(m.message);
-                  return (
-                    <div key={m.id} className="w-full relative overflow-hidden rounded-xl bg-gradient-to-br from-pink-600/10 via-rose-500/8 to-orange-500/5 backdrop-blur-xl border border-pink-400/15 p-4 text-right hover:border-pink-400/30 transition-all">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {getMilestoneIcon(milestone.type)}
-                          <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
-                        </div>
-                        <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
-                      </div>
-                      {milestone.intention && (
-                        <div className="pt-2 border-t border-white/10 text-xs text-white/80 font-medium">
-                          <span className="text-pink-300/60 ml-1">النية:</span>
-                          {milestone.intention}
-                        </div>
-                      )}
-                      {milestone.notes && (
-                        <div className="pt-1.5 text-xs text-yellow-100/70 italic leading-relaxed">
-                          {milestone.notes}
-                        </div>
-                      )}
-                      <div className="mt-3 flex items-center gap-2 text-[9px] text-white/30 border-t border-white/5 pt-2">
-                        <span>{new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}</span>
-                        <span className="opacity-50">•</span>
-                        <span>{new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           )}
         </div>
