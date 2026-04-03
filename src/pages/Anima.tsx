@@ -118,7 +118,6 @@ const Anima = () => {
       if (error) throw error;
       return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: (c as any).tags || [] }));
     },
-    },
     enabled: !!user
   });
 
