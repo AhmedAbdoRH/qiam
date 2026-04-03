@@ -788,6 +788,24 @@ const Anima = () => {
                     className="w-full"
                     rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
                   />
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {((task as any).tags || []).map((tag: string, idx: number) => (
+                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('task', task.id, idx)}>
+                        {tag}
+                      </span>
+                    ))}
+                    {tagTarget?.type === 'task' && tagTarget.id === task.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('task', task.id, newTag); }} className="flex gap-1">
+                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
+                        <button type="submit" className="text-[10px] text-blue-300 hover:text-blue-200">+</button>
+                      </form>
+                    ) : (
+                      <button onClick={() => setTagTarget({ type: 'task', id: task.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
+                        + سمة
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {localTasks.length === 0 && (
