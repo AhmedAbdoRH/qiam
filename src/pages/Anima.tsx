@@ -637,7 +637,7 @@ const Anima = () => {
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-pink-400" />
-                <h3 className="text-sm font-medium text-pink-200/80"></h3>
+                <h3 className="text-sm font-medium text-pink-200/80">رسائل من الانيما</h3>
               </div>
             </div>
             
