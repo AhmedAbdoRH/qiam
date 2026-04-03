@@ -728,6 +728,24 @@ const Anima = () => {
                     className="w-full"
                     rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
                   />
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {((item as any).tags || []).map((tag: string, idx: number) => (
+                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('calendar', item.id, idx)}>
+                        {tag}
+                      </span>
+                    ))}
+                    {tagTarget?.type === 'calendar' && tagTarget.id === item.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('calendar', item.id, newTag); }} className="flex gap-1">
+                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
+                        <button type="submit" className="text-[10px] text-lime-300 hover:text-lime-200">+</button>
+                      </form>
+                    ) : (
+                      <button onClick={() => setTagTarget({ type: 'calendar', id: item.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
+                        + سمة
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {localCalendarItems.length === 0 && (
