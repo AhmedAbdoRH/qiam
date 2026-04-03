@@ -101,7 +101,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []).map(t => ({ id: t.id, title: t.title, progress: Number(t.progress) }));
+      return (data || []).map(t => ({ id: t.id, title: t.title, progress: Number(t.progress), tags: (t as any).tags || [] }));
     },
     enabled: !!user
   });
@@ -116,7 +116,8 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress) }));
+      return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: (c as any).tags || [] }));
+    },
     },
     enabled: !!user
   });
