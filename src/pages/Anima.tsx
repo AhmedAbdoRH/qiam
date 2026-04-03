@@ -289,6 +289,46 @@ const Anima = () => {
     toast.success('تم حذف المهمة');
   };
 
+  // Tag Handlers
+  const handleAddTag = async (type: 'task' | 'calendar', id: string, tag: string) => {
+    if (!tag.trim() || !user) return;
+    const table = type === 'task' ? 'anima_tasks' : 'anima_calendar';
+    const items = type === 'task' ? localTasks : localCalendarItems;
+    const item = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = (item as any).tags || [];
+    const updatedTags = [...currentTags, tag.trim()];
+    await supabase.from(table).update({ tags: updatedTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
+    setNewTag("");
+    setTagTarget(null);
+  };
+
+  const handleDeleteTag = async (type: 'task' | 'calendar', id: string, tagIndex: number) => {
+    if (!user) return;
+    const items = type === 'task' ? localTasks : localCalendarItems;
+    const item = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = [...((item as any).tags || [])];
+    currentTags.splice(tagIndex, 1);
+    const table = type === 'task' ? 'anima_tasks' : 'anima_calendar';
+    await supabase.from(table).update({ tags: currentTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
+  };
+
+  // Sweet Notes persistence
+  useEffect(() => {
+    if (user) {
+      const saved = localStorage.getItem(`sweetNotes_${user.id}`);
+      if (saved) setSweetNotes(saved);
+    }
+  }, [user]);
+
+  const handleSweetNotesChange = (val: string) => {
+    setSweetNotes(val);
+    if (user) localStorage.setItem(`sweetNotes_${user.id}`, val);
+  };
+
   // Calendar Handlers
   const handleAddCalendarItem = async () => {
     if (!newCalendarItemTitle.trim() || !user) return;
