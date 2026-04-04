@@ -177,14 +177,12 @@ const Anima = () => {
     return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
   }, [localCalendarItems]);
 
-  // Sorted Wishes Logic (Lowest progress first)
   const sortedWishes = useMemo(() => {
-    return [...localWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
+    return [...localWishes].sort((a, b) => a.progress - b.progress);
   }, [localWishes]);
 
-  // Sorted Sexual Wishes Logic
   const sortedSexualWishes = useMemo(() => {
-    return [...localSexualWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
+    return [...localSexualWishes].sort((a, b) => a.progress - b.progress);
   }, [localSexualWishes]);
 
   const handleHeartStart = () => {
