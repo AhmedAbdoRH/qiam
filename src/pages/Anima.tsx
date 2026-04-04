@@ -71,7 +71,7 @@ const Anima = () => {
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
 
   const [_showSexualWishes, _setShowSexualWishes] = useState(true);
-  const [sweetNotes, setSweetNotes] = useState<string[]>([]);
+  
   const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tagTarget, setTagTarget] = useState<{ type: 'task' | 'calendar'; id: string } | null>(null);
@@ -132,7 +132,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: Number((w as any).progress || 0) }));
     },
     enabled: !!user
   });
@@ -147,7 +147,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: Number((w as any).progress || 0) }));
     },
     enabled: !!user
   });
@@ -177,14 +177,12 @@ const Anima = () => {
     return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
   }, [localCalendarItems]);
 
-  // Sorted Wishes Logic (Lowest progress first)
   const sortedWishes = useMemo(() => {
-    return [...localWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
+    return [...localWishes].sort((a, b) => a.progress - b.progress);
   }, [localWishes]);
 
-  // Sorted Sexual Wishes Logic
   const sortedSexualWishes = useMemo(() => {
-    return [...localSexualWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
+    return [...localSexualWishes].sort((a, b) => a.progress - b.progress);
   }, [localSexualWishes]);
 
   const handleHeartStart = () => {
@@ -326,34 +324,35 @@ const Anima = () => {
     queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
   };
 
-  // Sweet Notes persistence (now as array of notes)
-  useEffect(() => {
-    if (user) {
-      const saved = localStorage.getItem(`sweetNotes_${user.id}`);
-      if (saved) {
-        try {
-          setSweetNotes(JSON.parse(saved));
-        } catch {
-          setSweetNotes([]);
-        }
-      }
-    }
-  }, [user]);
+  // Sweet Notes from database
+  const { data: sweetNotesData = [] } = useQuery({
+    queryKey: ['animaNotes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim() || !user) return;
-    const updatedNotes = [newNote.trim(), ...sweetNotes];
-    setSweetNotes(updatedNotes);
-    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    const { error } = await supabase.from('anima_notes').insert({ user_id: user.id, content: newNote.trim() });
+    if (error) { toast.error('خطأ في إضافة الملاحظة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
     setNewNote("");
     toast.success('تمت إضافة الملاحظة');
   };
 
-  const handleDeleteNote = (index: number) => {
+  const handleDeleteNote = async (id: string) => {
     if (!user) return;
-    const updatedNotes = sweetNotes.filter((_, i) => i !== index);
-    setSweetNotes(updatedNotes);
-    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    await supabase.from('anima_notes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
     toast.success('تم حذف الملاحظة');
   };
 
@@ -402,7 +401,7 @@ const Anima = () => {
 
   const handleUpdateSexualWishProgress = async (id: string, progress: number) => {
     if (!user) return;
-    await supabase.from('anima_sexual_wishes').update({ completed: true }).eq('id', id).eq('user_id', user.id);
+    await supabase.from('anima_sexual_wishes').update({ progress, completed: progress >= 9.5 } as any).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
   };
 
@@ -434,7 +433,7 @@ const Anima = () => {
 
   const handleUpdateWishProgress = async (id: string, progress: number) => {
     if (!user) return;
-    await supabase.from('anima_wishes').update({ completed: true }).eq('id', id).eq('user_id', user.id);
+    await supabase.from('anima_wishes').update({ progress, completed: progress >= 9.5 } as any).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
@@ -868,15 +867,25 @@ const Anima = () => {
             <div className="space-y-4">
               {sortedWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleWishCompleted(wish.id)}>
-                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
-                      <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
                     </div>
-                    <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
+                  <Slider
+                    value={[wish.progress]}
+                    onValueChange={(val) => handleUpdateWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
+                  />
                 </div>
               ))}
               {localWishes.length === 0 && (
@@ -934,15 +943,25 @@ const Anima = () => {
             <div className="space-y-4">
               {sortedSexualWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleSexualWishCompleted(wish.id)}>
-                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
-                      <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
                     </div>
-                    <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
+                  <Slider
+                    value={[wish.progress]}
+                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
                 </div>
               ))}
               {localSexualWishes.length === 0 && (
@@ -990,13 +1009,13 @@ const Anima = () => {
             </div>
             
             <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
-              {sweetNotes.length > 0 ? (
-                sweetNotes.map((note, index) => (
-                  <div key={index} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
+              {sweetNotesData.length > 0 ? (
+                sweetNotesData.map((note) => (
+                  <div key={note.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note}</p>
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note.content}</p>
                       <button 
-                        onClick={() => handleDeleteNote(index)}
+                        onClick={() => handleDeleteNote(note.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
                       >
                         <Trash2 className="w-3 h-3" />

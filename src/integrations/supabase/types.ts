@@ -95,6 +95,30 @@ export type Database = {
         }
         Relationships: []
       }
+      anima_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anima_page_cards: {
         Row: {
           created_at: string
@@ -157,6 +181,7 @@ export type Database = {
           completed: boolean
           created_at: string
           id: string
+          progress: number
           title: string
           user_id: string
         }
@@ -164,6 +189,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          progress?: number
           title: string
           user_id: string
         }
@@ -171,6 +197,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          progress?: number
           title?: string
           user_id?: string
         }
@@ -211,6 +238,7 @@ export type Database = {
           completed: boolean
           created_at: string
           id: string
+          progress: number
           title: string
           user_id: string
         }
@@ -218,6 +246,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          progress?: number
           title: string
           user_id: string
         }
@@ -225,6 +254,7 @@ export type Database = {
           completed?: boolean
           created_at?: string
           id?: string
+          progress?: number
           title?: string
           user_id?: string
         }
