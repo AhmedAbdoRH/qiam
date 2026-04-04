@@ -132,7 +132,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
     },
     enabled: !!user
   });
@@ -147,7 +147,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
     },
     enabled: !!user
   });
