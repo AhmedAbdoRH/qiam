@@ -1009,13 +1009,13 @@ const Anima = () => {
             </div>
             
             <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
-              {sweetNotes.length > 0 ? (
-                sweetNotes.map((note, index) => (
-                  <div key={index} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
+              {sweetNotesData.length > 0 ? (
+                sweetNotesData.map((note) => (
+                  <div key={note.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note}</p>
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note.content}</p>
                       <button 
-                        onClick={() => handleDeleteNote(index)}
+                        onClick={() => handleDeleteNote(note.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
                       >
                         <Trash2 className="w-3 h-3" />
