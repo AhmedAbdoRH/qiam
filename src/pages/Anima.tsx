@@ -435,7 +435,7 @@ const Anima = () => {
 
   const handleUpdateWishProgress = async (id: string, progress: number) => {
     if (!user) return;
-    await supabase.from('anima_wishes').update({ completed: true }).eq('id', id).eq('user_id', user.id);
+    await supabase.from('anima_wishes').update({ progress, completed: progress >= 9.5 } as any).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
