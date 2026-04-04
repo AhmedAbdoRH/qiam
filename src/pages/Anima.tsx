@@ -326,34 +326,35 @@ const Anima = () => {
     queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
   };
 
-  // Sweet Notes persistence (now as array of notes)
-  useEffect(() => {
-    if (user) {
-      const saved = localStorage.getItem(`sweetNotes_${user.id}`);
-      if (saved) {
-        try {
-          setSweetNotes(JSON.parse(saved));
-        } catch {
-          setSweetNotes([]);
-        }
-      }
-    }
-  }, [user]);
+  // Sweet Notes from database
+  const { data: sweetNotesData = [] } = useQuery({
+    queryKey: ['animaNotes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim() || !user) return;
-    const updatedNotes = [newNote.trim(), ...sweetNotes];
-    setSweetNotes(updatedNotes);
-    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    const { error } = await supabase.from('anima_notes').insert({ user_id: user.id, content: newNote.trim() });
+    if (error) { toast.error('خطأ في إضافة الملاحظة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
     setNewNote("");
     toast.success('تمت إضافة الملاحظة');
   };
 
-  const handleDeleteNote = (index: number) => {
+  const handleDeleteNote = async (id: string) => {
     if (!user) return;
-    const updatedNotes = sweetNotes.filter((_, i) => i !== index);
-    setSweetNotes(updatedNotes);
-    localStorage.setItem(`sweetNotes_${user.id}`, JSON.stringify(updatedNotes));
+    await supabase.from('anima_notes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
     toast.success('تم حذف الملاحظة');
   };
 
