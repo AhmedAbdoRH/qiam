@@ -179,12 +179,12 @@ const Anima = () => {
 
   // Sorted Wishes Logic (Lowest progress first)
   const sortedWishes = useMemo(() => {
-    return [...localWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+    return [...localWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
   }, [localWishes]);
 
-  // Sorted Sexual Wishes Logic (Lowest progress first)
+  // Sorted Sexual Wishes Logic
   const sortedSexualWishes = useMemo(() => {
-    return [...localSexualWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+    return [...localSexualWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
   }, [localSexualWishes]);
 
   const handleHeartStart = () => {
