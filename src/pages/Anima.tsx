@@ -71,7 +71,7 @@ const Anima = () => {
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
 
   const [_showSexualWishes, _setShowSexualWishes] = useState(true);
-  const [sweetNotes, setSweetNotes] = useState<string[]>([]);
+  
   const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tagTarget, setTagTarget] = useState<{ type: 'task' | 'calendar'; id: string } | null>(null);
