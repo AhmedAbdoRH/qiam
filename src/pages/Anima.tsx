@@ -943,15 +943,25 @@ const Anima = () => {
             <div className="space-y-4">
               {sortedSexualWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleSexualWishCompleted(wish.id)}>
-                      <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
-                      <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
                     </div>
-                    <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
+                  <Slider
+                    value={[wish.progress]}
+                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
                 </div>
               ))}
               {localSexualWishes.length === 0 && (
