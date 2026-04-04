@@ -1579,6 +1579,36 @@ export function SelfDialogueChat() {
     toast.success('تم تصدير البيانات');
   };
 
+  const exportConversationCSV = () => {
+    const normalMessages = allMessages.filter(m => 
+      !m.message.startsWith('__MILESTONE__') && 
+      !m.message.startsWith('__SPACER__') && 
+      m.message !== '__KISS__' && 
+      m.message !== '__TOUCH__' && 
+      m.message !== '__SHOWER__' && 
+      m.message !== '__SELFHUG__' &&
+      !m.message.startsWith('__FALL__')
+    );
+    const rows = [['التاريخ', 'الوقت', 'المرسل', 'الرسالة']];
+    normalMessages.forEach(m => {
+      const date = new Date(m.created_at);
+      const dateStr = date.toLocaleDateString('ar-SA');
+      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
+      const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
+      rows.push([dateStr, timeStr, sender, text]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'conversation.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('تم تصدير المحادثة');
+  };
+
   const copyMilestoneData = (msg: DialogueMessage) => {
     const content = msg.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
