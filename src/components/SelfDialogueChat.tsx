@@ -1579,6 +1579,36 @@ export function SelfDialogueChat() {
     toast.success('تم تصدير البيانات');
   };
 
+  const exportConversationCSV = () => {
+    const normalMessages = allMessages.filter(m => 
+      !m.message.startsWith('__MILESTONE__') && 
+      !m.message.startsWith('__SPACER__') && 
+      m.message !== '__KISS__' && 
+      m.message !== '__TOUCH__' && 
+      m.message !== '__SHOWER__' && 
+      m.message !== '__SELFHUG__' &&
+      !m.message.startsWith('__FALL__')
+    );
+    const rows = [['التاريخ', 'الوقت', 'المرسل', 'الرسالة']];
+    normalMessages.forEach(m => {
+      const date = new Date(m.created_at);
+      const dateStr = date.toLocaleDateString('ar-SA');
+      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
+      const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
+      rows.push([dateStr, timeStr, sender, text]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'conversation.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('تم تصدير المحادثة');
+  };
+
   const copyMilestoneData = (msg: DialogueMessage) => {
     const content = msg.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
@@ -1961,16 +1991,29 @@ export function SelfDialogueChat() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneTable(false)}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[80vh] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس واللمس</h3>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={exportMilestonesCSV}
-                            className="h-7 px-2 text-[10px] text-amber-300 hover:bg-amber-500/10 gap-1"
-                          >
-                            <Download className="h-3 w-3" />
-                            CSV
-                          </Button>
+                         <div className="flex items-center gap-1">
+                           <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس واللمس</h3>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={exportConversationCSV}
+                             className="h-7 px-2 text-[10px] text-cyan-300 hover:bg-cyan-500/10 gap-1"
+                           >
+                             <Download className="h-3 w-3" />
+                             المحادثة
+                           </Button>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={exportMilestonesCSV}
+                             className="h-7 px-2 text-[10px] text-amber-300 hover:bg-amber-500/10 gap-1"
+                           >
+                             <Download className="h-3 w-3" />
+                             CSV
+                           </Button>
+                         </div>
                         </div>
                         <div className="overflow-y-auto flex-1 space-y-2">
                           {[...milestoneMessages].reverse().map(m => {

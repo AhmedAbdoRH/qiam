@@ -132,7 +132,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
     },
     enabled: !!user
   });
@@ -147,7 +147,7 @@ const Anima = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: w.progress || 0 }));
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed }));
     },
     enabled: !!user
   });
@@ -179,12 +179,12 @@ const Anima = () => {
 
   // Sorted Wishes Logic (Lowest progress first)
   const sortedWishes = useMemo(() => {
-    return [...localWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+    return [...localWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
   }, [localWishes]);
 
-  // Sorted Sexual Wishes Logic (Lowest progress first)
+  // Sorted Sexual Wishes Logic
   const sortedSexualWishes = useMemo(() => {
-    return [...localSexualWishes].sort((a, b) => (a.progress || 0) - (b.progress || 0));
+    return [...localSexualWishes].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
   }, [localSexualWishes]);
 
   const handleHeartStart = () => {
@@ -402,7 +402,7 @@ const Anima = () => {
 
   const handleUpdateSexualWishProgress = async (id: string, progress: number) => {
     if (!user) return;
-    await supabase.from('anima_sexual_wishes').update({ progress }).eq('id', id).eq('user_id', user.id);
+    await supabase.from('anima_sexual_wishes').update({ completed: true }).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
   };
 
@@ -434,7 +434,7 @@ const Anima = () => {
 
   const handleUpdateWishProgress = async (id: string, progress: number) => {
     if (!user) return;
-    await supabase.from('anima_wishes').update({ progress }).eq('id', id).eq('user_id', user.id);
+    await supabase.from('anima_wishes').update({ completed: true }).eq('id', id).eq('user_id', user.id);
     queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
@@ -868,25 +868,15 @@ const Anima = () => {
             <div className="space-y-4">
               {sortedWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleWishCompleted(wish.id)}>
                       <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
                       <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">{(wish.progress || 0).toFixed(1)}</span>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <Slider
-                    value={[wish.progress || 0]}
-                    onValueChange={(val) => handleUpdateWishProgress(wish.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
-                  />
                 </div>
               ))}
               {localWishes.length === 0 && (
@@ -944,25 +934,15 @@ const Anima = () => {
             <div className="space-y-4">
               {sortedSexualWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleSexualWishCompleted(wish.id)}>
                       <CheckCircle2 className={`w-4 h-4 ${wish.completed ? "text-green-400" : "text-white/20"}`} />
                       <span className={`text-sm font-medium ${wish.completed ? "text-white/50 line-through" : "text-white/90"}`}>{wish.title}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{(wish.progress || 0).toFixed(1)}</span>
-                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <Slider
-                    value={[wish.progress || 0]}
-                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
                 </div>
               ))}
               {localSexualWishes.length === 0 && (
