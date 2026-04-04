@@ -944,7 +944,6 @@ const Anima = () => {
                     </button>
                   </div>
                 </div>
-                </div>
               ))}
               {localSexualWishes.length === 0 && (
                 <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
