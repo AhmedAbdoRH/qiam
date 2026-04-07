@@ -315,6 +315,8 @@ export function SelfDialogueChat() {
   const [milestoneComfort, setMilestoneComfort] = useState(5);
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
+  const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
+  const [milestoneOutput, setMilestoneOutput] = useState<'full' | 'simple' | 'preserved'>('full');
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
   const [isEditingMilestone, setIsEditingMilestone] = useState(false);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
@@ -1339,6 +1341,8 @@ export function SelfDialogueChat() {
     setMilestoneComfort(5);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
+    setMilestoneDuration('medium');
+    setMilestoneOutput('full');
     setIsEditingMilestone(false);
     setEditingMilestoneId(null);
     setShowMilestoneDialog(true);
@@ -1385,6 +1389,14 @@ export function SelfDialogueChat() {
       intentionAch = rating;
     }
     
+    // Parse duration and output (parts[5] and parts[6] in non-sacred format)
+    let duration: 'long' | 'medium' | 'short' = 'medium';
+    let output: 'full' | 'simple' | 'preserved' = 'full';
+    if (!isSacredFmt && parts.length > 5) {
+      duration = (parts[5] as any) || 'medium';
+      output = (parts[6] as any) || 'full';
+    }
+    
     // Set all states
     setMilestoneType(type);
     setMilestoneIntention(intention);
@@ -1395,6 +1407,8 @@ export function SelfDialogueChat() {
     setMilestoneComfort(comfort);
     setMilestoneAfterglow(afterglow);
     setMilestoneSacred(sacred);
+    setMilestoneDuration(duration);
+    setMilestoneOutput(output);
     setIsEditingMilestone(true);
     setEditingMilestoneId(milestoneMessage.id);
     setEditingMilestoneCreatedAt(milestoneMessage.created_at);
@@ -1428,9 +1442,8 @@ export function SelfDialogueChat() {
     // For all types, use simple decimal rating
     finalRating = milestoneIntentionAchievement;
     
-    // Format: __MILESTONE__title|rating|notes|type|intention
-    // Fall now uses milestone format too, with 0 rating
-    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
+    // Format: __MILESTONE__title|rating|notes|type|intention|duration|output
+    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}|${milestoneDuration}|${milestoneOutput}`;
     
     // If editing, update existing milestone
     if (isEditingMilestone && editingMilestoneId) {
@@ -2303,6 +2316,53 @@ export function SelfDialogueChat() {
                                   className="w-full"
                                   rangeClassName="bg-white"
                                 />
+                              </div>
+                              {/* Duration Radio */}
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-xs text-white/60">المدة</span>
+                                <div className="flex gap-2 justify-end">
+                                  {[
+                                    { value: 'long', label: 'طويل' },
+                                    { value: 'medium', label: 'متوسط' },
+                                    { value: 'short', label: 'قصير' },
+                                  ].map(opt => (
+                                    <button
+                                      key={opt.value}
+                                      onClick={() => setMilestoneDuration(opt.value as any)}
+                                      className={`px-3 py-1 rounded-full text-[11px] border transition-all ${
+                                        milestoneDuration === opt.value
+                                          ? 'bg-white/15 border-white/40 text-white'
+                                          : 'bg-white/5 border-white/10 text-white/40 hover:text-white/60'
+                                      }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Output Radio */}
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-xs text-white/60">الخروج</span>
+                                <div className="flex gap-2 justify-end">
+                                  {[
+                                    { value: 'full', label: 'كامل' },
+                                    { value: 'simple', label: 'بسيط' },
+                                    { value: 'preserved', label: 'محفوظ' },
+                                  ].map(opt => (
+                                    <button
+                                      key={opt.value}
+                                      onClick={() => setMilestoneOutput(opt.value as any)}
+                                      className={`px-3 py-1 rounded-full text-[11px] border transition-all ${
+                                        milestoneOutput === opt.value
+                                          ? 'bg-white/15 border-white/40 text-white'
+                                          : 'bg-white/5 border-white/10 text-white/40 hover:text-white/60'
+                                      }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
                             </>
                           )}
