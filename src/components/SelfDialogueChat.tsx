@@ -1387,6 +1387,14 @@ export function SelfDialogueChat() {
       intentionAch = rating;
     }
     
+    // Parse duration and output (parts[5] and parts[6] in non-sacred format)
+    let duration: 'long' | 'medium' | 'short' = 'medium';
+    let output: 'full' | 'simple' | 'preserved' = 'full';
+    if (!isSacredFmt && parts.length > 5) {
+      duration = (parts[5] as any) || 'medium';
+      output = (parts[6] as any) || 'full';
+    }
+    
     // Set all states
     setMilestoneType(type);
     setMilestoneIntention(intention);
@@ -1397,6 +1405,8 @@ export function SelfDialogueChat() {
     setMilestoneComfort(comfort);
     setMilestoneAfterglow(afterglow);
     setMilestoneSacred(sacred);
+    setMilestoneDuration(duration);
+    setMilestoneOutput(output);
     setIsEditingMilestone(true);
     setEditingMilestoneId(milestoneMessage.id);
     setEditingMilestoneCreatedAt(milestoneMessage.created_at);
