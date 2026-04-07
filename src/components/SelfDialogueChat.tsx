@@ -1341,6 +1341,8 @@ export function SelfDialogueChat() {
     setMilestoneComfort(5);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
+    setMilestoneDuration('medium');
+    setMilestoneOutput('full');
     setIsEditingMilestone(false);
     setEditingMilestoneId(null);
     setShowMilestoneDialog(true);
