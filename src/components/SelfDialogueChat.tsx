@@ -1643,10 +1643,14 @@ export function SelfDialogueChat() {
     const isSacredFmt = parts.length > 8;
     const notes = isSacredFmt ? '' : (parts[2] || '');
     const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
-    const text = `التاريخ: ${date.toLocaleDateString('ar-SA')}
-الوقت: ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+    const duration = !isSacredFmt && parts[5] ? parts[5] : '';
+    const output = !isSacredFmt && parts[6] ? parts[6] : '';
+    const durationLabel = duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : duration === 'short' ? 'قصير' : '';
+    const outputLabel = output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : output === 'preserved' ? 'محفوظ' : '';
+    const text = `التاريخ: ${date.toLocaleDateString('en-US')}
+الوقت: ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
 النوع: ${parts[0] || ''}
-التقييم: ${parts[1] || ''}
+التقييم: ${parts[1] || ''}${durationLabel ? `\nالمدة: ${durationLabel}` : ''}${outputLabel ? `\nالخروج: ${outputLabel}` : ''}
 الملاحظات: ${notes}
 النية: ${intention}`;
     navigator.clipboard.writeText(text);
