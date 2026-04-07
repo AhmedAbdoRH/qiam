@@ -315,6 +315,8 @@ export function SelfDialogueChat() {
   const [milestoneComfort, setMilestoneComfort] = useState(5);
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
+  const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
+  const [milestoneOutput, setMilestoneOutput] = useState<'full' | 'simple' | 'preserved'>('full');
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
   const [isEditingMilestone, setIsEditingMilestone] = useState(false);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
