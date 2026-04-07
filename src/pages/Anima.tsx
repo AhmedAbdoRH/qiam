@@ -562,14 +562,16 @@ const Anima = () => {
   const parseMilestone = (message: string) => {
     const content = message.replace('__MILESTONE__', '');
     const parts = content.split('|');
-    const isSacredFmt = parts.length > 5;
+    const isSacredFmt = parts.length > 8;
     
     return {
       title: parts[0] || 'جماع',
       rating: parts[1] || '-',
       notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[5] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[6] || '') : (parts[4] || '')
+      type: isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal'),
+      intention: isSacredFmt ? (parts[9] || '') : (parts[4] || ''),
+      duration: !isSacredFmt && parts[5] ? parts[5] : '',
+      output: !isSacredFmt && parts[6] ? parts[6] : '',
     };
   };
 
@@ -1084,10 +1086,12 @@ const Anima = () => {
                         notes: milestone.notes,
                         type: milestone.type,
                         intention: milestone.intention,
-                        date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                        time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                        duration: milestone.duration,
+                        output: milestone.output,
+                        date: new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        time: new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
                         timeAgo: getTimeDifference(new Date(m.created_at)),
-                        dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
+                        dayName: new Date(m.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
                         dayStartMs,
                       };
                     });
@@ -1119,6 +1123,8 @@ const Anima = () => {
                         <div className="font-bold text-white">{payload[0].payload.title}</div>
                         <div>التقييم: {payload[0].payload.rating}</div>
                         {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                        {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
+                        {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
                         {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
                         <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
                       </div> 

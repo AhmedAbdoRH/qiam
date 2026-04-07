@@ -376,7 +376,7 @@ export function SelfDialogueChat() {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ar-SA', {
+    return new Date(dateString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -437,8 +437,14 @@ export function SelfDialogueChat() {
         const isSacredFmt = parts.length > 8;
         const notes = isSacredFmt ? '' : (parts[2] || '');
         const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+        const duration = !isSacredFmt && parts[5] ? parts[5] : '';
+        const output = !isSacredFmt && parts[6] ? parts[6] : '';
+        const durationLabel = duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : duration === 'short' ? 'قصير' : '';
+        const outputLabel = output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : output === 'preserved' ? 'محفوظ' : '';
         let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
         if (intention) line += ` | نية: ${intention}`;
+        if (durationLabel) line += ` | المدة: ${durationLabel}`;
+        if (outputLabel) line += ` | الخروج: ${outputLabel}`;
         if (notes) line += ` | ملاحظات: ${notes}`;
         return line;
       }
@@ -447,7 +453,7 @@ export function SelfDialogueChat() {
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
-    const header = `محادثة اليوم (${new Date().toLocaleDateString('ar-SA')})\n` + '='.repeat(30) + '\n\n';
+    const header = `محادثة اليوم (${new Date().toLocaleDateString('en-US')})\n` + '='.repeat(30) + '\n\n';
     return header + conversation;
   };
 
@@ -488,7 +494,7 @@ export function SelfDialogueChat() {
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
-    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('ar-SA')})\n` + '='.repeat(40) + '\n\n';
+    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('en-US')})\n` + '='.repeat(40) + '\n\n';
     return header + conversation;
   };
 
@@ -766,7 +772,7 @@ export function SelfDialogueChat() {
           // Render kiss label
           if (msg.message === '__KISS__') {
             const kissDate = new Date(msg.created_at);
-            const kissTime = kissDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const kissTime = kissDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <KissLabel messageId={msg.id} timestamp={kissTime} />
@@ -777,7 +783,7 @@ export function SelfDialogueChat() {
           // Render touch label
           if (msg.message === '__TOUCH__') {
             const touchDate = new Date(msg.created_at);
-            const touchTime = touchDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const touchTime = touchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <TouchLabel messageId={msg.id} timestamp={touchTime} />
@@ -788,7 +794,7 @@ export function SelfDialogueChat() {
           // Render shower label
           if (msg.message === '__SHOWER__') {
             const showerDate = new Date(msg.created_at);
-            const showerTime = showerDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const showerTime = showerDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <div className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg px-3 py-2">
@@ -805,7 +811,7 @@ export function SelfDialogueChat() {
           // Render self-hug label
           if (msg.message === '__SELFHUG__') {
             const selfhugDate = new Date(msg.created_at);
-            const selfhugTime = selfhugDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const selfhugTime = selfhugDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2">
@@ -838,6 +844,8 @@ export function SelfDialogueChat() {
             let type = 'normal';
             let intention = '';
             let notes = '';
+            let duration = '';
+            let output = '';
             
             if (isSacredFormat) {
               // Sacred format: title|rating|pleasure|saturation|comfort|intentionAch|afterglow|sacred|type|intention
@@ -850,10 +858,12 @@ export function SelfDialogueChat() {
               type = parts.length > 8 ? parts[8] : 'normal';
               intention = parts.length > 9 ? parts[9] : '';
             } else {
-              // Non-sacred format: title|rating|notes|type|intention
+              // Non-sacred format: title|rating|notes|type|intention|duration|output
               notes = parts.length > 2 ? parts[2] : '';
               type = parts.length > 3 ? parts[3] : 'normal';
               intention = parts.length > 4 ? parts[4] : '';
+              duration = parts.length > 5 ? parts[5] : '';
+              output = parts.length > 6 ? parts[6] : '';
             }
             // Get base color by type, then interpolate with rating
             let baseColor = { r: 100, g: 150, b: 220 }; // normal (blue)
@@ -868,8 +878,8 @@ export function SelfDialogueChat() {
             const b = baseColor.b;
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
             const milestoneDate = new Date(msg.created_at);
-            const dateStr = milestoneDate.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
-            const timeStr = milestoneDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = milestoneDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeStr = milestoneDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
             // Get icon based on type
             const getMilestoneIconElement = () => {
@@ -914,7 +924,11 @@ export function SelfDialogueChat() {
                         {sacred && <span>🕊مقدس</span>}
                       </>
                     ) : (
-                      notes && <span className="text-blue-300">ملاحظات: {notes}</span>
+                      <>
+                        {duration && <span>{duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : 'قصير'}</span>}
+                        {output && <span>{output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : 'محفوظ'}</span>}
+                        {notes && <span className="text-blue-300">ملاحظات: {notes}</span>}
+                      </>
                     )}
                   </div>
                   {intention && (
@@ -1534,29 +1548,29 @@ export function SelfDialogueChat() {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'الملاحظات', 'النية']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'المدة', 'الخروج', 'الملاحظات', 'النية']];
     [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
-      const dateStr = date.toLocaleDateString('ar-SA');
-      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('en-US');
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-', '-', '-']);
         return;
       }
       
       if (m.message === '__TOUCH__') {
-        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-', '-', '-']);
         return;
       }
 
       if (m.message === '__SHOWER__') {
-        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-', '-', '-']);
         return;
       }
 
       if (m.message === '__SELFHUG__') {
-        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-', '-', '-']);
         return;
       }
 
@@ -1564,7 +1578,7 @@ export function SelfDialogueChat() {
         const fallContent = m.message.replace('__FALL__|', '');
         const fallParts = fallContent.split('|');
         const description = fallParts[1] || '';
-        rows.push([dateStr, timeStr, '0', description, '-']);
+        rows.push([dateStr, timeStr, 'سقوط', '0', '-', '-', description, '-']);
         return;
       }
       
@@ -1573,11 +1587,13 @@ export function SelfDialogueChat() {
       const isSacredFmt = parts.length > 8;
       const notes = isSacredFmt ? '' : (parts[2] || '');
       const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
-      const type = parts[3] || 'normal';
+      const duration = !isSacredFmt && parts[5] ? (parts[5] === 'long' ? 'طويل' : parts[5] === 'medium' ? 'متوسط' : 'قصير') : '-';
+      const output = !isSacredFmt && parts[6] ? (parts[6] === 'full' ? 'كامل' : parts[6] === 'simple' ? 'بسيط' : 'محفوظ') : '-';
       rows.push([
         dateStr, timeStr,
         parts[0] || '',
         parts[1] || '',
+        duration, output,
         notes, intention
       ]);
     });
@@ -1605,8 +1621,8 @@ export function SelfDialogueChat() {
     const rows = [['التاريخ', 'الوقت', 'المرسل', 'الرسالة']];
     normalMessages.forEach(m => {
       const date = new Date(m.created_at);
-      const dateStr = date.toLocaleDateString('ar-SA');
-      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('en-US');
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
       const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
       rows.push([dateStr, timeStr, sender, text]);
@@ -1629,10 +1645,14 @@ export function SelfDialogueChat() {
     const isSacredFmt = parts.length > 8;
     const notes = isSacredFmt ? '' : (parts[2] || '');
     const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
-    const text = `التاريخ: ${date.toLocaleDateString('ar-SA')}
-الوقت: ${date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+    const duration = !isSacredFmt && parts[5] ? parts[5] : '';
+    const output = !isSacredFmt && parts[6] ? parts[6] : '';
+    const durationLabel = duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : duration === 'short' ? 'قصير' : '';
+    const outputLabel = output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : output === 'preserved' ? 'محفوظ' : '';
+    const text = `التاريخ: ${date.toLocaleDateString('en-US')}
+الوقت: ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
 النوع: ${parts[0] || ''}
-التقييم: ${parts[1] || ''}
+التقييم: ${parts[1] || ''}${durationLabel ? `\nالمدة: ${durationLabel}` : ''}${outputLabel ? `\nالخروج: ${outputLabel}` : ''}
 الملاحظات: ${notes}
 النية: ${intention}`;
     navigator.clipboard.writeText(text);
@@ -1859,145 +1879,73 @@ export function SelfDialogueChat() {
           ) : (
             // Regular Chat Content
             <>
-              <DialogHeader className="p-4 border-b border-white/10 flex-shrink-0 flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
+              <DialogHeader className="p-3 border-b border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-1">
                   {isSyncing && (
                     <Loader2 className="h-3 w-3 text-[#626FC4] animate-spin" />
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('sacred')}
-                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1"
-                      title="إضافة جماع مقدس"
-                    >
+                <div className="flex flex-col gap-1">
+                  {/* Row 1: Milestone types */}
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('sacred')} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1" title="إضافة جماع مقدس">
                       <Flame className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('heart')}
-                      className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1"
-                      title="إضافة جماع قلبي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('heart')} className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1" title="إضافة جماع قلبي">
                       <HeartHandshake className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('imaginary')}
-                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
-                      title="إضافة جماع خيالي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('imaginary')} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="إضافة جماع خيالي">
                       <Brain className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('normal')}
-                      className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
-                      title="إضافة جماع عادي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('normal')} className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1" title="إضافة جماع عادي">
                       <Zap className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('nursing')}
-                      className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1"
-                      title="إضافة جماع ارضاعي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع ارضاعي">
                       <Droplets className="h-3 w-3" />
                     </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertKissLabel}
-                      className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1"
-                      title="بوس حميمي"
-                    >
-                      💋
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertTouchLabel}
-                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
-                      title="لمس حنون"
-                    >
-                      🤲
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertShowerLabel}
-                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="دش دافئ حميمي"
-                    >
-                      🛀
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertSelfHugLabel}
-                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
-                      title="حضن ذاتي"
-                    >
-                      🦋
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={openFallDialog}
-                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1"
-                      title="سقوط"
-                    >
+                    <Button variant="ghost" size="sm" onClick={openFallDialog} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1" title="سقوط">
                       🛑
                     </Button>
-
-                  {/* Milestone Table Button */}
-                  {milestoneMessages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowMilestoneTable(true)}
-                      className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1"
-                      title="جدول الجماعات"
-                    >
-                      <Table2 className="h-3 w-3" />
+                  </div>
+                  {/* Row 2: Actions (kiss, touch, shower, hug, table, copy) */}
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <Button variant="ghost" size="sm" onClick={insertKissLabel} className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1" title="بوس حميمي">
+                      💋
                     </Button>
-                  )}
-
-
-                  {/* Copy Today's Conversation */}
-                  {displayedMessages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={copyTodayConversation}
-                      onMouseDown={handleCopyButtonMouseDown}
-                      onMouseUp={handleCopyButtonMouseUp}
-                      onMouseLeave={handleCopyButtonMouseUp}
-                      onTouchStart={handleCopyButtonMouseDown}
-                      onTouchEnd={handleCopyButtonMouseUp}
-                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                      title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
-                    >
-                      <Copy className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" onClick={insertTouchLabel} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="لمس حنون">
+                      🤲
                     </Button>
-                  )}
+                    <Button variant="ghost" size="sm" onClick={insertShowerLabel} className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1" title="دش دافئ حميمي">
+                      🛀
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={insertSelfHugLabel} className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1" title="حضن ذاتي">
+                      🦋
+                    </Button>
+                    {milestoneMessages.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={() => setShowMilestoneTable(true)} className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1" title="جدول الجماعات">
+                        <Table2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {displayedMessages.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyTodayConversation}
+                        onMouseDown={handleCopyButtonMouseDown}
+                        onMouseUp={handleCopyButtonMouseUp}
+                        onMouseLeave={handleCopyButtonMouseUp}
+                        onTouchStart={handleCopyButtonMouseDown}
+                        onTouchEnd={handleCopyButtonMouseUp}
+                        className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                        title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </DialogHeader>
 
                   {/* Milestone Table View */}
                   {showMilestoneTable && (
@@ -2031,8 +1979,8 @@ export function SelfDialogueChat() {
                         <div className="overflow-y-auto flex-1 space-y-2">
                           {[...milestoneMessages].reverse().map(m => {
                             const date = new Date(m.created_at);
-                            const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
-                            const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+                            const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                            const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
                             // Kiss entry
                             if (m.message === '__KISS__') {
@@ -2146,7 +2094,7 @@ export function SelfDialogueChat() {
                               );
                             }
 
-                            // Milestone entry - simplified: intention, rating, notes, date
+                            // Milestone entry - simplified: intention, rating, notes, duration, output, date
                             const content = m.message.replace('__MILESTONE__', '');
                             const p = content.split('|');
                             const isSacredFmt = p.length > 8;
@@ -2154,6 +2102,10 @@ export function SelfDialogueChat() {
                             const rating = p[1] || '';
                             const notes = isSacredFmt ? '' : (p[2] || '');
                             const intention = isSacredFmt ? (p[9] || '') : (p[4] || '');
+                            const mDuration = !isSacredFmt && p[5] ? p[5] : '';
+                            const mOutput = !isSacredFmt && p[6] ? p[6] : '';
+                            const durationLabel = mDuration === 'long' ? 'طويل' : mDuration === 'medium' ? 'متوسط' : mDuration === 'short' ? 'قصير' : '';
+                            const outputLabel = mOutput === 'full' ? 'كامل' : mOutput === 'simple' ? 'بسيط' : mOutput === 'preserved' ? 'محفوظ' : '';
                             return (
                               <div key={m.id} className="bg-white/5 rounded-lg p-3 border border-white/10 text-right" dir="rtl">
                                 <div className="flex items-center justify-between mb-1">
@@ -2173,6 +2125,10 @@ export function SelfDialogueChat() {
                                 </div>
                                 <div className="text-[9px] text-white/40 mb-1">{dateStr} • {timeStr}</div>
                                 {intention && <div className="text-[9px] text-white/50 mb-0.5">نية: {intention}</div>}
+                                <div className="flex gap-2 text-[9px] text-white/40 mb-0.5">
+                                  {durationLabel && <span>المدة: {durationLabel}</span>}
+                                  {outputLabel && <span>الخروج: {outputLabel}</span>}
+                                </div>
                                 {notes && <div className="text-[9px] text-white/40">ملاحظات: {notes}</div>}
                               </div>
                             );
@@ -2422,12 +2378,6 @@ export function SelfDialogueChat() {
                     </Button>
                   )}
 
-                </div>
-
-                <DialogDescription className="sr-only">
-                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"الأنيما".
-                </DialogDescription>
-              </DialogHeader>
 
 
               <div className="flex flex-col flex-1 min-h-0">
