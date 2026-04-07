@@ -1879,145 +1879,72 @@ export function SelfDialogueChat() {
           ) : (
             // Regular Chat Content
             <>
-              <DialogHeader className="p-4 border-b border-white/10 flex-shrink-0 flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
+              <DialogHeader className="p-3 border-b border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-1">
                   {isSyncing && (
                     <Loader2 className="h-3 w-3 text-[#626FC4] animate-spin" />
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('sacred')}
-                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1"
-                      title="إضافة جماع مقدس"
-                    >
+                <div className="flex flex-col gap-1">
+                  {/* Row 1: Milestone types */}
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('sacred')} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1" title="إضافة جماع مقدس">
                       <Flame className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('heart')}
-                      className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1"
-                      title="إضافة جماع قلبي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('heart')} className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1" title="إضافة جماع قلبي">
                       <HeartHandshake className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('imaginary')}
-                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
-                      title="إضافة جماع خيالي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('imaginary')} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="إضافة جماع خيالي">
                       <Brain className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('normal')}
-                      className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
-                      title="إضافة جماع عادي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('normal')} className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1" title="إضافة جماع عادي">
                       <Zap className="h-3 w-3" />
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openMilestoneDialog('nursing')}
-                      className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1"
-                      title="إضافة جماع ارضاعي"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع ارضاعي">
                       <Droplets className="h-3 w-3" />
                     </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertKissLabel}
-                      className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1"
-                      title="بوس حميمي"
-                    >
-                      💋
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertTouchLabel}
-                      className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1"
-                      title="لمس حنون"
-                    >
-                      🤲
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertShowerLabel}
-                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1"
-                      title="دش دافئ حميمي"
-                    >
-                      🛀
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertSelfHugLabel}
-                      className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1"
-                      title="حضن ذاتي"
-                    >
-                      🦋
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={openFallDialog}
-                      className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1"
-                      title="سقوط"
-                    >
+                    <Button variant="ghost" size="sm" onClick={openFallDialog} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1" title="سقوط">
                       🛑
                     </Button>
-
-                  {/* Milestone Table Button */}
-                  {milestoneMessages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowMilestoneTable(true)}
-                      className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1"
-                      title="جدول الجماعات"
-                    >
-                      <Table2 className="h-3 w-3" />
+                  </div>
+                  {/* Row 2: Actions (kiss, touch, shower, hug, table, copy) */}
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <Button variant="ghost" size="sm" onClick={insertKissLabel} className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1" title="بوس حميمي">
+                      💋
                     </Button>
-                  )}
-
-
-                  {/* Copy Today's Conversation */}
-                  {displayedMessages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={copyTodayConversation}
-                      onMouseDown={handleCopyButtonMouseDown}
-                      onMouseUp={handleCopyButtonMouseUp}
-                      onMouseLeave={handleCopyButtonMouseUp}
-                      onTouchStart={handleCopyButtonMouseDown}
-                      onTouchEnd={handleCopyButtonMouseUp}
-                      className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                      title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
-                    >
-                      <Copy className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" onClick={insertTouchLabel} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="لمس حنون">
+                      🤲
                     </Button>
-                  )}
+                    <Button variant="ghost" size="sm" onClick={insertShowerLabel} className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-1" title="دش دافئ حميمي">
+                      🛀
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={insertSelfHugLabel} className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 gap-1" title="حضن ذاتي">
+                      🦋
+                    </Button>
+                    {milestoneMessages.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={() => setShowMilestoneTable(true)} className="h-7 px-2 text-[10px] text-red-500/60 hover:text-red-400 hover:bg-red-500/10 gap-1" title="جدول الجماعات">
+                        <Table2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {displayedMessages.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyTodayConversation}
+                        onMouseDown={handleCopyButtonMouseDown}
+                        onMouseUp={handleCopyButtonMouseUp}
+                        onMouseLeave={handleCopyButtonMouseUp}
+                        onTouchStart={handleCopyButtonMouseDown}
+                        onTouchEnd={handleCopyButtonMouseUp}
+                        className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                        title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
                   {/* Milestone Table View */}
                   {showMilestoneTable && (

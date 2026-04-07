@@ -562,14 +562,16 @@ const Anima = () => {
   const parseMilestone = (message: string) => {
     const content = message.replace('__MILESTONE__', '');
     const parts = content.split('|');
-    const isSacredFmt = parts.length > 5;
+    const isSacredFmt = parts.length > 8;
     
     return {
       title: parts[0] || 'جماع',
       rating: parts[1] || '-',
       notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[5] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[6] || '') : (parts[4] || '')
+      type: isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal'),
+      intention: isSacredFmt ? (parts[9] || '') : (parts[4] || ''),
+      duration: !isSacredFmt && parts[5] ? parts[5] : '',
+      output: !isSacredFmt && parts[6] ? parts[6] : '',
     };
   };
 
