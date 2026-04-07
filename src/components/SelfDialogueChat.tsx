@@ -1945,6 +1945,7 @@ export function SelfDialogueChat() {
                     )}
                   </div>
                 </div>
+              </DialogHeader>
 
                   {/* Milestone Table View */}
                   {showMilestoneTable && (
