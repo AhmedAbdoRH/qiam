@@ -2166,7 +2166,7 @@ export function SelfDialogueChat() {
                               );
                             }
 
-                            // Milestone entry - simplified: intention, rating, notes, date
+                            // Milestone entry - simplified: intention, rating, notes, duration, output, date
                             const content = m.message.replace('__MILESTONE__', '');
                             const p = content.split('|');
                             const isSacredFmt = p.length > 8;
@@ -2174,6 +2174,10 @@ export function SelfDialogueChat() {
                             const rating = p[1] || '';
                             const notes = isSacredFmt ? '' : (p[2] || '');
                             const intention = isSacredFmt ? (p[9] || '') : (p[4] || '');
+                            const mDuration = !isSacredFmt && p[5] ? p[5] : '';
+                            const mOutput = !isSacredFmt && p[6] ? p[6] : '';
+                            const durationLabel = mDuration === 'long' ? 'طويل' : mDuration === 'medium' ? 'متوسط' : mDuration === 'short' ? 'قصير' : '';
+                            const outputLabel = mOutput === 'full' ? 'كامل' : mOutput === 'simple' ? 'بسيط' : mOutput === 'preserved' ? 'محفوظ' : '';
                             return (
                               <div key={m.id} className="bg-white/5 rounded-lg p-3 border border-white/10 text-right" dir="rtl">
                                 <div className="flex items-center justify-between mb-1">
@@ -2193,6 +2197,10 @@ export function SelfDialogueChat() {
                                 </div>
                                 <div className="text-[9px] text-white/40 mb-1">{dateStr} • {timeStr}</div>
                                 {intention && <div className="text-[9px] text-white/50 mb-0.5">نية: {intention}</div>}
+                                <div className="flex gap-2 text-[9px] text-white/40 mb-0.5">
+                                  {durationLabel && <span>المدة: {durationLabel}</span>}
+                                  {outputLabel && <span>الخروج: {outputLabel}</span>}
+                                </div>
                                 {notes && <div className="text-[9px] text-white/40">ملاحظات: {notes}</div>}
                               </div>
                             );
