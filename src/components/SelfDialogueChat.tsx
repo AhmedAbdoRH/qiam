@@ -376,7 +376,7 @@ export function SelfDialogueChat() {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ar-SA', {
+    return new Date(dateString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -437,8 +437,14 @@ export function SelfDialogueChat() {
         const isSacredFmt = parts.length > 8;
         const notes = isSacredFmt ? '' : (parts[2] || '');
         const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+        const duration = !isSacredFmt && parts[5] ? parts[5] : '';
+        const output = !isSacredFmt && parts[6] ? parts[6] : '';
+        const durationLabel = duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : duration === 'short' ? 'قصير' : '';
+        const outputLabel = output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : output === 'preserved' ? 'محفوظ' : '';
         let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
         if (intention) line += ` | نية: ${intention}`;
+        if (durationLabel) line += ` | المدة: ${durationLabel}`;
+        if (outputLabel) line += ` | الخروج: ${outputLabel}`;
         if (notes) line += ` | ملاحظات: ${notes}`;
         return line;
       }
@@ -447,7 +453,7 @@ export function SelfDialogueChat() {
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
-    const header = `محادثة اليوم (${new Date().toLocaleDateString('ar-SA')})\n` + '='.repeat(30) + '\n\n';
+    const header = `محادثة اليوم (${new Date().toLocaleDateString('en-US')})\n` + '='.repeat(30) + '\n\n';
     return header + conversation;
   };
 
@@ -488,7 +494,7 @@ export function SelfDialogueChat() {
       return `[${time}] ${senderName}: ${msg.message}`;
     }).join('\n\n');
     
-    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('ar-SA')})\n` + '='.repeat(40) + '\n\n';
+    const header = `رسائل اليوم من الساعة 3 صباحاً (${todayAt3AM.toLocaleDateString('en-US')})\n` + '='.repeat(40) + '\n\n';
     return header + conversation;
   };
 
