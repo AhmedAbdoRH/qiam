@@ -844,6 +844,8 @@ export function SelfDialogueChat() {
             let type = 'normal';
             let intention = '';
             let notes = '';
+            let duration = '';
+            let output = '';
             
             if (isSacredFormat) {
               // Sacred format: title|rating|pleasure|saturation|comfort|intentionAch|afterglow|sacred|type|intention
@@ -856,10 +858,12 @@ export function SelfDialogueChat() {
               type = parts.length > 8 ? parts[8] : 'normal';
               intention = parts.length > 9 ? parts[9] : '';
             } else {
-              // Non-sacred format: title|rating|notes|type|intention
+              // Non-sacred format: title|rating|notes|type|intention|duration|output
               notes = parts.length > 2 ? parts[2] : '';
               type = parts.length > 3 ? parts[3] : 'normal';
               intention = parts.length > 4 ? parts[4] : '';
+              duration = parts.length > 5 ? parts[5] : '';
+              output = parts.length > 6 ? parts[6] : '';
             }
             // Get base color by type, then interpolate with rating
             let baseColor = { r: 100, g: 150, b: 220 }; // normal (blue)
