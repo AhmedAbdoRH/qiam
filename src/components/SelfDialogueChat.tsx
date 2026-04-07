@@ -772,7 +772,7 @@ export function SelfDialogueChat() {
           // Render kiss label
           if (msg.message === '__KISS__') {
             const kissDate = new Date(msg.created_at);
-            const kissTime = kissDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const kissTime = kissDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <KissLabel messageId={msg.id} timestamp={kissTime} />
@@ -783,7 +783,7 @@ export function SelfDialogueChat() {
           // Render touch label
           if (msg.message === '__TOUCH__') {
             const touchDate = new Date(msg.created_at);
-            const touchTime = touchDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const touchTime = touchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <TouchLabel messageId={msg.id} timestamp={touchTime} />
@@ -794,7 +794,7 @@ export function SelfDialogueChat() {
           // Render shower label
           if (msg.message === '__SHOWER__') {
             const showerDate = new Date(msg.created_at);
-            const showerTime = showerDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const showerTime = showerDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <div className="bg-cyan-500/20 border border-cyan-500/30 rounded-lg px-3 py-2">
@@ -811,7 +811,7 @@ export function SelfDialogueChat() {
           // Render self-hug label
           if (msg.message === '__SELFHUG__') {
             const selfhugDate = new Date(msg.created_at);
-            const selfhugTime = selfhugDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const selfhugTime = selfhugDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             return (
               <div key={msg.id} className="flex justify-center py-3">
                 <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2">
