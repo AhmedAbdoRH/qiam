@@ -1430,9 +1430,8 @@ export function SelfDialogueChat() {
     // For all types, use simple decimal rating
     finalRating = milestoneIntentionAchievement;
     
-    // Format: __MILESTONE__title|rating|notes|type|intention
-    // Fall now uses milestone format too, with 0 rating
-    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
+    // Format: __MILESTONE__title|rating|notes|type|intention|duration|output
+    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}|${milestoneDuration}|${milestoneOutput}`;
     
     // If editing, update existing milestone
     if (isEditingMilestone && editingMilestoneId) {
