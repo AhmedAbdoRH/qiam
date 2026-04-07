@@ -1548,29 +1548,29 @@ export function SelfDialogueChat() {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'الملاحظات', 'النية']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'المدة', 'الخروج', 'الملاحظات', 'النية']];
     [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
-      const dateStr = date.toLocaleDateString('ar-SA');
-      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('en-US');
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       
       if (m.message === '__KISS__') {
-        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'قبلة حميمية', '-', '-', '-', '-', '-']);
         return;
       }
       
       if (m.message === '__TOUCH__') {
-        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'لمس حنون', '-', '-', '-', '-', '-']);
         return;
       }
 
       if (m.message === '__SHOWER__') {
-        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'دش دافئ حميمي', '-', '-', '-', '-', '-']);
         return;
       }
 
       if (m.message === '__SELFHUG__') {
-        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-']);
+        rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-', '-', '-']);
         return;
       }
 
@@ -1578,7 +1578,7 @@ export function SelfDialogueChat() {
         const fallContent = m.message.replace('__FALL__|', '');
         const fallParts = fallContent.split('|');
         const description = fallParts[1] || '';
-        rows.push([dateStr, timeStr, '0', description, '-']);
+        rows.push([dateStr, timeStr, 'سقوط', '0', '-', '-', description, '-']);
         return;
       }
       
@@ -1587,11 +1587,13 @@ export function SelfDialogueChat() {
       const isSacredFmt = parts.length > 8;
       const notes = isSacredFmt ? '' : (parts[2] || '');
       const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
-      const type = parts[3] || 'normal';
+      const duration = !isSacredFmt && parts[5] ? (parts[5] === 'long' ? 'طويل' : parts[5] === 'medium' ? 'متوسط' : 'قصير') : '-';
+      const output = !isSacredFmt && parts[6] ? (parts[6] === 'full' ? 'كامل' : parts[6] === 'simple' ? 'بسيط' : 'محفوظ') : '-';
       rows.push([
         dateStr, timeStr,
         parts[0] || '',
         parts[1] || '',
+        duration, output,
         notes, intention
       ]);
     });
@@ -1619,8 +1621,8 @@ export function SelfDialogueChat() {
     const rows = [['التاريخ', 'الوقت', 'المرسل', 'الرسالة']];
     normalMessages.forEach(m => {
       const date = new Date(m.created_at);
-      const dateStr = date.toLocaleDateString('ar-SA');
-      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('en-US');
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
       const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
       rows.push([dateStr, timeStr, sender, text]);
@@ -2049,8 +2051,8 @@ export function SelfDialogueChat() {
                         <div className="overflow-y-auto flex-1 space-y-2">
                           {[...milestoneMessages].reverse().map(m => {
                             const date = new Date(m.created_at);
-                            const dateStr = date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
-                            const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+                            const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                            const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
                             // Kiss entry
                             if (m.message === '__KISS__') {
