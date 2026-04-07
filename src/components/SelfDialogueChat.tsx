@@ -874,8 +874,8 @@ export function SelfDialogueChat() {
             const b = baseColor.b;
             const ratingColor = `rgb(${r}, ${g}, ${b})`;
             const milestoneDate = new Date(msg.created_at);
-            const dateStr = milestoneDate.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' });
-            const timeStr = milestoneDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = milestoneDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeStr = milestoneDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
             // Get icon based on type
             const getMilestoneIconElement = () => {
