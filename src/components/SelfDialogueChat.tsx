@@ -924,7 +924,11 @@ export function SelfDialogueChat() {
                         {sacred && <span>🕊مقدس</span>}
                       </>
                     ) : (
-                      notes && <span className="text-blue-300">ملاحظات: {notes}</span>
+                      <>
+                        {duration && <span>{duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : 'قصير'}</span>}
+                        {output && <span>{output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : 'محفوظ'}</span>}
+                        {notes && <span className="text-blue-300">ملاحظات: {notes}</span>}
+                      </>
                     )}
                   </div>
                   {intention && (
