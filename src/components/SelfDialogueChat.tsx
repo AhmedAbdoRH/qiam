@@ -2378,12 +2378,6 @@ export function SelfDialogueChat() {
                     </Button>
                   )}
 
-                </div>
-
-                <DialogDescription className="sr-only">
-                  نافذة محادثة خاصة لتسجيل رسائل بين "أنا" و"الأنيما".
-                </DialogDescription>
-              </DialogHeader>
 
 
               <div className="flex flex-col flex-1 min-h-0">
