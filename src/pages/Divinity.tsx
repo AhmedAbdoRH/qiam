@@ -437,21 +437,23 @@ export default function Divinity() {
             </div>
 
             <TabsContent value="monologue" className="flex-1 flex flex-col min-h-0 m-0">
-              <ScrollArea className="flex-1 p-6" ref={monologueScrollRef}>
-                <div className="flex flex-col gap-4">
+              <ScrollArea className="flex-1 px-4 py-6" ref={monologueScrollRef}>
+                <div className="flex flex-col gap-3">
                   {monologues.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-white/20 gap-4">
-                      <MessageCircle className="w-12 h-12 opacity-10" />
-                      <p className="text-sm">ابدأ مناجاتك مع الله بهذا الاسم...</p>
+                    <div className="flex flex-col items-center justify-center py-24 gap-5">
+                      <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)' }}>
+                        <MessageCircle className="w-10 h-10 text-blue-400/30" />
+                      </div>
+                      <p className="text-sm text-white/25 font-light">ابدأ مناجاتك مع الله بهذا الاسم...</p>
                     </div>
                   ) : (
-                    monologues.map((m) => (
-                      <div key={m.id} className="flex justify-start group/msg">
-                        <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tr-sm p-4 max-w-[85%] shadow-xl backdrop-blur-md relative">
-                          <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{m.message}</p>
-                          <div className="flex items-center justify-between mt-2 gap-4">
-                            <span className="text-[10px] text-white/20">
-                              {new Date(m.created_at).toLocaleString('ar-SA', {
+                    monologues.map((m, i) => (
+                      <div key={m.id} className="flex justify-start group/msg animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: `${i * 30}ms` }}>
+                        <div className="rounded-2xl rounded-tr-sm p-4 max-w-[88%] relative border border-white/[0.06]" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.04) 100%)' }}>
+                          <p className="text-white/90 text-[13px] leading-[1.8] whitespace-pre-wrap">{m.message}</p>
+                          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-white/[0.04] gap-4">
+                            <span className="text-[10px] text-white/20 font-light tracking-wide">
+                              {new Date(m.created_at).toLocaleString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 day: 'numeric',
@@ -462,7 +464,7 @@ export default function Divinity() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteMonologue(m.id)}
-                              className="h-6 w-6 rounded-full opacity-0 group-hover/msg:opacity-100 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                              className="h-6 w-6 rounded-full opacity-0 group-hover/msg:opacity-60 hover:opacity-100 hover:bg-red-500/15 hover:text-red-400 transition-all duration-200"
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -474,13 +476,13 @@ export default function Divinity() {
                 </div>
               </ScrollArea>
 
-              <div className="p-6 border-t border-white/5 bg-white/5">
-                <div className="flex gap-3 items-end">
+              <div className="px-4 py-4 border-t border-white/[0.06]" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%)' }}>
+                <div className="flex gap-2.5 items-end">
                   <Textarea
                     value={newMonologue}
                     onChange={(e) => setNewMonologue(e.target.value)}
-                    placeholder="اكتب رسالتك هنا..."
-                    className="min-h-[60px] max-h-[150px] bg-black/40 border-white/10 text-white text-right rounded-2xl resize-none focus:border-primary/50 transition-all"
+                    placeholder="اكتب مناجاتك هنا..."
+                    className="min-h-[52px] max-h-[140px] bg-white/[0.04] border-white/[0.08] text-white text-right text-[13px] rounded-2xl resize-none placeholder:text-white/20 focus:border-blue-500/30 focus:bg-white/[0.06] transition-all duration-200"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -492,9 +494,17 @@ export default function Divinity() {
                     size="icon"
                     onClick={handleSendMonologue}
                     disabled={!newMonologue.trim()}
-                    className="shrink-0 h-[60px] w-[60px] rounded-2xl bg-primary hover:bg-primary/80 text-primary-foreground shadow-lg shadow-primary/20"
+                    className="shrink-0 h-[52px] w-[52px] rounded-2xl border-0 text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:hover:scale-100"
+                    style={{
+                      background: newMonologue.trim()
+                        ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)'
+                        : 'rgba(59,130,246,0.15)',
+                      boxShadow: newMonologue.trim()
+                        ? '0 8px 30px rgba(37,99,235,0.4), 0 0 20px rgba(59,130,246,0.2)'
+                        : 'none'
+                    }}
                   >
-                    <Send className="w-6 h-6 rotate-180" />
+                    <Send className="w-5 h-5 rotate-180" />
                   </Button>
                 </div>
               </div>
