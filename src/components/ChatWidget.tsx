@@ -282,8 +282,7 @@ export function ChatWidget() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-sky-400/10 bg-sky-950/30">
               <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-                <span className="text-sm font-medium text-sky-100">المحادثة المباشرة</span>
+                <span className="text-sm font-medium text-gray-400">مناجاة إلى الله</span>
               </div>
               <Button 
                 variant="ghost" 
@@ -298,8 +297,8 @@ export function ChatWidget() {
             {/* Messages area */}
             <ScrollArea ref={scrollRef} className="flex-grow w-full">
               <div className="p-4 space-y-1.5 min-h-full flex flex-col justify-end">
-                {/* فراغ علوي افتراضي (8 أسطر) */}
-                <div className="h-40" />
+                {/* فراغ علوي افتراضي (12 سطراً) */}
+                <div className="h-60" />
 
                 {loading ? (
                   <div className="flex items-center justify-center h-full py-10">
