@@ -85,8 +85,8 @@ export function ChatWidget() {
   const [currentTimestamp, setCurrentTimestamp] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const timestampTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timestampTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
 
   // Load messages from DB

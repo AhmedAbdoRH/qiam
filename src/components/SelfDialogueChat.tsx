@@ -306,6 +306,24 @@ export function SelfDialogueChat() {
   const [displayCount, setDisplayCount] = useState(20);
   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
+  const [isAutoSwitch, setIsAutoSwitch] = useState(false);
+  const [milestoneIntention, setMilestoneIntention] = useState('');
+  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
+  const [milestonePleasure, setMilestonePleasure] = useState(5);
+  const [milestoneSaturation, setMilestoneSaturation] = useState(5);
+  const [milestoneComfort, setMilestoneComfort] = useState(5);
+  const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
+  const [milestoneSacred, setMilestoneSacred] = useState(false);
+  const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
+  const [milestoneOutput, setMilestoneOutput] = useState<'full' | 'simple' | 'preserved'>('full');
+  const [showMilestoneTable, setShowMilestoneTable] = useState(false);
+  const [isEditingMilestone, setIsEditingMilestone] = useState(false);
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
+  const [showFallDialog, setShowFallDialog] = useState(false);
+  const [fallDescription, setFallDescription] = useState('');
+  const [editingFallId, setEditingFallId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
