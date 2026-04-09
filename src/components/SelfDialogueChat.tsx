@@ -282,7 +282,11 @@ interface AnimaCapability {
 // Global sequence counter to ensure message ordering even within same millisecond
 let globalMessageSeq = 0;
 
-export function SelfDialogueChat() {
+interface SelfDialogueChatProps {
+  onLongPress?: () => void;
+}
+
+export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
@@ -1815,6 +1819,38 @@ export function SelfDialogueChat() {
           <Button
             type="button"
             className="fixed bottom-32 left-8 z-50 flex h-14 w-14 items-center justify-center rounded-full dynamic-gradient-bg backdrop-blur-lg border border-white/20 shadow-xl transition-all duration-300 hover:scale-105"
+            onTouchStart={() => {
+              if (onLongPress) {
+                modeButtonLongPressRef.current = setTimeout(() => {
+                  onLongPress();
+                }, 1500);
+              }
+            }}
+            onTouchEnd={() => {
+              if (modeButtonLongPressRef.current) {
+                clearTimeout(modeButtonLongPressRef.current);
+                modeButtonLongPressRef.current = null;
+              }
+            }}
+            onMouseDown={() => {
+              if (onLongPress) {
+                modeButtonLongPressRef.current = setTimeout(() => {
+                  onLongPress();
+                }, 1500);
+              }
+            }}
+            onMouseUp={() => {
+              if (modeButtonLongPressRef.current) {
+                clearTimeout(modeButtonLongPressRef.current);
+                modeButtonLongPressRef.current = null;
+              }
+            }}
+            onMouseLeave={() => {
+              if (modeButtonLongPressRef.current) {
+                clearTimeout(modeButtonLongPressRef.current);
+                modeButtonLongPressRef.current = null;
+              }
+            }}
           >
             <SelfDialogueIconNew className="h-7 w-7" />
           </Button>
