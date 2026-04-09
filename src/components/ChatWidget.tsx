@@ -75,8 +75,22 @@ interface Message {
   isDeleting?: boolean;
 }
 
-export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface ChatWidgetProps {
+  externalOpen?: boolean;
+  onExternalClose?: () => void;
+}
+
+export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isExternallyControlled = externalOpen !== undefined;
+  const isOpen = isExternallyControlled ? externalOpen : internalOpen;
+  const setIsOpen = (open: boolean) => {
+    if (isExternallyControlled) {
+      if (!open && onExternalClose) onExternalClose();
+    } else {
+      setInternalOpen(open);
+    }
+  };
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -267,11 +281,13 @@ export function ChatWidget() {
     <>
       <style>{chatStyles}</style>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/80 backdrop-blur-lg border border-white/20 shadow-xl transition-all hover:scale-110 hover:bg-blue-500 active:scale-95">
-            <MessageSquareText className="h-7 w-7 text-white" />
-          </Button>
-        </DialogTrigger>
+        {!isExternallyControlled && (
+          <DialogTrigger asChild>
+            <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/80 backdrop-blur-lg border border-white/20 shadow-xl transition-all hover:scale-110 hover:bg-blue-500 active:scale-95">
+              <MessageSquareText className="h-7 w-7 text-white" />
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent className="dialog-content-mobile sm:max-w-[450px] p-0 border-0 bg-transparent shadow-none [&>button]:hidden flex flex-col">
           <DialogHeader className="sr-only">
             <DialogTitle>محادثة</DialogTitle>
@@ -321,7 +337,7 @@ export function ChatWidget() {
                       onMouseLeave={handleMessageTouchEnd}
                     >
                       <div className="max-w-[85%] relative">
-                        <div className="relative px-4 py-2.5 rounded-2xl rounded-tr-sm break-words text-sky-50 border-0 shadow-none hover:bg-transparent transition-colors">
+                        <div className="relative px-4 py-2.5 rounded-2xl rounded-tr-sm break-words text-sky-50 border-0 bg-gray-700/60 shadow-[inset_0_0_12px_rgba(255,255,255,0.05)] transition-colors">
                           <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-light" style={{ unicodeBidi: 'plaintext' }}>
                             {msg.text}
                           </p>
@@ -377,7 +393,7 @@ export function ChatWidget() {
                   onTouchStart={handleSendButtonMouseDown}
                   onTouchEnd={handleSendButtonMouseUp}
                   disabled={!inputValue.trim()}
-                  className="w-full h-12 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-lg shadow-lg shadow-sky-500/30 disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-xl bg-gray-600/80 hover:bg-gray-500/80 text-white font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.1),inset_0_0_10px_rgba(255,255,255,0.05)] disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <span>إرسال</span>
                   <Send className="h-5 w-5" />

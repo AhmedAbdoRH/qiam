@@ -4,6 +4,7 @@ import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { FeelingTaskList, FeelingTask } from "@/components/FeelingTaskList";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
+import { ChatWidget } from "@/components/ChatWidget";
 import { VALUES, ValueData } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +16,7 @@ const Index = () => {
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [feelingTasks, setFeelingTasks] = useState<FeelingTask[]>([]);
+  const [monologueOpen, setMonologueOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -366,7 +368,10 @@ const Index = () => {
       )}
 
       {/* Self Dialogue Chat */}
-      <SelfDialogueChat />
+      <SelfDialogueChat onLongPress={() => setMonologueOpen(true)} />
+
+      {/* مناجاة - triggered by long press */}
+      <ChatWidget externalOpen={monologueOpen} onExternalClose={() => setMonologueOpen(false)} />
     </div>
   );
 };
