@@ -241,9 +241,9 @@ export function ChatWidget() {
 
             {/* Messages area */}
             <ScrollArea ref={scrollRef} className="flex-grow w-full">
-              <div className="p-4 space-y-3 min-h-full flex flex-col justify-end">
-                {/* فراغ علوي افتراضي (6 أسطر) */}
-                <div className="h-32" />
+              <div className="p-4 space-y-1.5 min-h-full flex flex-col justify-end">
+                {/* فراغ علوي افتراضي (8 أسطر) */}
+                <div className="h-40" />
 
                 {loading ? (
                   <div className="flex items-center justify-center h-full py-10">
