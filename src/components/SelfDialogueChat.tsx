@@ -284,14 +284,12 @@ let globalMessageSeq = 0;
 
 export function SelfDialogueChat() {
   const { user, signOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
-  const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showPinInput, setShowPinInput] = useState(true);
+  const [showPinInput, setShowPinInput] = useState(false);
   const [pinValue, setPinValue] = useState('');
   const [pinError, setPinError] = useState(false);
   const [sessionTitle, setSessionTitle] = useState<string>('');
@@ -305,29 +303,9 @@ export function SelfDialogueChat() {
   const [showMilestoneDialog, setShowMilestoneDialog] = useState(false);
   const [milestoneType, setMilestoneType] = useState<'sacred' | 'heart' | 'imaginary' | 'normal' | 'nursing' | 'fall'>('normal');
   const [milestoneNotes, setMilestoneNotes] = useState('');
-   const [displayCount, setDisplayCount] = useState(20);
-   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
-   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [milestoneIntention, setMilestoneIntention] = useState('');
-  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
-  const [milestonePleasure, setMilestonePleasure] = useState(5);
-  const [milestoneSaturation, setMilestoneSaturation] = useState(5);
-  const [milestoneComfort, setMilestoneComfort] = useState(5);
-  const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
-  const [milestoneSacred, setMilestoneSacred] = useState(false);
-  const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
-  const [milestoneOutput, setMilestoneOutput] = useState<'full' | 'simple' | 'preserved'>('full');
-  const [showMilestoneTable, setShowMilestoneTable] = useState(false);
-  const [isEditingMilestone, setIsEditingMilestone] = useState(false);
-  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
-  const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
-  const milestoneLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const milestoneLongPressFiredRef = useRef(false);
-
-  // Fall event states
-  const [showFallDialog, setShowFallDialog] = useState(false);
-  const [fallDescription, setFallDescription] = useState('');
-  const [editingFallId, setEditingFallId] = useState<string | null>(null);
+  const [displayCount, setDisplayCount] = useState(20);
+  const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
