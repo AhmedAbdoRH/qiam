@@ -242,8 +242,8 @@ export function ChatWidget() {
             {/* Messages area */}
             <ScrollArea ref={scrollRef} className="flex-grow w-full">
               <div className="p-4 space-y-3 min-h-full flex flex-col justify-end">
-                {/* فراغ علوي افتراضي (3 أسطر) */}
-                <div className="h-16" />
+                {/* فراغ علوي افتراضي (6 أسطر) */}
+                <div className="h-32" />
 
                 {loading ? (
                   <div className="flex items-center justify-center h-full py-10">
@@ -266,7 +266,7 @@ export function ChatWidget() {
                       onMouseLeave={handleMessageTouchEnd}
                     >
                       <div className="max-w-[85%] relative">
-                        <div className="relative px-4 py-2.5 rounded-2xl rounded-tr-sm break-words bg-sky-500/25 text-sky-50 border border-sky-400/40 shadow-sm hover:bg-sky-500/30 transition-colors">
+                        <div className="relative px-4 py-2.5 rounded-2xl rounded-tr-sm break-words text-sky-50 border-0 shadow-none hover:bg-transparent transition-colors">
                           <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-light" style={{ unicodeBidi: 'plaintext' }}>
                             {msg.text}
                           </p>
