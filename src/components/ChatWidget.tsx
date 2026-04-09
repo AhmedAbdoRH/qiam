@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageSquareText, Send, Cloud, RefreshCw, CloudOff } from 'lucide-react';
+import { MessageSquareText, Send, Cloud, RefreshCw, CloudOff, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -13,7 +13,30 @@ const chatStyles = `
     100% { opacity: 1; transform: translateY(0); }
   }
   .animate-chat-pop {
-    animation: chat-message-pop 0.15s ease-out;
+    animation: chat-message-pop 0.2s ease-out;
+  }
+  
+  /* تحسينات للهواتf المحمولة */
+  @media (max-width: 640px) {
+    .mobile-chat-container {
+      height: 100dvh !important;
+      width: 100vw !important;
+      max-width: none !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+    }
+    .dialog-content-mobile {
+      padding: 0 !important;
+      margin: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      transform: none !important;
+      height: 100dvh !important;
+      width: 100vw !important;
+      max-width: none !important;
+    }
   }
 `;
 
@@ -31,6 +54,7 @@ export function ChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
 
   // Load messages from DB
@@ -71,27 +95,34 @@ export function ChatWidget() {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
   const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return new Date(date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user) return;
     
+    const textToSend = inputValue.trim();
     const tempId = crypto.randomUUID();
     const now = new Date().toISOString();
     const newMsg: Message = {
       id: tempId,
-      text: inputValue.trim(),
+      text: textToSend,
       isSender: true,
       created_at: now,
       status: 'pending',
     };
     
+    // إظهار الرسالة فوراً عند الإرسال
     setMessages(prev => [...prev, newMsg]);
     setInputValue('');
+    
+    // إعادة التركيز على حقل النص بعد الإرسال (للموبايل)
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
 
     try {
       const { data, error } = await supabase
@@ -99,7 +130,7 @@ export function ChatWidget() {
         .insert({
           user_id: user.id,
           divine_name: 'chat',
-          message: newMsg.text,
+          message: textToSend,
         })
         .select()
         .single();
@@ -117,45 +148,78 @@ export function ChatWidget() {
     }
   };
 
+  const handleLongPress = (e: React.MouseEvent | React.TouchEvent) => {
+    // محاكاة الضغط المطول لإضافة سطرين
+    let timer: any;
+    const start = () => {
+      timer = setTimeout(() => {
+        setInputValue(prev => prev + '\n\n');
+      }, 600);
+    };
+    const stop = () => clearTimeout(timer);
+
+    if (e.type === 'touchstart' || e.type === 'mousedown') start();
+    if (e.type === 'touchend' || e.type === 'mouseup' || e.type === 'mouseleave') stop();
+  };
+
   return (
     <>
       <style>{chatStyles}</style>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button className="fixed bottom-32 left-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-black/30 backdrop-blur-lg border border-white/10 shadow-lg transition-all hover:scale-110 hover:bg-black/40">
-            <MessageSquareText className="h-6 w-6 text-white/40" />
+          <Button className="fixed bottom-32 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/80 backdrop-blur-lg border border-white/20 shadow-xl transition-all hover:scale-110 hover:bg-blue-500 active:scale-95">
+            <MessageSquareText className="h-7 w-7 text-white" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px] p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
+        <DialogContent className="dialog-content-mobile sm:max-w-[450px] p-0 border-0 bg-transparent shadow-none [&>button]:hidden flex flex-col">
           <DialogHeader className="sr-only">
             <DialogTitle>محادثة</DialogTitle>
-            <DialogDescription>نافذة المحادثة</DialogDescription>
+            <DialogDescription>نافذة المحادثة الاحترافية</DialogDescription>
           </DialogHeader>
           
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
+          <div className="mobile-chat-container flex flex-col h-[550px] w-full overflow-hidden sm:rounded-3xl border border-white/10 bg-black/80 backdrop-blur-2xl shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm font-medium text-white/90">المحادثة المباشرة</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 rounded-full text-white/40 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
             {/* Messages area */}
-            <ScrollArea ref={scrollRef} className="h-[350px] w-full">
-              <div className="p-3 space-y-2 min-h-full flex flex-col justify-end">
+            <ScrollArea ref={scrollRef} className="flex-grow w-full">
+              <div className="p-4 space-y-4 min-h-full flex flex-col justify-end">
                 {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <RefreshCw className="h-4 w-4 text-white/20 animate-spin" />
+                  <div className="flex items-center justify-center h-full py-10">
+                    <RefreshCw className="h-6 w-6 text-blue-400 animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-[10px] text-white/15">ابدأ المحادثة...</p>
+                  <div className="flex flex-col items-center justify-center h-full py-10 opacity-20">
+                    <MessageSquareText className="h-12 w-12 mb-2" />
+                    <p className="text-sm">ابدأ المحادثة الآن...</p>
                   </div>
                 ) : (
                   messages.map((msg, i) => (
-                    <div key={msg.id} className={`flex justify-start ${i === messages.length - 1 ? 'animate-chat-pop' : ''}`}>
-                      <div className="max-w-[85%]">
-                        <div className="inline-block p-2.5 rounded-2xl rounded-bl-sm break-words bg-[#626FC4]/20 text-[#C8CCEC] border border-[#626FC4]/20">
-                          <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.text}</p>
+                    <div key={msg.id} className={`flex justify-end ${i === messages.length - 1 ? 'animate-chat-pop' : ''}`}>
+                      <div className="max-w-[85%] group">
+                        <div className="relative px-4 py-3 rounded-2xl rounded-tr-sm break-words bg-blue-600/20 text-blue-50 border border-blue-500/30 shadow-sm">
+                          <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-light" style={{ unicodeBidi: 'plaintext' }}>
+                            {msg.text}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-1 mt-0.5 justify-start">
-                          <span className="text-[7px] text-white/20">{formatTime(msg.created_at)}</span>
-                          {msg.status === 'pending' && <RefreshCw className="h-2 w-2 text-white/30 animate-spin" />}
-                          {msg.status === 'error' && <CloudOff className="h-2 w-2 text-red-400/50" />}
-                          {msg.status === 'synced' && <Cloud className="h-2 w-2 text-green-400/20" />}
+                        <div className="flex items-center gap-2 mt-1.5 justify-end px-1">
+                          <span className="text-[10px] text-white/30 font-medium">{formatTime(msg.created_at)}</span>
+                          {msg.status === 'pending' && <RefreshCw className="h-3 w-3 text-blue-400/50 animate-spin" />}
+                          {msg.status === 'error' && <CloudOff className="h-3 w-3 text-red-400/50" />}
+                          {msg.status === 'synced' && <Cloud className="h-3 w-3 text-green-400/40" />}
                         </div>
                       </div>
                     </div>
@@ -165,10 +229,11 @@ export function ChatWidget() {
             </ScrollArea>
 
             {/* Input area */}
-            <div className="p-2 border-t border-white/5 bg-black/30">
-              <div className="flex items-end gap-2">
+            <div className="p-3 sm:p-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+              <div className="flex flex-col gap-3">
                 <Textarea
-                  placeholder="اكتب هنا..."
+                  ref={textareaRef}
+                  placeholder="اكتب رسالتك هنا..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => {
@@ -177,16 +242,21 @@ export function ChatWidget() {
                       handleSendMessage();
                     }
                   }}
-                  className="flex-grow resize-none rounded-xl bg-white/5 border-white/10 text-white/90 text-xs placeholder:text-white/20 min-h-[36px] max-h-[80px] focus-visible:ring-1 focus-visible:ring-[#626FC4]/30"
+                  className="w-full resize-none rounded-2xl bg-white/5 border-white/10 text-white text-[15px] placeholder:text-white/20 min-h-[50px] max-h-[150px] focus-visible:ring-2 focus-visible:ring-blue-500/50 p-4 transition-all"
                   rows={1}
                 />
                 <Button 
                   onClick={handleSendMessage} 
+                  onMouseDown={handleLongPress}
+                  onMouseUp={handleLongPress}
+                  onMouseLeave={handleLongPress}
+                  onTouchStart={handleLongPress}
+                  onTouchEnd={handleLongPress}
                   disabled={!inputValue.trim()}
-                  size="icon"
-                  className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 border-0 shadow-lg shadow-blue-500/20 disabled:opacity-30 disabled:shadow-none transition-all"
+                  className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg shadow-lg shadow-blue-600/20 disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
-                  <Send className="h-4 w-4 text-white" />
+                  <span>إرسال</span>
+                  <Send className="h-5 w-5" />
                 </Button>
               </div>
             </div>
