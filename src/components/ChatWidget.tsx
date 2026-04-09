@@ -24,6 +24,24 @@ const chatStyles = `
     animation: delete-fade 0.3s ease-out forwards;
   }
   
+  @keyframes timestamp-fade-in {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes timestamp-fade-out {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.8); }
+  }
+  
+  .timestamp-display {
+    animation: timestamp-fade-in 0.3s ease-out;
+  }
+  
+  .timestamp-hide {
+    animation: timestamp-fade-out 0.3s ease-out forwards;
+  }
+  
   /* تحسينات للهواتف المحمولة */
   @media (max-width: 640px) {
     .mobile-chat-container {
@@ -63,9 +81,12 @@ export function ChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [longPressId, setLongPressId] = useState<string | null>(null);
+  const [showTimestamp, setShowTimestamp] = useState(false);
+  const [currentTimestamp, setCurrentTimestamp] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const timestampTimer = useRef<NodeJS.Timeout | null>(null);
   const { user } = useAuth();
 
   // Load messages from DB
@@ -111,6 +132,29 @@ export function ChatWidget() {
 
   const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
+  const formatFullDateTime = (date: Date) => {
+    const daysInArabic = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const dayName = daysInArabic[date.getDay()];
+    const dateStr = date.toLocaleDateString('ar-EG');
+    const timeStr = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    return `${dayName}\n${dateStr}\n${timeStr}`;
+  };
+
+  const handleSendButtonLongPress = () => {
+    const now = new Date();
+    const timestamp = formatFullDateTime(now);
+    setCurrentTimestamp(timestamp);
+    setShowTimestamp(true);
+
+    // إخفاء الطابع الزمني بعد 3 ثوانٍ
+    if (timestampTimer.current) {
+      clearTimeout(timestampTimer.current);
+    }
+    timestampTimer.current = setTimeout(() => {
+      setShowTimestamp(false);
+    }, 3000);
   };
 
   const handleSendMessage = async () => {
@@ -202,6 +246,18 @@ export function ChatWidget() {
   };
 
   const handleMessageTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  const handleSendButtonMouseDown = () => {
+    longPressTimer.current = setTimeout(() => {
+      handleSendButtonLongPress();
+    }, 600);
+  };
+
+  const handleSendButtonMouseUp = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
@@ -315,7 +371,12 @@ export function ChatWidget() {
                   rows={1}
                 />
                 <Button 
-                  onClick={handleSendMessage} 
+                  onClick={handleSendMessage}
+                  onMouseDown={handleSendButtonMouseDown}
+                  onMouseUp={handleSendButtonMouseUp}
+                  onMouseLeave={handleSendButtonMouseUp}
+                  onTouchStart={handleSendButtonMouseDown}
+                  onTouchEnd={handleSendButtonMouseUp}
                   disabled={!inputValue.trim()}
                   className="w-full h-12 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-lg shadow-lg shadow-sky-500/30 disabled:opacity-40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
@@ -327,6 +388,17 @@ export function ChatWidget() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Timestamp Display */}
+      {showTimestamp && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[100]">
+          <div className="timestamp-display bg-black/70 backdrop-blur-md px-8 py-6 rounded-2xl border border-sky-400/30 shadow-xl">
+            <p className="text-sky-100 text-center text-xl font-semibold whitespace-pre-line leading-relaxed">
+              {currentTimestamp}
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }
