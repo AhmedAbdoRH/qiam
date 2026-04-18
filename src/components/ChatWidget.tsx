@@ -103,7 +103,33 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
   const timestampTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
 
-  // Load messages from DB
+  const PENDING_KEY = user ? `monologue_pending_${user.id}` : null;
+
+  const getPendingFromStorage = (): Message[] => {
+    if (!PENDING_KEY) return [];
+    try {
+      const stored = localStorage.getItem(PENDING_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const savePendingToStorage = (pending: Message[]) => {
+    if (!PENDING_KEY) return;
+    if (pending.length === 0) localStorage.removeItem(PENDING_KEY);
+    else localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  };
+
+  const addPending = (msg: Message) => {
+    savePendingToStorage([...getPendingFromStorage(), msg]);
+  };
+
+  const removePending = (id: string) => {
+    savePendingToStorage(getPendingFromStorage().filter(m => m.id !== id));
+  };
+
+  // Load messages from DB + retry any pending ones
   useEffect(() => {
     if (!isOpen || !user) return;
     const loadMessages = async () => {
@@ -113,17 +139,51 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
           .from('divine_name_monologues')
           .select('*')
           .eq('user_id', user.id)
+          .eq('divine_name', 'chat')
           .order('created_at', { ascending: true });
         if (error) throw error;
-        if (data) {
-          setMessages(data.map(m => ({
-            id: m.id,
-            text: m.message,
-            isSender: true,
-            created_at: m.created_at,
-            status: 'synced' as const,
-            isDeleting: false,
-          })));
+
+        const remoteMessages: Message[] = (data || []).map(m => ({
+          id: m.id,
+          text: m.message,
+          isSender: true,
+          created_at: m.created_at,
+          status: 'synced' as const,
+          isDeleting: false,
+        }));
+
+        // Merge pending messages that haven't been synced yet
+        const pending = getPendingFromStorage();
+        const remoteTexts = new Set(remoteMessages.map(m => `${m.text}|${m.created_at}`));
+        const stillPending = pending.filter(p => !remoteTexts.has(`${p.text}|${p.created_at}`));
+
+        const all = [...remoteMessages, ...stillPending].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        setMessages(all);
+
+        // Retry syncing pending messages
+        for (const p of stillPending) {
+          try {
+            const { data: inserted, error: insertErr } = await supabase
+              .from('divine_name_monologues')
+              .insert({
+                user_id: user.id,
+                divine_name: 'chat',
+                message: p.text,
+                created_at: p.created_at,
+              })
+              .select()
+              .single();
+            if (!insertErr && inserted) {
+              removePending(p.id);
+              setMessages(prev => prev.map(m =>
+                m.id === p.id ? { ...m, id: inserted.id, status: 'synced' as const } : m
+              ));
+            }
+          } catch (err) {
+            console.error('Retry sync failed:', err);
+          }
         }
       } catch (e) {
         console.error('Error loading messages:', e);
@@ -186,8 +246,9 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
       isDeleting: false,
     };
     
-    // إظهار الرسالة فوراً عند الإرسال
+    // إظهار الرسالة فوراً عند الإرسال + حفظها كـ pending في localStorage
     setMessages(prev => [...prev, newMsg]);
+    addPending(newMsg);
     setInputValue('');
     
     // إعادة التركيز على حقل النص بعد الإرسال (للموبايل)
@@ -202,17 +263,21 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
           user_id: user.id,
           divine_name: 'chat',
           message: textToSend,
+          created_at: now,
         })
         .select()
         .single();
       
       if (error) throw error;
       
+      // نجح الحفظ - أزل من pending
+      removePending(tempId);
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, id: data.id, status: 'synced' as const } : m
       ));
     } catch (e) {
       console.error('Error sending message:', e);
+      // فشل الحفظ - تبقى في pending للمحاولة لاحقاً
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, status: 'error' as const } : m
       ));
