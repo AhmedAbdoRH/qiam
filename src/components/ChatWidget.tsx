@@ -246,8 +246,9 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
       isDeleting: false,
     };
     
-    // إظهار الرسالة فوراً عند الإرسال
+    // إظهار الرسالة فوراً عند الإرسال + حفظها كـ pending في localStorage
     setMessages(prev => [...prev, newMsg]);
+    addPending(newMsg);
     setInputValue('');
     
     // إعادة التركيز على حقل النص بعد الإرسال (للموبايل)
@@ -262,17 +263,21 @@ export function ChatWidget({ externalOpen, onExternalClose }: ChatWidgetProps = 
           user_id: user.id,
           divine_name: 'chat',
           message: textToSend,
+          created_at: now,
         })
         .select()
         .single();
       
       if (error) throw error;
       
+      // نجح الحفظ - أزل من pending
+      removePending(tempId);
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, id: data.id, status: 'synced' as const } : m
       ));
     } catch (e) {
       console.error('Error sending message:', e);
+      // فشل الحفظ - تبقى في pending للمحاولة لاحقاً
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, status: 'error' as const } : m
       ));
