@@ -524,6 +524,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const syncPendingMessages = useCallback(async () => {
     if (!user || !PENDING_MESSAGES_KEY || isSyncing) return;
 
+    // Verify session is still active
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.warn('No active session for sync');
+      return;
+    }
+
     const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
     if (!stored) return;
 
@@ -532,10 +539,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     setIsSyncing(true);
     const successfullySynced: string[] = [];
+    const failedMessages: string[] = [];
 
     for (const msg of pending) {
       try {
-        const { error } = await supabase
+        console.log('Syncing pending message:', msg.id, { chat_mode: msg.chat_mode });
+        
+        const { error, data } = await supabase
           .from('self_dialogue_messages')
           .insert({
             user_id: user.id,
@@ -543,9 +553,18 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
             message: msg.message,
             created_at: msg.created_at,
             chat_mode: msg.chat_mode || 'self'
-          });
+          })
+          .select();
 
-        if (!error) {
+        if (error) {
+          console.error('Sync error for message:', msg.id, {
+            code: error.code,
+            message: error.message,
+            details: error.details
+          });
+          failedMessages.push(msg.id);
+        } else {
+          console.log('Message synced successfully:', msg.id, data);
           successfullySynced.push(msg.id);
           // Update message status in main list if it exists
           setMessages(prev => prev.map(m =>
@@ -554,6 +573,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         }
       } catch (err) {
         console.error('Failed to sync message:', msg.id, err);
+        failedMessages.push(msg.id);
       }
     }
 
@@ -568,6 +588,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setIsSyncing(false);
     if (successfullySynced.length > 0) {
       toast.success(`تم حفظ ${successfullySynced.length} رسالة بنجاح`);
+    }
+    if (failedMessages.length > 0) {
+      console.warn(`Failed to sync ${failedMessages.length} messages`);
     }
   }, [user, PENDING_MESSAGES_KEY, isSyncing]);
 
@@ -1697,7 +1720,17 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !user) return;
+    if (!inputValue.trim() || !user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    // Verify session is still active
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مجدداً');
+      return;
+    }
 
     // Auto-insert spacer if last message was > 1.5 hours ago
     const filtered = messages.filter(m => m.message !== '__SPACER__');
@@ -1748,7 +1781,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     });
 
     try {
-      const { error } = await supabase
+      console.log('Attempting to save message:', {
+        user_id: user.id,
+        sender: senderForThisMessage,
+        chat_mode: chatModeForMsg,
+        message_length: newMessage.message.length
+      });
+
+      const { error, data } = await supabase
         .from('self_dialogue_messages')
         .insert({
           user_id: user.id,
@@ -1757,9 +1797,20 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
           created_at: newMessage.created_at,
           session_title: sessionTitle || null,
           chat_mode: chatModeForMsg
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+
+      console.log('Message saved successfully:', data);
 
       // Mark as synced in state
       setMessages(prev => prev.map(m =>
@@ -1779,8 +1830,22 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving message:', error);
+      
+      // Provide detailed error message based on error type
+      let errorMessage = 'فشل حفظ الرسالة في الكلاود. تم حفظها محلياً.';
+      
+      if (error?.code === '42P01') {
+        errorMessage = 'خطأ في قاعدة البيانات: الجدول غير موجود';
+      } else if (error?.code === 'PGRST301') {
+        errorMessage = 'خطأ في الصلاحيات: تحقق من تسجيل الدخول';
+      } else if (error?.message?.includes('RLS')) {
+        errorMessage = 'خطأ في سياسات الأمان: تحقق من حسابك';
+      } else if (error?.message?.includes('auth')) {
+        errorMessage = 'خطأ في المصادقة: يرجى تسجيل الدخول مجدداً';
+      }
+      
       // Mark as error in state instead of removing it
       setMessages(prev => prev.map(m =>
         m.id === tempId ? { ...m, status: 'error' } : m
@@ -1797,7 +1862,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
           localStorage.setItem(PENDING_MESSAGES_KEY, JSON.stringify(updated));
         }
       }
-      toast.error('فشل حفظ الرسالة في الكلاود. تم حفظها محلياً.');
+      toast.error(errorMessage);
     }
   };
 
