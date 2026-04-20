@@ -41,7 +41,7 @@ const Nurturing = () => {
   const [qualityRating, setQualityRating] = useState(() => parseFloat(localStorage.getItem("nurturing_quality_rating") || "5.0"));
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
   

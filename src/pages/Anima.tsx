@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2, ListTodo, CheckCircle2 } from "lucide-react";
+import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2, ListTodo, CheckCircle2, Send } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip, ReferenceLine } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useMemo } from "react";
@@ -49,72 +49,122 @@ const Anima = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [cardMounted, setCardMounted] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [pressDuration, setPressDuration] = useState(0);
   const [isPressing, setIsPressing] = useState(false);
   const [pressStartTime, setPressStartTime] = useState<number | null>(null);
-  const [fadeOutTimer, setFadeOutTimer] = useState<NodeJS.Timeout | null>(null);
+  const [fadeOutTimer, setFadeOutTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isAddingWish, setIsAddingWish] = useState(false);
   const [newWish, setNewWish] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [showMilestones, setShowMilestones] = useState(true);
   const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
   
-  const [animaMessages, setAnimaMessages] = useState<{id: string, text: string, timestamp: number, likes: number}[]>(() => {
-    const saved = localStorage.getItem("anima_messages");
-    return saved ? JSON.parse(saved) : [];
-  });
-  
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [localTasks, setLocalTasks] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_tasks");
-    return saved ? JSON.parse(saved) : [];
-  });
 
   // Calendar State
   const [isAddingCalendarItem, setIsAddingCalendarItem] = useState(false);
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
-  const [localCalendarItems, setLocalCalendarItems] = useState<AnimaTask[]>(() => {
-    const saved = localStorage.getItem("anima_calendar");
-    return saved ? JSON.parse(saved) : [];
+
+  const [_showSexualWishes, _setShowSexualWishes] = useState(true);
+  
+  const [newNote, setNewNote] = useState("");
+  const [newTag, setNewTag] = useState("");
+  const [tagTarget, setTagTarget] = useState<{ type: 'task' | 'calendar'; id: string } | null>(null);
+
+  // Database queries for all data
+  const { data: animaMessages = [] } = useQuery({
+    queryKey: ['animaMessages', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(m => ({ id: m.id, text: m.text, timestamp: new Date(m.created_at).getTime(), likes: m.likes }));
+    },
+    enabled: !!user
   });
 
-  const [localWishes, setLocalWishes] = useState<{id: string, title: string, completed: boolean}[]>(() => {
-    const saved = localStorage.getItem("anima_wishes");
-    return saved ? JSON.parse(saved) : [];
+  const { data: localTasks = [] } = useQuery({
+    queryKey: ['animaTasks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(t => ({ id: t.id, title: t.title, progress: Number(t.progress), tags: (t as any).tags || [] }));
+    },
+    enabled: !!user
   });
 
-  const [localCards, setLocalCards] = useState<AnimaCard[]>(() => {
-    const saved = localStorage.getItem("anima_cards");
-    return saved ? JSON.parse(saved) : [];
+  const { data: localCalendarItems = [] } = useQuery({
+    queryKey: ['animaCalendar', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_calendar')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: (c as any).tags || [] }));
+    },
+    enabled: !!user
   });
 
-  // Persistent Storage Effects
-  useEffect(() => {
-    localStorage.setItem("anima_wishes", JSON.stringify(localWishes));
-  }, [localWishes]);
+  const { data: localWishes = [] } = useQuery({
+    queryKey: ['animaWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: Number((w as any).progress || 0) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_tasks", JSON.stringify(localTasks));
-  }, [localTasks]);
+  const { data: localSexualWishes = [] } = useQuery({
+    queryKey: ['animaSexualWishes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_sexual_wishes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(w => ({ id: w.id, title: w.title, completed: w.completed, progress: Number((w as any).progress || 0) }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_calendar", JSON.stringify(localCalendarItems));
-  }, [localCalendarItems]);
+  const { data: localCards = [] } = useQuery({
+    queryKey: ['animaPageCards', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_page_cards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(c => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
 
-  useEffect(() => {
-    localStorage.setItem("anima_cards", JSON.stringify(localCards));
-  }, [localCards]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
-
-  useEffect(() => {
-    localStorage.setItem("anima_messages", JSON.stringify(animaMessages));
-  }, [animaMessages]);
 
   // Sorted Tasks Logic (Lowest progress first)
   const sortedTasks = useMemo(() => {
@@ -125,6 +175,14 @@ const Anima = () => {
   const sortedCalendarItems = useMemo(() => {
     return [...localCalendarItems].sort((a, b) => a.progress - b.progress);
   }, [localCalendarItems]);
+
+  const sortedWishes = useMemo(() => {
+    return [...localWishes].sort((a, b) => a.progress - b.progress);
+  }, [localWishes]);
+
+  const sortedSexualWishes = useMemo(() => {
+    return [...localSexualWishes].sort((a, b) => a.progress - b.progress);
+  }, [localSexualWishes]);
 
   const handleHeartStart = () => {
     const startTime = Date.now();
@@ -162,7 +220,7 @@ const Anima = () => {
         setFadeOutTimer(null);
       }
     }, 50);
-    setFadeOutTimer(fadeTimer as unknown as NodeJS.Timeout);
+    setFadeOutTimer(fadeTimer);
   };
 
   useEffect(() => {
@@ -180,21 +238,7 @@ const Anima = () => {
     };
   }, [fadeOutTimer]);
 
-  // Database Queries
-  const { data: dbCards = [] } = useQuery({
-    queryKey: ['animaCards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('anima_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('order_index', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user
-  });
+  // Database Queries (dbCards removed - using localCards from anima_page_cards)
 
   const { data: ratingData } = useQuery({
     queryKey: ['animaQualityRating', user?.id],
@@ -230,113 +274,229 @@ const Anima = () => {
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState(0);
 
   // Task Handlers
-  const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
-    const newTask: AnimaTask = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      progress: 0
-    };
-    setLocalTasks([...localTasks, newTask]);
+  const handleAddTask = async () => {
+    if (!newTaskTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_tasks').insert({ user_id: user.id, title: newTaskTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة المهمة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
     setNewTaskTitle("");
     setIsAddingTask(false);
     toast.success('تمت إضافة المهمة');
   };
 
-  const handleUpdateTaskProgress = (id: string, progress: number) => {
-    setLocalTasks(prev => prev.map(t => t.id === id ? { ...t, progress } : t));
+  const handleUpdateTaskProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
   };
 
-  const handleDeleteTask = (id: string) => {
-    setLocalTasks(prev => prev.filter(t => t.id !== id));
-    toast.success('تم حذف المهمة');
+  const handleDeleteTask = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_tasks').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaTasks', user.id] });
+  };
+
+  // Tag Handlers
+  const handleAddTag = async (type: 'task' | 'calendar', id: string, tag: string) => {
+    if (!tag.trim() || !user) return;
+    const table = type === 'task' ? 'anima_tasks' : 'anima_calendar';
+    const items = type === 'task' ? localTasks : localCalendarItems;
+    const item = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = (item as any).tags || [];
+    const updatedTags = [...currentTags, tag.trim()];
+    await supabase.from(table).update({ tags: updatedTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
+    setNewTag("");
+    setTagTarget(null);
+  };
+
+  const handleDeleteTag = async (type: 'task' | 'calendar', id: string, tagIndex: number) => {
+    if (!user) return;
+    const items = type === 'task' ? localTasks : localCalendarItems;
+    const item = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = [...((item as any).tags || [])];
+    currentTags.splice(tagIndex, 1);
+    const table = type === 'task' ? 'anima_tasks' : 'anima_calendar';
+    await supabase.from(table).update({ tags: currentTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: [type === 'task' ? 'animaTasks' : 'animaCalendar', user.id] });
+  };
+
+  // Sweet Notes from database
+  const { data: sweetNotesData = [] } = useQuery({
+    queryKey: ['animaNotes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !user) return;
+    const { error } = await supabase.from('anima_notes').insert({ user_id: user.id, content: newNote.trim() });
+    if (error) { toast.error('خطأ في إضافة الملاحظة'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
+    setNewNote("");
+    toast.success('تمت إضافة الملاحظة');
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_notes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaNotes', user.id] });
+    toast.success('تم حذف الملاحظة');
   };
 
   // Calendar Handlers
-  const handleAddCalendarItem = () => {
-    if (!newCalendarItemTitle.trim()) return;
-    const newItem: AnimaTask = {
-      id: `calendar-${Date.now()}`,
-      title: newCalendarItemTitle.trim(),
-      progress: 0
-    };
-    setLocalCalendarItems([...localCalendarItems, newItem]);
+  const handleAddCalendarItem = async () => {
+    if (!newCalendarItemTitle.trim() || !user) return;
+    const { error } = await supabase.from('anima_calendar').insert({ user_id: user.id, title: newCalendarItemTitle.trim(), progress: 0 });
+    if (error) { toast.error('خطأ في إضافة عنصر التقويم'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     setNewCalendarItemTitle("");
     setIsAddingCalendarItem(false);
     toast.success('تمت إضافة عنصر التقويم');
   };
 
-  const handleUpdateCalendarProgress = (id: string, progress: number) => {
-    setLocalCalendarItems(prev => prev.map(c => c.id === id ? { ...c, progress } : c));
+  const handleUpdateCalendarProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').update({ progress }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
   };
 
-  const handleDeleteCalendarItem = (id: string) => {
-    setLocalCalendarItems(prev => prev.filter(c => c.id !== id));
+  const handleDeleteCalendarItem = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_calendar').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaCalendar', user.id] });
     toast.success('تم حذف عنصر التقويم');
   };
 
+  // Sexual Wish Handlers
+  const [newSexualWish, setNewSexualWish] = useState("");
+  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
+
+  const handleAddSexualWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim(), progress: 0 });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+    setNewSexualWish("");
+    setIsAddingSexualWish(false);
+    toast.success('تمت إضافة الأمنية');
+  };
+
+  const handleToggleSexualWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localSexualWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_sexual_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+  };
+
+  const handleUpdateSexualWishProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_sexual_wishes').update({ progress, completed: progress >= 9.5 } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+  };
+
+  const handleDeleteSexualWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_sexual_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaSexualWishes', user.id] });
+    toast.success('تم حذف الأمنية');
+  };
+
   // Wish Handlers
-  const handleAddLocalWish = (wish: string) => {
-    if (!wish.trim()) return;
-    const newWishObj = { id: `wish-${Date.now()}`, title: wish.trim(), completed: false };
-    setLocalWishes(prev => [newWishObj, ...prev]);
+  const handleAddLocalWish = async (wish: string) => {
+    if (!wish.trim() || !user) return;
+    const { error } = await supabase.from('anima_wishes').insert({ user_id: user.id, title: wish.trim(), progress: 0 });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     setNewWish("");
     setIsAddingWish(false);
     toast.success('تمت إضافة الأمنية');
   };
 
-  const handleToggleWishCompleted = (id: string) => {
-    setLocalWishes(prev => prev.map(w => w.id === id ? { ...w, completed: !w.completed } : w));
+  const handleToggleWishCompleted = async (id: string) => {
+    if (!user) return;
+    const wish = localWishes.find(w => w.id === id);
+    if (!wish) return;
+    await supabase.from('anima_wishes').update({ completed: !wish.completed }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
   };
 
-  const handleDeleteLocalWish = (id: string) => {
-    setLocalWishes(prev => prev.filter(w => w.id !== id));
+  const handleUpdateWishProgress = async (id: string, progress: number) => {
+    if (!user) return;
+    await supabase.from('anima_wishes').update({ progress, completed: progress >= 9.5 } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
+  };
+
+  const handleDeleteLocalWish = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_wishes').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaWishes', user.id] });
     toast.success('تم حذف الأمنية');
   };
 
-  const handleAddLocalCard = (card: AnimaCard) => {
-    const newCard: AnimaCard = {
-      ...card,
-      id: card.id.startsWith('temp-') ? `card-${Date.now()}` : card.id,
-      order_index: localCards.length
-    };
-    setLocalCards(prev => [...prev, newCard]);
+  const handleAddLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    const { error } = await supabase.from('anima_page_cards').insert({
+      user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: localCards.length
+    });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setEditingCard(null);
     toast.success('تمت إضافة البطاقة');
   };
 
-  const handleUpdateLocalCard = (card: AnimaCard) => {
-    setLocalCards(prev => prev.map(c => c.id === card.id ? card : c));
+  const handleUpdateLocalCard = async (card: AnimaCard) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').update({
+      title: card.title, description: card.description, emoji: card.emoji
+    }).eq('id', card.id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     setIsEditingCard(false);
     setSelectedCard(null);
     toast.success('تم تحديث البطاقة');
   };
 
-  const handleDeleteLocalCard = (id: string) => {
-    setLocalCards(prev => prev.filter(c => c.id !== id));
+  const handleDeleteLocalCard = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_page_cards').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaPageCards', user.id] });
     toast.success('تم حذف البطاقة');
   };
 
-  const handleAddMessage = () => {
-    if (!newMessage.trim()) return;
-    const message = {
-      id: `msg-${Date.now()}`,
-      text: newMessage,
-      timestamp: Date.now(),
-      likes: 0
-    };
-    setAnimaMessages(prev => [message, ...prev]);
+  const handleAddMessage = async () => {
+    if (!newMessage.trim() || !user) return;
+    const { error } = await supabase.from('anima_messages').insert({ user_id: user.id, text: newMessage.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     setNewMessage("");
     toast.success('تمت إضافة الرسالة');
   };
 
-  const handleToggleLike = (id: string) => {
-    setAnimaMessages(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+  const handleToggleLike = async (id: string) => {
+    if (!user) return;
+    const msg = animaMessages.find(m => m.id === id);
+    if (!msg) return;
+    await supabase.from('anima_messages').update({ likes: msg.likes + 1 }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
   };
 
-  const handleDeleteMessage = (id: string) => {
-    setAnimaMessages(prev => prev.filter(m => m.id !== id));
+  const handleDeleteMessage = async (id: string) => {
+    if (!user) return;
+    await supabase.from('anima_messages').delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['animaMessages', user.id] });
     toast.success('تم حذف الرسالة');
   };
 
@@ -362,30 +522,7 @@ const Anima = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['animaQualityRating', user?.id] })
   });
 
-  const updateCardMutation = useMutation({
-    mutationFn: async (card: AnimaCard) => {
-      if (!user) throw new Error('No user');
-      if (card.id.startsWith('temp-')) {
-        const { error } = await supabase.from('anima_cards').insert({
-          user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: card.order_index
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('anima_cards').update({
-          title: card.title, description: card.description, emoji: card.emoji, updated_at: new Date().toISOString()
-        }).eq('id', card.id).eq('user_id', user.id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animaCards', user?.id] });
-      setIsEditingCard(false);
-      setSelectedCard(null);
-      toast.success('تم الحفظ');
-    }
-  });
-
-  const cardsToDisplay = localCards.length > 0 ? localCards : (dbCards.length > 0 ? dbCards : defaultCards);
+  const cardsToDisplay = localCards.length > 0 ? localCards : defaultCards;
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
@@ -427,14 +564,16 @@ const Anima = () => {
   const parseMilestone = (message: string) => {
     const content = message.replace('__MILESTONE__', '');
     const parts = content.split('|');
-    const isSacredFmt = parts.length > 5;
+    const isSacredFmt = parts.length > 8;
     
     return {
       title: parts[0] || 'جماع',
       rating: parts[1] || '-',
       notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[5] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[6] || '') : (parts[4] || '')
+      type: isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal'),
+      intention: isSacredFmt ? (parts[9] || '') : (parts[4] || ''),
+      duration: !isSacredFmt && parts[5] ? parts[5] : '',
+      output: !isSacredFmt && parts[6] ? parts[6] : '',
     };
   };
 
@@ -504,16 +643,52 @@ const Anima = () => {
             />
           </div>
 
+          {/* Cards Section (صفات الانيما) */}
+          <div className="relative mb-8">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <button onClick={() => {
+                setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
+                setIsEditingCard(true);
+              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {cardsToDisplay.map((item, i) => (
+                <div key={item.id} className="group relative">
+                  <button 
+                    onClick={() => {
+                      setSelectedCard(item);
+                      setEditingCard({ ...item });
+                      setIsEditingCard(true);
+                    }}
+                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
+                  >
+                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
+                  </button>
+                  {localCards.find(c => c.id === item.id) && (
+                    <button
+                      onClick={() => handleDeleteLocalCard(item.id)}
+                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Messages Section */}
           <div className="mb-6 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-yellow-700" />
                 <h3 className="text-sm font-medium text-yellow-700/80">رسائل من الأنيما</h3>
+
               </div>
             </div>
             
-            {/* Messages Display */}
             <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
               {animaMessages.length > 0 ? (
                 animaMessages.map((msg) => (
@@ -543,7 +718,6 @@ const Anima = () => {
               )}
             </div>
 
-            {/* Message Input */}
             <div className="flex gap-2">
               <textarea
                 value={newMessage}
@@ -563,91 +737,8 @@ const Anima = () => {
                 disabled={!newMessage.trim()}
                 className="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600/30 hover:bg-yellow-700/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-yellow-600"
               >
-                <Plus className="w-5 h-5" />
+                <Send className="w-5 h-5" />
               </button>
-            </div>
-          </div>
-
-          {/* Wishes Section */}
-          <div className="mb-12 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
-                <h2 className="text-lg font-bold text-yellow-700">أمنيات الأنيما</h2>
-              </div>
-              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-yellow-700">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              {localWishes.map((wish) => (
-                <div key={wish.id} className={`group relative backdrop-blur-xl border rounded-2xl p-4 transition-all ${wish.completed ? "bg-green-500/10 border-green-500/30" : "bg-white/5 border-white/10 hover:border-pink-500/30"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className={`text-sm leading-relaxed flex-1 ${
-                      wish.completed
-                        ? "text-white/50 line-through"
-                        : "text-white/90"
-                    }`}>{wish.title}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleToggleWishCompleted(wish.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          wish.completed
-                            ? "bg-green-500 border-green-500"
-                            : "border-white/20 hover:border-green-400"
-                        }`}
-                      >
-                        {wish.completed && <span className="text-white text-xs font-bold">✓</span>}
-                      </button>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Treatment Section (Therapy Tasks) */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-yellow-700" />
-                <h2 className="text-lg font-bold text-yellow-100">تطبيب الطفل الداخلي</h2>
-              </div>
-              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{task.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[task.progress]}
-                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                </div>
-              ))}
-              {localTasks.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
-              )}
             </div>
           </div>
 
@@ -685,6 +776,24 @@ const Anima = () => {
                     className="w-full"
                     rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
                   />
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {((item as any).tags || []).map((tag: string, idx: number) => (
+                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('calendar', item.id, idx)}>
+                        {tag}
+                      </span>
+                    ))}
+                    {tagTarget?.type === 'calendar' && tagTarget.id === item.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('calendar', item.id, newTag); }} className="flex gap-1">
+                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
+                        <button type="submit" className="text-[10px] text-lime-300 hover:text-lime-200">+</button>
+                      </form>
+                    ) : (
+                      <button onClick={() => setTagTarget({ type: 'calendar', id: item.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
+                        + سمة
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {localCalendarItems.length === 0 && (
@@ -693,110 +802,312 @@ const Anima = () => {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-3">
-              {cardsToDisplay.map((item, i) => (
-                <div key={item.id} className={`group relative ${i === 0 && latestMilestones.length > 0 && showMilestones ? 'col-span-2' : ''}`}>
-                  {i === 0 && latestMilestones.length > 0 && showMilestones && (
-                    <div className="mb-3">
-                      {(() => {
-                        const currentMilestone = latestMilestones[currentMilestoneIndex];
-                        const milestone = parseMilestone(currentMilestone.message);
-                        return (
-                          <div>
-                            <button 
-                              onClick={() => {}}
-                              className="w-full relative overflow-hidden rounded-lg bg-gradient-to-br from-pink-600/15 via-rose-500/12 to-orange-500/8 backdrop-blur-lg border border-pink-400/20 p-2.5 text-left hover:border-pink-400/40 transition-all opacity-100 scale-100">
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-1.5">
-                                  {getMilestoneIcon(milestone.type)}
-                                  <h3 className="text-sm font-bold text-white">{milestone.title}</h3>
-                                </div>
-                                <span className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text leading-none">{milestone.rating}</span>
-                              </div>
-                              {milestone.intention && <div className="pt-1.5 border-t border-white/20 text-xs text-white/85 font-medium">{milestone.intention}</div>}
-                              {milestone.notes && <div className="pt-1 text-xs text-yellow-100/80 line-clamp-2 italic">{milestone.notes}</div>}
-                            </button>
-                            {/* Auto-play Button Below Milestone */}
-                            <button
-                              onClick={() => setIsAutoPlayEnabled(!isAutoPlayEnabled)}
-                              className={`mt-1 p-1 rounded-md transition-all duration-300 flex items-center justify-center ${
-                                isAutoPlayEnabled 
-                                  ? 'text-yellow-600 hover:text-yellow-700' 
-                                  : 'text-white/30 hover:text-white/50'
-                              }`}
-                              title={isAutoPlayEnabled ? 'إيقاف التشغيل التلقائي' : 'تشغيل التشغيل التلقائي'}
-                            >
-                              {isAutoPlayEnabled ? (
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M5.5 3a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0V4.5A1.5 1.5 0 0 0 5.5 3zm9 0a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0V4.5A1.5 1.5 0 0 0 14.5 3z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        );
-                      })()}
-                      <div className="mt-4 mb-3 w-full flex justify-center">
-                        <h2 className="text-xl font-bold text-yellow-700">نعمة الأنيما</h2>
-                      </div>
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <ListTodo className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-bold text-blue-100">تطبيب الطفل الداخلي</h2>
+              </div>
+              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {sortedTasks.map((task) => (
+                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{task.title}</span>
                     </div>
-                  )}
-                  <button 
-                    onClick={() => {
-                      setSelectedCard(item);
-                      setEditingCard({ ...item });
-                      setIsEditingCard(true);
-                    }}
-                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
-                  >
-                    <h3 className="text-[13px] font-medium text-yellow-600/90">{item.title}</h3>
-                  </button>
-                  {localCards.find(c => c.id === item.id) && (
-                    <button
-                      onClick={() => handleDeleteLocalCard(item.id)}
-                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[task.progress]}
+                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {((task as any).tags || []).map((tag: string, idx: number) => (
+                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('task', task.id, idx)}>
+                        {tag}
+                      </span>
+                    ))}
+                    {tagTarget?.type === 'task' && tagTarget.id === task.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('task', task.id, newTag); }} className="flex gap-1">
+                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
+                        <button type="submit" className="text-[10px] text-blue-300 hover:text-blue-200">+</button>
+                      </form>
+                    ) : (
+                      <button onClick={() => setTagTarget({ type: 'task', id: task.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
+                        + سمة
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <button onClick={() => {
-            setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
-            setIsEditingCard(true);
-          }} className="w-full mt-4 flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 text-white/40 hover:text-white/60 transition-all">
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">إضافة بطاقة</span>
-          </button>
+                </div>
+              ))}
+              {localTasks.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
+              )}
+            </div>
+          </div>
+
+          {/* Wishes Section - أمنيات الانيما من احمد */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
+                <h2 className="text-lg font-bold text-pink-100">أمنيات الانيما من احمد</h2>
+              </div>
+              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {sortedWishes.map((wish) => (
+                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[wish.progress]}
+                    onValueChange={(val) => handleUpdateWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
+                  />
+                </div>
+              ))}
+              {localWishes.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+              )}
+            </div>
+          </div>
+
+          {/* Regular Wish Dialog */}
+          {isAddingWish && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
+              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
+                <textarea
+                    value={newWish}
+                    onChange={(e) => setNewWish(e.target.value)}
+                    placeholder="اكتب الأمنية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
+                      disabled={!newWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                    >
+                      إضافة أمنية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* امنيات احمد من الانيما */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-blue-400 fill-blue-400/20" />
+                <h2 className="text-lg font-bold text-blue-100">امنيات احمد من الانيما</h2>
+              </div>
+              <button 
+                onClick={() => setIsAddingSexualWish(true)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {sortedSexualWishes.map((wish) => (
+                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
+                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
+                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[wish.progress]}
+                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
+                    max={10} min={0} step={0.1}
+                    className="w-full"
+                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                  />
+                </div>
+              ))}
+              {localSexualWishes.length === 0 && (
+                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
+              )}
+            </div>
+          </div>
+
+          {/* Sexual Wish Dialog */}
+          {isAddingSexualWish && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
+              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
+                <textarea
+                    value={newSexualWish}
+                    onChange={(e) => setNewSexualWish(e.target.value)}
+                    placeholder="اكتب الأمنية..."
+                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
+                    rows={3}
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { handleAddSexualWish(newSexualWish); setIsAddingSexualWish(false); }}
+                      disabled={!newSexualWish.trim()}
+                      className="flex-1 p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
+                    >
+                      إضافة أمنية
+                    </button>
+                    <button
+                      onClick={() => setIsAddingSexualWish(false)}
+                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* ملاحظات جميله بيننا */}
+          <div className="mb-8 w-full">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
+              <h2 className="text-lg font-bold text-pink-100">ملاحظات جميله بيننا</h2>
+            </div>
+            
+            <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+              {sweetNotesData.length > 0 ? (
+                sweetNotesData.map((note) => (
+                  <div key={note.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note.content}</p>
+                      <button 
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-3 text-xs text-white/20">لا توجد ملاحظات حالياً</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNote();
+                  }
+                }}
+                placeholder="اكتب ملاحظة جميلة..."
+                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                rows={2}
+              />
+              <button
+                onClick={handleAddNote}
+                disabled={!newNote.trim()}
+                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
           {/* Chart Section */}
           {latestMilestones.length > 1 && (
-            <div className="mt-20 w-full h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={(() => {
-                  const filtered = [...latestMilestones]
-                    .reverse()
-                    .filter((m) => {
-                      const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
-                      return daysAgo <= 7;
-                    });
-                  
-                  // Find the start of the earliest day (midnight) in the filtered range
-                  const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
-                  const dayStart = new Date(earliestDate);
-                  dayStart.setHours(0, 0, 0, 0); // midnight of the earliest day
-                  const dayStartMs = dayStart.getTime();
+            <div className="mt-8 w-full">
+              <h3 className="text-sm font-medium text-red-200/80 mb-3 px-1">الصحة الحميمية</h3>
+              <div className="h-[120px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={(() => {
+                    const filtered = [...latestMilestones]
+                      .reverse()
+                      .filter((m) => {
+                        const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                        return daysAgo <= 7;
+                      });
+                    
+                    const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
+                    const dayStart = new Date(earliestDate);
+                    dayStart.setHours(0, 0, 0, 0);
+                    const dayStartMs = dayStart.getTime();
 
+                    return filtered.map((m, i) => {
+                      const milestone = parseMilestone(m.message);
+                      const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
+
+                      return {
+                        val: parseFloat(milestone.rating) || 0,
+                        timePosition: hoursSinceDayStart,
+                        index: i,
+                        title: milestone.title,
+                        rating: milestone.rating,
+                        notes: milestone.notes,
+                        type: milestone.type,
+                        intention: milestone.intention,
+                        duration: milestone.duration,
+                        output: milestone.output,
+                        date: new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        time: new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                        timeAgo: getTimeDifference(new Date(m.created_at)),
+                        dayName: new Date(m.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
+                        dayStartMs,
+                      };
+                    });
                   return filtered.map((m, i) => {
                     const milestone = parseMilestone(m.message);
-                    // timePosition = hours elapsed since midnight of the first day
                     const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
 
                     return {
@@ -808,6 +1119,8 @@ const Anima = () => {
                       notes: milestone.notes,
                       type: milestone.type,
                       intention: milestone.intention,
+                      duration: milestone.duration,
+                      output: milestone.output,
                       date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
                       time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
                       timeAgo: getTimeDifference(new Date(m.created_at)),
@@ -817,7 +1130,17 @@ const Anima = () => {
                   });
                 })()}
                   >
-                  <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)"/><stop offset="100%" stopColor="rgba(239,68,68,0.8)"/></linearGradient></defs>
+                  <defs>
+                    <linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="rgba(239,68,68,0.1)"/>
+                      <stop offset="100%" stopColor="rgba(239,68,68,0.8)"/>
+                    </linearGradient>
+                    <linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="rgba(255,140,0,0.4)"/>
+                      <stop offset="50%" stopColor="rgba(255,69,0,0.6)"/>
+                      <stop offset="100%" stopColor="rgba(255,0,0,0.8)"/>
+                    </linearGradient>
+                  </defs>
                   <YAxis hide domain={[5, 10]} />
                   <XAxis 
                     dataKey="timePosition" 
@@ -825,8 +1148,6 @@ const Anima = () => {
                     type="number"
                     ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
                     tickFormatter={(value) => {
-                      // Compute the actual day-of-week for each tick using latestMilestones from closure.
-                      // value = hours since midnight of the earliest day in the filtered range.
                       const filtered = [...latestMilestones]
                         .reverse()
                         .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
@@ -845,13 +1166,14 @@ const Anima = () => {
                       <div className="font-bold text-white">{payload[0].payload.title}</div>
                       <div>التقييم: {payload[0].payload.rating}</div>
                       {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                      {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
+                      {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
                       {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
                       <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
                     </div> 
                     : null)} 
                   />
                   <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  {/* Day boundary lines — each 24h represents one full calendar day starting from midnight */}
                   <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
                   <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
                   <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
@@ -880,16 +1202,12 @@ const Anima = () => {
                       
                       return (
                         <g key={`dot-${cx}-${cy}`}>
-                          {/* Icon inside */}
                           <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {iconType === 'fall' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            {/* Fallback for any other type */}
-                            {!['sacred', 'heart', 'imaginary', 'normal', 'nursing', 'fall'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            {iconType === 'sacred' ? (
+                              <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />
+                            ) : (
+                              <circle cx="3" cy="3" r="2.0" fill={iconColor} />
+                            )}
                           </g>
                         </g>
                       );
@@ -898,6 +1216,7 @@ const Anima = () => {
                   />
                 </LineChart>
               </ResponsiveContainer>
+
             </div>
           )}
         </div>
@@ -922,6 +1241,17 @@ const Anima = () => {
           <SheetFooter className="px-6 pb-8 gap-3">
             <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
             <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isAddingSexualWish} onOpenChange={setIsAddingSexualWish}>
+        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جنسية جديدة</SheetTitle></SheetHeader>
+          <div className="px-6 py-4"><Input value={newSexualWish} onChange={(e) => setNewSexualWish(e.target.value)} placeholder="ماذا تتمنى الأنيما جنسياً؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+          <SheetFooter className="px-6 pb-8 gap-3">
+            <Button variant="ghost" onClick={() => setIsAddingSexualWish(false)} className="flex-1">إلغاء</Button>
+            <Button onClick={() => handleAddSexualWish(newSexualWish)} disabled={!newSexualWish.trim()} className="flex-1 bg-pink-600">إضافة الأمنية</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -977,6 +1307,34 @@ const Anima = () => {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+=======
+        <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
+            <div className="px-6 py-6 space-y-4">
+              <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
+              <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
+            </div>
+            <SheetFooter className="px-6 pb-6 gap-3">
+              <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
+              <Button 
+                onClick={() => {
+                  if (!editingCard) return;
+                  if (editingCard.id.startsWith('temp-')) {
+                    handleAddLocalCard(editingCard);
+                  } else {
+                    handleUpdateLocalCard(editingCard);
+                  }
+                }} 
+                className="flex-1 bg-pink-500"
+              >
+                حفظ
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
+>>>>>>> a58f91caf6e2477c80e0ca4d98b9213f8850f4f9
 
       <style>{`
         .anima-bg { background: linear-gradient(135deg, hsl(20,40%,12%) 0%, hsl(22,42%,14%) 30%, hsl(18,38%,10%) 60%, hsl(20,40%,13%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
