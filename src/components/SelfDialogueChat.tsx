@@ -817,6 +817,27 @@ export function SelfDialogueChat() {
             );
           }
 
+          // Render fall event
+          if (msg.message.startsWith('__FALL__')) {
+            const fallContent = msg.message.replace('__FALL__|', '');
+            const fallParts = fallContent.split('|');
+            const fallDescription = fallParts[1] || '';
+            const fallDate = new Date(msg.created_at);
+            const fallTime = fallDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={msg.id} className="flex justify-center py-3">
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg px-3 py-2 max-w-[300px]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-red-400 text-sm">📉</span>
+                    <span className="text-xs text-red-300/70">{fallTime}</span>
+                  </div>
+                  <p className="text-xs text-red-200 leading-relaxed">{fallDescription}</p>
+
+                </div>
+              </div>
+            );
+          }
+
           // Render milestone message
           if (msg.message.startsWith('__MILESTONE__')) {
             const milestoneBody = msg.message.replace('__MILESTONE__', '');
@@ -860,6 +881,7 @@ export function SelfDialogueChat() {
             else if (type === 'imaginary') baseColor = { r: 180, g: 100, b: 200 }; // purple
             else if (type === 'nursing') baseColor = { r: 180, g: 140, b: 80 }; // tan/wheat
             else if (type === 'fall') baseColor = { r: 127, g: 29, b: 29 }; // dark red
+
             
             const r = baseColor.r;
             const g = baseColor.g;
@@ -877,6 +899,7 @@ export function SelfDialogueChat() {
                 case 'imaginary': return <Brain className="h-4 w-4 flex-shrink-0" />;
                 case 'nursing': return <span className="text-lg leading-none flex-shrink-0">💧</span>;
                 case 'fall': return <span className="text-lg leading-none flex-shrink-0">🛑</span>;
+
                 default: return <Zap className="h-4 w-4 flex-shrink-0" />;
               }
             };
@@ -1325,7 +1348,71 @@ export function SelfDialogueChat() {
   };
 
   const openFallDialog = () => {
-    openMilestoneDialog('fall');
+    setFallDescription('');
+    setShowFallDialog(true);
+  };
+
+  const insertFall = async () => {
+    if (!user || !fallDescription.trim()) {
+      toast.error('الرجاء إدخال وصف السقوط');
+      return;
+    }
+    
+    const fallContent = `__FALL__|0|${fallDescription}`;
+    
+    // Handle editing
+    if (editingFallId) {
+      try {
+        await supabase
+          .from('self_dialogue_messages')
+          .update({ message: fallContent })
+          .eq('id', editingFallId)
+          .eq('user_id', user.id);
+        
+        setMessages(prev => prev.map(m => m.id === editingFallId ? { ...m, message: fallContent } : m));
+        setAllMessages(prev => prev.map(m => m.id === editingFallId ? { ...m, message: fallContent } : m));
+        setShowFallDialog(false);
+        setEditingFallId(null);
+        setFallDescription('');
+        toast.success('تم تحديث السقوط');
+      } catch (err) {
+        console.error('Failed to update fall:', err);
+        toast.error('فشل تحديث السقوط');
+      }
+      return;
+    }
+
+    // Handle new fall event
+    const tempId = crypto.randomUUID();
+    globalMessageSeq++;
+    const fallMessage: DialogueMessage = {
+      id: tempId,
+      sender: 'me',
+      message: fallContent,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+      localSeq: globalMessageSeq,
+      chat_mode: 'self'
+    };
+    setMessages(prev => [...prev, fallMessage]);
+    setAllMessages(prev => [...prev, fallMessage]);
+    setShowFallDialog(false);
+    
+    try {
+      await supabase.from('self_dialogue_messages').insert({
+        user_id: user.id,
+        sender: 'me',
+        message: fallContent,
+        created_at: fallMessage.created_at,
+        session_title: sessionTitle || null,
+        chat_mode: 'self'
+      });
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+      toast.success('تم تسجيل السقوط');
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+      toast.error('فشل تسجيل السقوط');
+    }
   };
 
 
@@ -1345,6 +1432,29 @@ export function SelfDialogueChat() {
   };
 
   const openMilestoneEditDialog = (milestoneMessage: DialogueMessage) => {
+    // Check if it's a fall event - convert to milestone format for editing
+    if (milestoneMessage.message.startsWith('__FALL__')) {
+      const fallContent = milestoneMessage.message.replace('__FALL__|', '');
+      const fallParts = fallContent.split('|');
+      const description = fallParts[1] || '';
+      
+      // Set fall type in milestone editor
+      setMilestoneType('fall');
+      setMilestoneNotes(description);
+      setMilestoneIntention('');
+      setMilestoneIntentionAchievement(0);
+      setMilestonePleasure(5);
+      setMilestoneSaturation(5);
+      setMilestoneComfort(5);
+      setMilestoneAfterglow(false);
+      setMilestoneSacred(false);
+      setIsEditingMilestone(true);
+      setEditingMilestoneId(milestoneMessage.id);
+      setEditingMilestoneCreatedAt(milestoneMessage.created_at);
+      setShowMilestoneDialog(true);
+      return;
+    }
+
     const content = milestoneMessage.message.replace('__MILESTONE__', '');
     const parts = content.split('|');
     const isSacredFmt = parts.length > 8;
@@ -1427,11 +1537,14 @@ export function SelfDialogueChat() {
     
     // For all types, use simple decimal rating
     finalRating = milestoneIntentionAchievement;
-    
-    // Format: __MILESTONE__title|rating|notes|type|intention
-    // Fall now uses milestone format too, with 0 rating
-    milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
-    
+    // Handle fall type - convert to __FALL__ format
+    if (milestoneType === 'fall') {
+      milestoneContent = `__FALL__|0|${milestoneNotes}`;
+    } else {
+      // Format: __MILESTONE__title|rating|notes|type|intention
+      milestoneContent = `__MILESTONE__${milestoneName}|${finalRating}|${milestoneNotes}|${milestoneType}|${milestoneIntention}`;
+    }
+
     // If editing, update existing milestone
     if (isEditingMilestone && editingMilestoneId) {
       try {
@@ -1517,7 +1630,8 @@ export function SelfDialogueChat() {
 
   // Get all milestone and kiss messages for the table view
   const milestoneMessages = useMemo(() => {
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__');
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__' || m.message.startsWith('__FALL__'));
+
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
@@ -1544,6 +1658,14 @@ export function SelfDialogueChat() {
 
       if (m.message === '__SELFHUG__') {
         rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-']);
+        return;
+      }
+
+      if (m.message.startsWith('__FALL__')) {
+        const fallContent = m.message.replace('__FALL__|', '');
+        const fallParts = fallContent.split('|');
+        const description = fallParts[1] || '';
+        rows.push([dateStr, timeStr, '0', description, '-']);
         return;
       }
       
@@ -1886,6 +2008,7 @@ export function SelfDialogueChat() {
                       🤲
                     </Button>
 
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1913,8 +2036,9 @@ export function SelfDialogueChat() {
                       className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1"
                       title="سقوط"
                     >
-                      🛑
+                      📉
                     </Button>
+
 
                   {/* Milestone Table Button */}
                   {milestoneMessages.length > 0 && (
@@ -1935,7 +2059,6 @@ export function SelfDialogueChat() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={copyTodayConversation}
                       onMouseDown={handleCopyButtonMouseDown}
                       onMouseUp={handleCopyButtonMouseUp}
                       onMouseLeave={handleCopyButtonMouseUp}
@@ -1943,6 +2066,7 @@ export function SelfDialogueChat() {
                       onTouchEnd={handleCopyButtonMouseUp}
                       className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                       title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
+
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -2016,49 +2140,12 @@ export function SelfDialogueChat() {
                               );
                             }
 
-                            // Shower entry
-                            if (m.message === '__SHOWER__') {
-                              return (
-                                <div key={m.id} className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-400/20 text-right" dir="rtl">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-semibold text-cyan-300">🛀 دش دافئ حميمي</span>
-                                    <div className="flex items-center gap-1">
-                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
-                                        <Trash2 className="h-3 w-3" />
-                                      </button>
-                                      <button onClick={() => { navigator.clipboard.writeText(`🛀 دش دافئ حميمي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                        <Copy className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
-                                </div>
-                              );
-                            }
-
-                            // Self-hug entry
-                            if (m.message === '__SELFHUG__') {
-                              return (
-                                <div key={m.id} className="bg-amber-500/10 rounded-lg p-3 border border-amber-400/20 text-right" dir="rtl">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-semibold text-amber-300">🦋 حضن ذاتي</span>
-                                    <div className="flex items-center gap-1">
-                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
-                                        <Trash2 className="h-3 w-3" />
-                                      </button>
-                                      <button onClick={() => { navigator.clipboard.writeText(`🦋 حضن ذاتي - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
-                                        <Copy className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
-                                </div>
-                              );
-                            }
-
                             // Fall entry
-                            if (false) { // __FALL__ is now stored as __MILESTONE__ format
-                              const fallDescription = '';
+                            if (m.message.startsWith('__FALL__')) {
+                              const fallContent = m.message.replace('__FALL__|', '');
+                              const fallParts = fallContent.split('|');
+                              const fallDescription = fallParts[1] || '';
+
                               return (
                                 <div key={m.id} className="bg-red-500/10 rounded-lg p-3 border border-red-400/20 text-right" dir="rtl">
                                   <div className="flex items-center justify-between mb-1">
@@ -2296,6 +2383,42 @@ export function SelfDialogueChat() {
                       </div>
                     </div>
                   )}
+
+                  {/* Fall Event Dialog */}
+                  {showFallDialog && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowFallDialog(false); setEditingFallId(null); }}>
+                      <div className="bg-[#1a1a2e] border border-red-500/30 rounded-2xl p-4 w-[95vw] max-w-[400px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                          <div className="text-red-500 text-lg">📉</div>
+                          <h3 className="font-medium text-white">{editingFallId ? 'تعديل سقوط' : 'تسجيل سقوط'}</h3>
+                        </div>
+                        
+                        <textarea
+                          value={fallDescription}
+                          onChange={(e) => setFallDescription(e.target.value)}
+                          placeholder="وصف السقوط والأسباب..."
+                          className="w-full h-24 bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-red-500/50"
+                        />
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={insertFall}
+                            className="flex-1 h-9 text-xs bg-red-600/30 hover:bg-red-600/40 border border-red-500/30 text-red-200"
+                          >
+                            {editingFallId ? 'حفظ التعديل' : 'حفظ السقوط'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => { setShowFallDialog(false); setEditingFallId(null); }}
+                            className="h-9 text-xs text-white/50 hover:text-white"
+                          >
+                            إلغاء
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
 
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && (
