@@ -552,7 +552,6 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
             user_id: user.id,
             sender: msg.sender,
             message: msg.message,
-            created_at: msg.created_at,
             chat_mode: msg.chat_mode || 'self'
           })
           .select();
@@ -1089,21 +1088,29 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   }, [messages.length, isOpen, showPinInput]);
 
   const loadMessages = async (mode?: ChatMode) => {
+    console.log('=== loadMessages called ===');
+    console.log('User ID:', user?.id);
+    console.log('Mode:', mode);
+    
     if (!user) return;
     setLoading(true);
     try {
+      console.log('Querying database...');
       const { data, error } = await supabase
         .from('self_dialogue_messages')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_archived', false)
         .in('chat_mode', ['self', 'anima', 'nurturing'])
-        .order('created_at', { ascending: true })
-        .order('id', { ascending: true });
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(100);
+
+      console.log('Query result:', { error, data, count: data?.length });
 
       if (error) throw error;
 
-      const remoteMessages = (data || []).map(msg => ({
+      const remoteMessages = (data || []).reverse().map(msg => ({
         id: msg.id,
         sender: msg.sender as 'me' | 'myself',
         message: msg.message,
@@ -1132,7 +1139,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         }
       });
 
-      // Sort by timestamp first, then by localSeq (for local messages), then by id
+      // Sort by timestamp first (oldest first), then by localSeq, then by id
       allMessages.sort((a, b) => {
         const t = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         if (t !== 0) return t;
@@ -1143,10 +1150,25 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         // Fallback to id comparison for database messages
         return a.id.localeCompare(b.id);
       });
-      // Keep only last 20 messages for better performance
-      const displayMessages = allMessages.slice(-20);
+      // Display all loaded messages (already limited to 100 from DB)
+      const displayMessages = allMessages;
       setAllMessages(allMessages);
       setMessages(displayMessages);
+
+      console.log('=== Messages loaded ===');
+      console.log('Total messages:', allMessages.length);
+      console.log('Display messages:', displayMessages.length);
+      console.log('Remote messages:', remoteMessages.length);
+      console.log('Pending messages:', pendingMessages.length);
+      
+      if (displayMessages.length > 0) {
+        console.log('First display message:', displayMessages[0]);
+        console.log('First display message created_at:', displayMessages[0].created_at);
+        console.log('First display message chat_mode:', displayMessages[0].chat_mode);
+        console.log('Last display message:', displayMessages[displayMessages.length - 1]);
+        console.log('Last display message created_at:', displayMessages[displayMessages.length - 1].created_at);
+        console.log('Last display message chat_mode:', displayMessages[displayMessages.length - 1].chat_mode);
+      }
 
       if (allMessages.length > 0) {
         setSessionTitle(allMessages[0].session_title || 'حوار مع الأنيما');
@@ -1740,14 +1762,25 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   };
 
   const handleSendMessage = async () => {
+    console.log('=== handleSendMessage called ===');
+    console.log('Input value:', inputValue);
+    console.log('User:', user);
+    console.log('User ID:', user?.id);
+    
     if (!inputValue.trim() || !user) {
+      console.error('Missing input or user');
       toast.error('يجب تسجيل الدخول أولاً');
       return;
     }
 
     // Verify session is still active
+    console.log('Checking session...');
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('Session:', session);
+    console.log('Session user ID:', session?.user?.id);
+    
     if (!session) {
+      console.error('No active session');
       toast.error('انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مجدداً');
       return;
     }
@@ -1801,12 +1834,17 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     });
 
     try {
-      console.log('Attempting to save message:', {
+      console.log('=== Attempting to save message to database ===');
+      console.log('Data to insert:', {
         user_id: user.id,
         sender: senderForThisMessage,
         chat_mode: chatModeForMsg,
-        message_length: newMessage.message.length
+        message: newMessage.message,
+        session_title: sessionTitle || null
       });
+      console.log('chatModeForMsg:', chatModeForMsg);
+      console.log('currentSender:', currentSender);
+      console.log('animaPersona:', animaPersona);
 
       const { error, data } = await supabase
         .from('self_dialogue_messages')
@@ -1814,23 +1852,24 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
           user_id: user.id,
           sender: senderForThisMessage,
           message: newMessage.message,
-          created_at: newMessage.created_at,
           session_title: sessionTitle || null,
           chat_mode: chatModeForMsg
         })
         .select();
 
+      console.log('Supabase response:', { error, data });
+
       if (error) {
-        console.error('Supabase insert error details:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        console.error('=== Supabase insert error ===');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
         throw error;
       }
 
-      console.log('Message saved successfully:', data);
+      console.log('=== Message saved successfully ===');
+      console.log('Saved data:', data);
 
       // Mark as synced in state
       setMessages(prev => prev.map(m =>

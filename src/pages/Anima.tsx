@@ -59,7 +59,9 @@ const Anima = () => {
   const [newMessage, setNewMessage] = useState("");
   const [showMilestones, setShowMilestones] = useState(true);
   const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(false);
-  
+  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
+  const [newSexualWish, setNewSexualWish] = useState("");
+
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -69,7 +71,7 @@ const Anima = () => {
   const [newCalendarItemTitle, setNewCalendarItemTitle] = useState("");
 
   const [_showSexualWishes, _setShowSexualWishes] = useState(true);
-  
+
   const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tagTarget, setTagTarget] = useState<{ type: 'task' | 'calendar'; id: string } | null>(null);
@@ -165,7 +167,6 @@ const Anima = () => {
     enabled: !!user
   });
 
-
   // Sorted Tasks Logic (Lowest progress first)
   const sortedTasks = useMemo(() => {
     return [...localTasks].sort((a, b) => a.progress - b.progress);
@@ -203,18 +204,18 @@ const Anima = () => {
     }
     setIsPressing(false);
     setPressStartTime(null);
-    
+
     // Fade out over 60 seconds
     const maxDuration = pressDuration;
     const fadeStartTime = Date.now();
     const fadeDuration = 60000; // 60 seconds
-    
+
     if (fadeOutTimer) clearInterval(fadeOutTimer as unknown as number);
     const fadeTimer = setInterval(() => {
       const elapsed = Date.now() - fadeStartTime;
       const progress = Math.min(elapsed / fadeDuration, 1);
       setPressDuration(Math.max(0, maxDuration * (1 - progress)));
-      
+
       if (progress >= 1) {
         clearInterval(fadeTimer);
         setFadeOutTimer(null);
@@ -380,9 +381,6 @@ const Anima = () => {
   };
 
   // Sexual Wish Handlers
-  const [newSexualWish, setNewSexualWish] = useState("");
-  const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
-
   const handleAddSexualWish = async (wish: string) => {
     if (!wish.trim() || !user) return;
     const { error } = await supabase.from('anima_sexual_wishes').insert({ user_id: user.id, title: wish.trim(), progress: 0 });
@@ -526,9 +524,9 @@ const Anima = () => {
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
-      setQualityRating(ratingData.balance_rating ?? 5.0);
+      setQualityRating((ratingData as any).balance_rating ?? 5.0);
     } else if (ratingData && 'rating' in ratingData) {
-      setQualityRating(ratingData.rating ?? 5.0);
+      setQualityRating((ratingData as any).rating ?? 5.0);
     }
   }, [ratingData]);
 
@@ -540,7 +538,7 @@ const Anima = () => {
       setCurrentMilestoneIndex(0);
       return;
     }
-    
+
     const interval = setInterval(() => {
       setCurrentMilestoneIndex((prev) => (prev + 1) % latestMilestones.length);
     }, 14000);
@@ -565,7 +563,7 @@ const Anima = () => {
     const content = message.replace('__MILESTONE__', '');
     const parts = content.split('|');
     const isSacredFmt = parts.length > 8;
-    
+
     return {
       title: parts[0] || 'جماع',
       rating: parts[1] || '-',
@@ -579,11 +577,10 @@ const Anima = () => {
 
   const getMilestoneIcon = (type: string) => {
     switch (type) {
-      case 'sacred': return <Flame className="w-3.5 h-3.5 text-red-500 fill-red-500" />;
-      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-yellow-700" />;
+      case 'sacred': return <Flame className="w-3.5 h-3.5 text-transparent fill-transparent" style={{ filter: 'drop-shadow(0 0 8px rgba(255,140,0,0.8))' }} />;
+      case 'heart': return <HeartHandshake className="w-3.5 h-3.5 text-pink-500" />;
       case 'imaginary': return <Brain className="w-3.5 h-3.5 text-purple-500" />;
       case 'nursing': return <span className="text-amber-700 text-[10px]">💧</span>;
-      case 'fall': return <span className="text-red-900 text-[10px]">⬇️</span>;
       case 'normal': return <Zap className="w-3.5 h-3.5 text-blue-500" />;
       default: return <Zap className="w-3.5 h-3.5 text-blue-500" />;
     }
@@ -610,26 +607,23 @@ const Anima = () => {
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         <div className={`max-w-sm w-full transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          
+
           {/* Header */}
           <div className="flex flex-col items-center mb-10">
             <div className="relative mb-4">
               <div className="absolute rounded-full" style={{
                 inset: `-${Math.round((qualityRating + pressDuration) * 4)}px`,
-                background: `radial-gradient(circle, rgba(212, 165, 32, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
+                background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
                 filter: `blur(${12 + qualityRating * 2 + pressDuration * 3}px)`,
                 opacity: Math.max(0.08, (qualityRating + pressDuration) / 10),
                 transition: 'all 0.1s ease',
               }} />
-              <div 
-                onMouseDown={handleHeartStart} onMouseUp={handleHeartEnd} onMouseLeave={handleHeartEnd}
-                onTouchStart={handleHeartStart} onTouchEnd={handleHeartEnd}
-                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-yellow-700/30 to-yellow-600/30 backdrop-blur-xl border border-yellow-600/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+              <div
+                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
               >
-                <Heart className="h-20 w-20 text-yellow-100 fill-yellow-100/60 pointer-events-none" />
+                <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-center text-yellow-600 select-none">الأنيما</h1>
           </div>
 
           {/* Quality Slider */}
@@ -639,7 +633,7 @@ const Anima = () => {
               onValueChange={(val) => { setQualityRating(val[0]); updateQualityRatingMutation.mutate(val[0]); }}
               max={10} min={0} step={0.1}
               className="w-full"
-              rangeClassName="bg-gradient-to-r from-yellow-400 to-yellow-200"
+              rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
             />
           </div>
 
@@ -656,7 +650,7 @@ const Anima = () => {
             <div className="grid grid-cols-2 gap-3">
               {cardsToDisplay.map((item, i) => (
                 <div key={item.id} className="group relative">
-                  <button 
+                  <button
                     onClick={() => {
                       setSelectedCard(item);
                       setEditingCard({ ...item });
@@ -683,12 +677,11 @@ const Anima = () => {
           <div className="mb-6 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-yellow-700" />
-                <h3 className="text-sm font-medium text-yellow-700/80">رسائل من الأنيما</h3>
-
+                <Sparkles className="w-4 h-4 text-pink-400" />
+                <h3 className="text-sm font-medium text-pink-200/80">رسائل من الانيما</h3>
               </div>
             </div>
-            
+
             <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
               {animaMessages.length > 0 ? (
                 animaMessages.map((msg) => (
@@ -696,14 +689,14 @@ const Anima = () => {
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <button 
+                        <button
                           onClick={() => handleToggleLike(msg.id)}
-                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-yellow-700 bg-yellow-700/10" : "text-white/20 hover:text-yellow-700"}`}
+                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-pink-400 bg-pink-500/10" : "text-white/20 hover:text-pink-400"}`}
                         >
                           <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
                           <span className="text-[10px] font-medium">{msg.likes}</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteMessage(msg.id)}
                           className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
                         >
@@ -735,19 +728,19 @@ const Anima = () => {
               <button
                 onClick={handleAddMessage}
                 disabled={!newMessage.trim()}
-                className="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600/30 hover:bg-yellow-700/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-yellow-600"
+                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
               >
                 <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Calendar Section */}
+          {/* Calendar Section - التذكية - تقويم */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-yellow-700" />
-                <h2 className="text-lg font-bold text-yellow-100">رعاية الطفل الداخلي</h2>
+                <ListTodo className="w-5 h-5 text-green-400" />
+                <h2 className="text-lg font-bold text-green-100">التذكية - تقويم</h2>
               </div>
               <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
                 <Plus className="w-4 h-4" />
@@ -802,11 +795,12 @@ const Anima = () => {
             </div>
           </div>
 
+          {/* Treatment Section - التذكية - الشفاء */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
               <div className="flex items-center gap-2">
                 <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">تطبيب الطفل الداخلي</h2>
+                <h2 className="text-lg font-bold text-blue-100">التذكية - الشفاء</h2>
               </div>
               <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
                 <Plus className="w-4 h-4" />
@@ -853,11 +847,6 @@ const Anima = () => {
                       </button>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
                 </div>
               ))}
               {localTasks.length === 0 && (
@@ -913,30 +902,30 @@ const Anima = () => {
               <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
                 <textarea
-                    value={newWish}
-                    onChange={(e) => setNewWish(e.target.value)}
-                    placeholder="اكتب الأمنية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
-                      disabled={!newWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                    >
-                      إضافة أمنية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
+                  value={newWish}
+                  onChange={(e) => setNewWish(e.target.value)}
+                  placeholder="اكتب الأمنية..."
+                  className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
+                  rows={3}
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
+                    disabled={!newWish.trim()}
+                    className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
+                  >
+                    إضافة أمنية
+                  </button>
+                  <button
+                    onClick={() => setIsAddingWish(false)}
+                    className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                  >
+                    إلغاء
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
           {/* امنيات احمد من الانيما */}
           <div className="mb-8 w-full">
@@ -945,14 +934,14 @@ const Anima = () => {
                 <Star className="w-5 h-5 text-blue-400 fill-blue-400/20" />
                 <h2 className="text-lg font-bold text-blue-100">امنيات احمد من الانيما</h2>
               </div>
-              <button 
+              <button
                 onClick={() => setIsAddingSexualWish(true)}
                 className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               {sortedSexualWishes.map((wish) => (
                 <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
@@ -989,30 +978,30 @@ const Anima = () => {
               <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
                 <textarea
-                    value={newSexualWish}
-                    onChange={(e) => setNewSexualWish(e.target.value)}
-                    placeholder="اكتب الأمنية..."
-                    className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => { handleAddSexualWish(newSexualWish); setIsAddingSexualWish(false); }}
-                      disabled={!newSexualWish.trim()}
-                      className="flex-1 p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
-                    >
-                      إضافة أمنية
-                    </button>
-                    <button
-                      onClick={() => setIsAddingSexualWish(false)}
-                      className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
+                  value={newSexualWish}
+                  onChange={(e) => setNewSexualWish(e.target.value)}
+                  placeholder="اكتب الأمنية..."
+                  className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
+                  rows={3}
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => { handleAddSexualWish(newSexualWish); setIsAddingSexualWish(false); }}
+                    disabled={!newSexualWish.trim()}
+                    className="flex-1 p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
+                  >
+                    إضافة أمنية
+                  </button>
+                  <button
+                    onClick={() => setIsAddingSexualWish(false)}
+                    className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
+                  >
+                    إلغاء
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
           {/* ملاحظات جميله بيننا */}
           <div className="mb-8 w-full">
@@ -1020,14 +1009,14 @@ const Anima = () => {
               <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
               <h2 className="text-lg font-bold text-pink-100">ملاحظات جميله بيننا</h2>
             </div>
-            
+
             <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
               {sweetNotesData.length > 0 ? (
                 sweetNotesData.map((note) => (
                   <div key={note.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm text-white/90 leading-relaxed flex-1">{note.content}</p>
-                      <button 
+                      <button
                         onClick={() => handleDeleteNote(note.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
                       >
@@ -1078,7 +1067,7 @@ const Anima = () => {
                         const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
                         return daysAgo <= 7;
                       });
-                    
+
                     const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
                     const dayStart = new Date(earliestDate);
                     dayStart.setHours(0, 0, 0, 0);
@@ -1106,208 +1095,124 @@ const Anima = () => {
                         dayStartMs,
                       };
                     });
-                  return filtered.map((m, i) => {
-                    const milestone = parseMilestone(m.message);
-                    const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
-
-                    return {
-                      val: parseFloat(milestone.rating) || 0,
-                      timePosition: hoursSinceDayStart,
-                      index: i,
-                      title: milestone.title,
-                      rating: milestone.rating,
-                      notes: milestone.notes,
-                      type: milestone.type,
-                      intention: milestone.intention,
-                      duration: milestone.duration,
-                      output: milestone.output,
-                      date: new Date(m.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                      time: new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                      timeAgo: getTimeDifference(new Date(m.created_at)),
-                      dayName: new Date(m.created_at).toLocaleDateString('ar-EG', { weekday: 'short' }),
-                      dayStartMs,
-                    };
-                  });
-                })()}
+                  })()}
                   >
-                  <defs>
-                    <linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="rgba(239,68,68,0.1)"/>
-                      <stop offset="100%" stopColor="rgba(239,68,68,0.8)"/>
-                    </linearGradient>
-                    <linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="rgba(255,140,0,0.4)"/>
-                      <stop offset="50%" stopColor="rgba(255,69,0,0.6)"/>
-                      <stop offset="100%" stopColor="rgba(255,0,0,0.8)"/>
-                    </linearGradient>
-                  </defs>
-                  <YAxis hide domain={[5, 10]} />
-                  <XAxis 
-                    dataKey="timePosition" 
-                    domain={[0, 'dataMax + 2']}
-                    type="number"
-                    ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
-                    tickFormatter={(value) => {
-                      const filtered = [...latestMilestones]
-                        .reverse()
-                        .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
-                      if (filtered.length === 0) return '';
-                      const earliest = new Date(filtered[0].created_at);
-                      earliest.setHours(0, 0, 0, 0);
-                      const tickDate = new Date(earliest.getTime() + value * 3600000);
-                      const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                      return days[tickDate.getDay()];
-                    }}
-                    tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
-                    interval={0}
-                  />
-                  <Tooltip content={({ active, payload }) => (active && payload?.[0] ? 
-                    <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
-                      <div className="font-bold text-white">{payload[0].payload.title}</div>
-                      <div>التقييم: {payload[0].payload.rating}</div>
-                      {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
-                      {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
-                      {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
-                      {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
-                      <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
-                    </div> 
-                    : null)} 
-                  />
-                  <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                  <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                  <Line 
-                    type="monotone" 
-                    dataKey="val" 
-                    stroke="url(#lineG)"  
-                    strokeWidth={2}
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      
-                      const iconType = payload.type;
-                      const iconColor = 
-                        iconType === 'sacred' ? '#ef4444' :
-                        iconType === 'heart' ? '#f472b6' :
-                        iconType === 'imaginary' ? '#a855f7' :
-                        iconType === 'normal' ? '#3b82f6' :
-                        iconType === 'nursing' ? '#d97706' :
-                        iconType === 'fall' ? '#7f1d1d' :
-                        '#6b7280';
-                      
-                      return (
-                        <g key={`dot-${cx}-${cy}`}>
-                          <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                            {iconType === 'sacred' ? (
-                              <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />
-                            ) : (
-                              <circle cx="3" cy="3" r="2.0" fill={iconColor} />
-                            )}
-                          </g>
-                        </g>
-                      );
-                    }}
-                    animationDuration={3000} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                    <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)" /><stop offset="100%" stopColor="rgba(239,68,68,0.8)" /></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)" /><stop offset="50%" stopColor="rgba(255,69,0,0.6)" /><stop offset="100%" stopColor="rgba(255,0,0,0.8)" /></linearGradient></defs>
+                    <YAxis hide domain={[5, 10]} />
+                    <XAxis
+                      dataKey="timePosition"
+                      domain={[0, 'dataMax + 2']}
+                      type="number"
+                      ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
+                      tickFormatter={(value) => {
+                        const filtered = [...latestMilestones]
+                          .reverse()
+                          .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
+                        if (filtered.length === 0) return '';
+                        const earliest = new Date(filtered[0].created_at);
+                        earliest.setHours(0, 0, 0, 0);
+                        const tickDate = new Date(earliest.getTime() + value * 3600000);
+                        const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                        return days[tickDate.getDay()];
+                      }}
+                      tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
+                      interval={0}
+                    />
+                    <Tooltip content={({ active, payload }) => (active && payload?.[0] ?
+                      <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
+                        <div className="font-bold text-white">{payload[0].payload.title}</div>
+                        <div>التقييم: {payload[0].payload.rating}</div>
+                        {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                        {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
+                        {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
+                        {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
+                        <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
+                      </div>
+                      : null)}
+                    />
+                    <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
+                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                    <Line
+                      type="monotone"
+                      dataKey="val"
+                      stroke="url(#lineG)"
+                      strokeWidth={2}
+                      dot={(props: any) => {
+                        const { cx, cy, payload } = props;
 
+                        const iconType = payload.type;
+                        const iconColor =
+                          iconType === 'sacred' ? '#ef4444' :
+                            iconType === 'heart' ? '#f472b6' :
+                              iconType === 'imaginary' ? '#a855f7' :
+                                iconType === 'normal' ? '#3b82f6' :
+                                  iconType === 'nursing' ? '#d97706' :
+                                    '#6b7280';
+
+                        return (
+                          <g key={`dot-${cx}-${cy}`}>
+                            <g transform={`translate(${cx - 3}, ${cy - 3})`}>
+                              {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
+                              {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                              {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                            </g>
+                          </g>
+                        );
+                      }}
+                      animationDuration={3000}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Sheets (Wishes, Tasks, Cards) */}
-      <Sheet open={isAddingWish} onOpenChange={setIsAddingWish}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جديدة</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Textarea value={newWish} onChange={(e) => setNewWish(e.target.value)} placeholder="ماذا تتمنى الأنيما؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingWish(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={() => handleAddLocalWish(newWish)} disabled={!newWish.trim()} className="flex-1 bg-yellow-700">إضافة</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <div>
+        <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
+            <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+            <SheetFooter className="px-6 pb-8 gap-3">
+              <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
+              <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isAddingTask} onOpenChange={setIsAddingTask}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>مهمة أنيما جديدة</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="اسم المهمة..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingTask(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={handleAddTask} disabled={!newTaskTitle.trim()} className="flex-1 bg-blue-600">إضافة المهمة</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
+            <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
+            <SheetFooter className="px-6 pb-8 gap-3">
+              <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
+              <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isAddingSexualWish} onOpenChange={setIsAddingSexualWish}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>أمنية جنسية جديدة</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Input value={newSexualWish} onChange={(e) => setNewSexualWish(e.target.value)} placeholder="ماذا تتمنى الأنيما جنسياً؟" className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingSexualWish(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={() => handleAddSexualWish(newSexualWish)} disabled={!newSexualWish.trim()} className="flex-1 bg-pink-600">إضافة الأمنية</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
+              setEditingCard({ ...selectedCard! });
+              setIsEditingCard(true);
+            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
+            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
+          </SheetContent>
+        </Sheet>
 
-      <Sheet open={isAddingCalendarItem} onOpenChange={setIsAddingCalendarItem}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>عنصر تقويم جديد</SheetTitle></SheetHeader>
-          <div className="px-6 py-4"><Input value={newCalendarItemTitle} onChange={(e) => setNewCalendarItemTitle(e.target.value)} placeholder="اسم عنصر التقويم..." className="bg-white/5 border-white/10 text-right" dir="rtl" /></div>
-          <SheetFooter className="px-6 pb-8 gap-3">
-            <Button variant="ghost" onClick={() => setIsAddingCalendarItem(false)} className="flex-1">إلغاء</Button>
-            <Button onClick={handleAddCalendarItem} disabled={!newCalendarItemTitle.trim()} className="flex-1 bg-green-600">إضافة عنصر</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={!!selectedCard && !isEditingCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{selectedCard?.emoji} {selectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
-            setEditingCard({ ...selectedCard! });
-            setIsEditingCard(true);
-          }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
-          <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{selectedCard?.description}</div>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
-        <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
-          <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
-          <div className="px-6 py-6 space-y-4">
-            <Input value={editingCard?.title || ''} onChange={(e) => setEditingCard({ ...editingCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
-            <Textarea value={editingCard?.description || ''} onChange={(e) => setEditingCard({ ...editingCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
-          </div>
-          <SheetFooter className="px-6 pb-6 gap-3">
-            <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
-            <Button 
-              onClick={() => {
-                if (!editingCard) return;
-                // Check if it's a new card (temp id)
-                if (editingCard.id.startsWith('temp-')) {
-                  handleAddLocalCard(editingCard);
-                } else if (localCards.find(c => c.id === editingCard.id)) {
-                  // It's a local card
-                  handleUpdateLocalCard(editingCard);
-                } else {
-                  // It's a database card
-                  updateCardMutation.mutate(editingCard);
-                }
-              }} 
-              className="flex-1 bg-yellow-700"
-            >
-              حفظ
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-=======
         <Sheet open={isEditingCard} onOpenChange={(open) => !open && setIsEditingCard(false)}>
           <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
             <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
@@ -1317,7 +1222,7 @@ const Anima = () => {
             </div>
             <SheetFooter className="px-6 pb-6 gap-3">
               <Button variant="ghost" onClick={() => setIsEditingCard(false)} className="flex-1">إلغاء</Button>
-              <Button 
+              <Button
                 onClick={() => {
                   if (!editingCard) return;
                   if (editingCard.id.startsWith('temp-')) {
@@ -1325,7 +1230,7 @@ const Anima = () => {
                   } else {
                     handleUpdateLocalCard(editingCard);
                   }
-                }} 
+                }}
                 className="flex-1 bg-pink-500"
               >
                 حفظ
@@ -1334,18 +1239,17 @@ const Anima = () => {
           </SheetContent>
         </Sheet>
       </div>
->>>>>>> a58f91caf6e2477c80e0ca4d98b9213f8850f4f9
 
       <style>{`
-        .anima-bg { background: linear-gradient(135deg, hsl(20,40%,12%) 0%, hsl(22,42%,14%) 30%, hsl(18,38%,10%) 60%, hsl(20,40%,13%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
+        .anima-bg { background: linear-gradient(135deg, hsl(330,40%,8%) 0%, hsl(280,35%,10%) 30%, hsl(320,30%,7%) 60%, hsl(270,40%,9%) 100%); background-size: 400% 400%; animation: anima-gradient 15s ease infinite; }
         @keyframes anima-gradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         .anima-orb { filter: blur(80px); animation: anima-orb-drift 12s ease-in-out infinite; }
-        .anima-orb-pink { background: radial-gradient(circle, hsl(20,50%,45%) 0%, transparent 70%); opacity: 0.2; }
-        .anima-orb-purple { background: radial-gradient(circle, hsl(25,45%,42%) 0%, transparent 70%); opacity: 0.15; animation-delay: -4s; }
-        .anima-orb-rose { background: radial-gradient(circle, hsl(20,48%,48%) 0%, transparent 70%); opacity: 0.12; animation-delay: -8s; }
+        .anima-orb-pink { background: radial-gradient(circle, hsl(330,60%,40%) 0%, transparent 70%); opacity: 0.2; }
+        .anima-orb-purple { background: radial-gradient(circle, hsl(270,50%,40%) 0%, transparent 70%); opacity: 0.15; animation-delay: -4s; }
+        .anima-orb-rose { background: radial-gradient(circle, hsl(350,50%,45%) 0%, transparent 70%); opacity: 0.12; animation-delay: -8s; }
         @keyframes anima-orb-drift { 0%, 100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.1); } 66% { transform: translate(-20px,15px) scale(0.9); } }
         .anima-pulse { animation: anima-pulse-anim 6s ease-in-out infinite; }
-        @keyframes anima-pulse-anim { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(212, 165, 32, 0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(212, 165, 32, 0.2); } }
+        @keyframes anima-pulse-anim { 0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(236,72,153,0.1); } 50% { transform: scale(1.03); box-shadow: 0 0 30px rgba(236,72,153,0.2); } }
         .anima-float-card { animation: anima-card-float 8s ease-in-out infinite; }
         @keyframes anima-card-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         [role="slider"] { display: none !important; }
