@@ -7,14 +7,14 @@ const BottomNavBar = () => {
 
   const navItems = [
     {
-      name: "الشعور",
+      name: "العمل",
       path: "/",
-      icon: Target,
+      icon: BrickWall,
     },
     {
-      name: "العمل",
-      path: "/behavioral",
-      icon: BrickWall,
+      name: "الشعور",
+      path: "/feelings",
+      icon: Target,
     },
     {
       name: "الايمان",

@@ -293,7 +293,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showPinInput, setShowPinInput] = useState(false);
+  const [showPinInput, setShowPinInput] = useState(true);
   const [pinValue, setPinValue] = useState('');
   const [pinError, setPinError] = useState(false);
   const [sessionTitle, setSessionTitle] = useState<string>('');
@@ -754,8 +754,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     });
   };
 
+  const longPressFiredRef = useRef(false);
   const handleMouseDown = (id: string) => {
-    longPressTimerRef.current = setTimeout(() => handleDeleteMessage(id), 600);
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      handleDeleteMessage(id);
+      toast.success('تم حذف الرسالة');
+    }, 600);
   };
 
   const handleMouseUp = () => {
@@ -763,6 +769,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+  };
+
+  const handleMessageClick = (message: string) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    handleCopyMessage(message);
   };
 
   const messageItems = useMemo(() => {
@@ -991,7 +1005,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
               >
                 <div
                   className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
-                  onClick={() => handleCopyMessage(msg.message)}
+                  onClick={() => handleMessageClick(msg.message)}
                   onMouseDown={() => handleMouseDown(msg.id)}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
