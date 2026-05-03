@@ -120,8 +120,9 @@ export const CalendarTaskList = () => {
               </div>
             </div>
             <Slider
-              value={[item.progress]}
-              onValueChange={(val) => handleProgress(item.id, val[0])}
+              value={[localProgress[item.id] ?? item.progress]}
+              onValueChange={(val) => setLocalProgress(prev => ({ ...prev, [item.id]: val[0] }))}
+              onValueCommit={(val) => { handleProgress(item.id, val[0]); setLocalProgress(prev => { const n = { ...prev }; delete n[item.id]; return n; }); }}
               max={10} min={0} step={0.1}
               className="w-full"
               rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
