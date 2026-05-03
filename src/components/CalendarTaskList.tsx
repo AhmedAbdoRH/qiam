@@ -113,7 +113,7 @@ export const CalendarTaskList = () => {
                 <span className="text-sm font-medium text-white/90">{item.title}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(1)}</span>
+                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{(localProgress[item.id] ?? item.progress).toFixed(1)}</span>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
