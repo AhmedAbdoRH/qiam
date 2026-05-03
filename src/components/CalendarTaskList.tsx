@@ -13,6 +13,7 @@ export const CalendarTaskList = () => {
   const [newTitle, setNewTitle] = useState("");
   const [tagTargetId, setTagTargetId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+  const [localProgress, setLocalProgress] = useState<Record<string, number>>({});
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
@@ -112,15 +113,16 @@ export const CalendarTaskList = () => {
                 <span className="text-sm font-medium text-white/90">{item.title}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(1)}</span>
+                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{(localProgress[item.id] ?? item.progress).toFixed(1)}</span>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
             <Slider
-              value={[item.progress]}
-              onValueChange={(val) => handleProgress(item.id, val[0])}
+              value={[localProgress[item.id] ?? item.progress]}
+              onValueChange={(val) => setLocalProgress(prev => ({ ...prev, [item.id]: val[0] }))}
+              onValueCommit={(val) => { handleProgress(item.id, val[0]); setLocalProgress(prev => { const n = { ...prev }; delete n[item.id]; return n; }); }}
               max={10} min={0} step={0.1}
               className="w-full"
               rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
