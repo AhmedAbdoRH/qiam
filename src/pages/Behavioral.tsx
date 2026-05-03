@@ -378,6 +378,12 @@ const Behavioral = () => {
         isPinned={selectedBehavioralValueForTasks ? pinnedValues.has(selectedBehavioralValueForTasks) : false}
         onTogglePin={() => selectedBehavioralValueForTasks && togglePin(selectedBehavioralValueForTasks)}
       />
+
+      {/* Self Dialogue Chat */}
+      <SelfDialogueChat onLongPress={() => setMonologueOpen(true)} />
+
+      {/* مناجاة - triggered by long press */}
+      <ChatWidget externalOpen={monologueOpen} onExternalClose={() => setMonologueOpen(false)} />
     </div>
   );
 };
