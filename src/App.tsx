@@ -23,6 +23,7 @@ const AppContent = () => {
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Behavioral />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="/feelings" element={<Index />} />
         <Route path="/anima" element={<Anima />} />
         <Route path="/nurturing" element={<Nurturing />} />
