@@ -735,65 +735,7 @@ const Anima = () => {
             </div>
           </div>
 
-          {/* Calendar Section - التذكية - تقويم */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-green-400" />
-                <h2 className="text-lg font-bold text-green-100">التذكية - تقويم</h2>
-              </div>
-              <button onClick={() => setIsAddingCalendarItem(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedCalendarItems.map((item) => (
-                <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${item.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{item.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteCalendarItem(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[item.progress]}
-                    onValueChange={(val) => handleUpdateCalendarProgress(item.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
-                  />
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {((item as any).tags || []).map((tag: string, idx: number) => (
-                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('calendar', item.id, idx)}>
-                        {tag}
-                      </span>
-                    ))}
-                    {tagTarget?.type === 'calendar' && tagTarget.id === item.id ? (
-                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('calendar', item.id, newTag); }} className="flex gap-1">
-                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
-                        <button type="submit" className="text-[10px] text-lime-300 hover:text-lime-200">+</button>
-                      </form>
-                    ) : (
-                      <button onClick={() => setTagTarget({ type: 'calendar', id: item.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
-                        + سمة
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {localCalendarItems.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد عناصر تقويم حالياً</p>
-              )}
-            </div>
-          </div>
+          {/* Calendar Section moved to /behavioral page */}
 
           {/* Treatment Section - التذكية - الشفاء */}
           <div className="mb-8 w-full">
