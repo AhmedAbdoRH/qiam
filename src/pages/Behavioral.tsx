@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { TaskSheet } from "@/components/TaskSheet";
-import { BehavioralTaskList, BehavioralTask } from "@/components/BehavioralTaskList";
-import { VALUES, ValueData } from "@/types/value";
+import { CalendarTaskList } from "@/components/CalendarTaskList";
+import { SelfDialogueChat } from "@/components/SelfDialogueChat";
+import { ChatWidget } from "@/components/ChatWidget";
+import { ValueData } from "@/types/value";
 import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,8 +29,8 @@ const Behavioral = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
   const [selectedBehavioralValueForTasks, setSelectedBehavioralValueForTasks] = useState<string | null>(null);
   const [behaviorsByValue, setBehaviorsByValue] = useState<Record<string, Behavior[]>>({});
-  const [behavioralTasks, setBehavioralTasks] = useState<BehavioralTask[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [monologueOpen, setMonologueOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -331,10 +333,7 @@ const Behavioral = () => {
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         
-        <BehavioralTaskList 
-          tasks={behavioralTasks} 
-          onTasksChange={setBehavioralTasks} 
-        />
+        <CalendarTaskList />
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
           {sortedValues.map(({ index, valueName, valueData }) => (
