@@ -13,6 +13,7 @@ export const CalendarTaskList = () => {
   const [newTitle, setNewTitle] = useState("");
   const [tagTargetId, setTagTargetId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+  const [localProgress, setLocalProgress] = useState<Record<string, number>>({});
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
