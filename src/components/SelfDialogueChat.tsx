@@ -985,10 +985,34 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                       <>
                         {duration && <span>{duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : 'قصير'}</span>}
                         {output && <span>{output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : 'محفوظ'}</span>}
-                        {notes && <span className="text-blue-300">ملاحظات: {notes}</span>}
                       </>
                     )}
                   </div>
+                  {!isSacredFormat && notes && (() => {
+                    const isExpanded = expandedMilestoneNotes.has(msg.id);
+                    const toggle = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setExpandedMilestoneNotes(prev => {
+                        const next = new Set(prev);
+                        if (next.has(msg.id)) next.delete(msg.id);
+                        else next.add(msg.id);
+                        return next;
+                      });
+                    };
+                    return (
+                      <div className="relative text-[8px] text-blue-300/80 mt-0.5 max-w-[240px]" dir="rtl">
+                        <span
+                          className={isExpanded ? '' : 'block overflow-hidden'}
+                          style={isExpanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}
+                        >
+                          ملاحظات: {notes}
+                        </span>
+                        <button onClick={toggle} className="text-[8px] text-blue-400/70 hover:text-blue-300 mt-0.5">
+                          {isExpanded ? 'عرض أقل' : 'عرض المزيد'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                   {intention && (
                     <div className="relative text-[9px] text-white/40 mt-0.5 text-center max-w-[200px]" dir="rtl" style={{ unicodeBidi: 'plaintext' }}>«{intention}»</div>
                   )}
