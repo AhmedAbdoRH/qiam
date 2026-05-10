@@ -328,6 +328,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [showFallDialog, setShowFallDialog] = useState(false);
   const [fallDescription, setFallDescription] = useState('');
   const [editingFallId, setEditingFallId] = useState<string | null>(null);
+  const [expandedMilestoneNotes, setExpandedMilestoneNotes] = useState<Set<string>>(new Set());
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
