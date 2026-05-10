@@ -1428,10 +1428,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setMilestoneType(type);
     setMilestoneIntention('');
     setMilestoneNotes('');
-    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 5);
-    setMilestonePleasure(5);
-    setMilestoneSaturation(5);
-    setMilestoneComfort(5);
+    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 9);
+    setMilestonePleasure(9);
+    setMilestoneSaturation(9);
+    setMilestoneComfort(9);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
     setMilestoneDuration('medium');
