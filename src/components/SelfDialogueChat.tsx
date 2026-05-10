@@ -313,10 +313,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
   const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [milestoneIntention, setMilestoneIntention] = useState('');
-  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
-  const [milestonePleasure, setMilestonePleasure] = useState(5);
-  const [milestoneSaturation, setMilestoneSaturation] = useState(5);
-  const [milestoneComfort, setMilestoneComfort] = useState(5);
+  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(9);
+  const [milestonePleasure, setMilestonePleasure] = useState(9);
+  const [milestoneSaturation, setMilestoneSaturation] = useState(9);
+  const [milestoneComfort, setMilestoneComfort] = useState(9);
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
