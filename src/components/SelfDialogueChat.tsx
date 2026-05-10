@@ -313,10 +313,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
   const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [milestoneIntention, setMilestoneIntention] = useState('');
-  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(5);
-  const [milestonePleasure, setMilestonePleasure] = useState(5);
-  const [milestoneSaturation, setMilestoneSaturation] = useState(5);
-  const [milestoneComfort, setMilestoneComfort] = useState(5);
+  const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(9);
+  const [milestonePleasure, setMilestonePleasure] = useState(9);
+  const [milestoneSaturation, setMilestoneSaturation] = useState(9);
+  const [milestoneComfort, setMilestoneComfort] = useState(9);
   const [milestoneAfterglow, setMilestoneAfterglow] = useState(false);
   const [milestoneSacred, setMilestoneSacred] = useState(false);
   const [milestoneDuration, setMilestoneDuration] = useState<'long' | 'medium' | 'short'>('medium');
@@ -328,6 +328,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [showFallDialog, setShowFallDialog] = useState(false);
   const [fallDescription, setFallDescription] = useState('');
   const [editingFallId, setEditingFallId] = useState<string | null>(null);
+  const [expandedMilestoneNotes, setExpandedMilestoneNotes] = useState<Set<string>>(new Set());
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -984,10 +985,34 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                       <>
                         {duration && <span>{duration === 'long' ? 'طويل' : duration === 'medium' ? 'متوسط' : 'قصير'}</span>}
                         {output && <span>{output === 'full' ? 'كامل' : output === 'simple' ? 'بسيط' : 'محفوظ'}</span>}
-                        {notes && <span className="text-blue-300">ملاحظات: {notes}</span>}
                       </>
                     )}
                   </div>
+                  {!isSacredFormat && notes && (() => {
+                    const isExpanded = expandedMilestoneNotes.has(msg.id);
+                    const toggle = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setExpandedMilestoneNotes(prev => {
+                        const next = new Set(prev);
+                        if (next.has(msg.id)) next.delete(msg.id);
+                        else next.add(msg.id);
+                        return next;
+                      });
+                    };
+                    return (
+                      <div className="relative text-[8px] text-blue-300/80 mt-0.5 max-w-[240px]" dir="rtl">
+                        <span
+                          className={isExpanded ? '' : 'block overflow-hidden'}
+                          style={isExpanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}
+                        >
+                          ملاحظات: {notes}
+                        </span>
+                        <button onClick={toggle} className="text-[8px] text-blue-400/70 hover:text-blue-300 mt-0.5">
+                          {isExpanded ? 'عرض أقل' : 'عرض المزيد'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                   {intention && (
                     <div className="relative text-[9px] text-white/40 mt-0.5 text-center max-w-[200px]" dir="rtl" style={{ unicodeBidi: 'plaintext' }}>«{intention}»</div>
                   )}
@@ -1428,10 +1453,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setMilestoneType(type);
     setMilestoneIntention('');
     setMilestoneNotes('');
-    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 5);
-    setMilestonePleasure(5);
-    setMilestoneSaturation(5);
-    setMilestoneComfort(5);
+    setMilestoneIntentionAchievement(type === 'fall' ? 0 : 9);
+    setMilestonePleasure(9);
+    setMilestoneSaturation(9);
+    setMilestoneComfort(9);
     setMilestoneAfterglow(false);
     setMilestoneSacred(type === 'sacred');
     setMilestoneDuration('medium');
@@ -1567,10 +1592,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         setEditingMilestoneCreatedAt(null);
         setMilestoneIntention('');
         setMilestoneNotes('');
-        setMilestoneIntentionAchievement(5);
-        setMilestonePleasure(5);
-        setMilestoneSaturation(5);
-        setMilestoneComfort(5);
+        setMilestoneIntentionAchievement(9);
+        setMilestonePleasure(9);
+        setMilestoneSaturation(9);
+        setMilestoneComfort(9);
         setMilestoneAfterglow(false);
         setMilestoneSacred(false);
         toast.success('تم تحديث الإنجاز بنجاح!');
@@ -1597,10 +1622,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       setShowMilestoneDialog(false);
       setMilestoneIntention('');
       setMilestoneNotes('');
-      setMilestoneIntentionAchievement(5);
-      setMilestonePleasure(5);
-      setMilestoneSaturation(5);
-      setMilestoneComfort(5);
+      setMilestoneIntentionAchievement(9);
+      setMilestonePleasure(9);
+      setMilestoneSaturation(9);
+      setMilestoneComfort(9);
       setMilestoneAfterglow(false);
       setMilestoneSacred(false);
       try {
