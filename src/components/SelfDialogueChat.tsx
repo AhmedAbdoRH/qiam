@@ -1534,6 +1534,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setIsEditingMilestone(true);
     setEditingMilestoneId(milestoneMessage.id);
     setEditingMilestoneCreatedAt(milestoneMessage.created_at);
+    const d = new Date(milestoneMessage.created_at);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    setMilestoneDate(d.toISOString().slice(0, 16));
     setShowMilestoneDialog(true);
   };
 
