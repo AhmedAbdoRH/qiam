@@ -1464,6 +1464,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setMilestoneOutput('full');
     setIsEditingMilestone(false);
     setEditingMilestoneId(null);
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setMilestoneDate(now.toISOString().slice(0, 16));
     setShowMilestoneDialog(true);
   };
 
