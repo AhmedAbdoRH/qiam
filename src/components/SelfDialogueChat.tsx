@@ -325,6 +325,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [isEditingMilestone, setIsEditingMilestone] = useState(false);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
   const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
+  const [milestoneDate, setMilestoneDate] = useState<string>('');
   const [showFallDialog, setShowFallDialog] = useState(false);
   const [fallDescription, setFallDescription] = useState('');
   const [editingFallId, setEditingFallId] = useState<string | null>(null);
