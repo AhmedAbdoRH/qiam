@@ -325,6 +325,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [isEditingMilestone, setIsEditingMilestone] = useState(false);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
   const [editingMilestoneCreatedAt, setEditingMilestoneCreatedAt] = useState<string | null>(null);
+  const [milestoneDate, setMilestoneDate] = useState<string>('');
   const [showFallDialog, setShowFallDialog] = useState(false);
   const [fallDescription, setFallDescription] = useState('');
   const [editingFallId, setEditingFallId] = useState<string | null>(null);
@@ -1463,6 +1464,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setMilestoneOutput('full');
     setIsEditingMilestone(false);
     setEditingMilestoneId(null);
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setMilestoneDate(now.toISOString().slice(0, 16));
     setShowMilestoneDialog(true);
   };
 
@@ -1530,6 +1534,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setIsEditingMilestone(true);
     setEditingMilestoneId(milestoneMessage.id);
     setEditingMilestoneCreatedAt(milestoneMessage.created_at);
+    const d = new Date(milestoneMessage.created_at);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    setMilestoneDate(d.toISOString().slice(0, 16));
     setShowMilestoneDialog(true);
   };
 
@@ -1568,11 +1575,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       try {
         console.log('Updating milestone:', { editingMilestoneId, userId: user?.id, content: milestoneContent });
         
+        const newCreatedAt = milestoneDate ? new Date(milestoneDate).toISOString() : undefined;
+        const updatePayload: any = { message: milestoneContent };
+        if (newCreatedAt) updatePayload.created_at = newCreatedAt;
         const { data, error } = await supabase
           .from('self_dialogue_messages')
-          .update({
-            message: milestoneContent
-          })
+          .update(updatePayload)
           .eq('id', editingMilestoneId);
 
         if (error) {
@@ -1583,8 +1591,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         console.log('Update successful:', data);
 
         // Update local state
-        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
-        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
+        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent, created_at: newCreatedAt || m.created_at } : m));
+        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent, created_at: newCreatedAt || m.created_at } : m));
         
         setShowMilestoneDialog(false);
         setIsEditingMilestone(false);
@@ -1608,11 +1616,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       const tempId = crypto.randomUUID();
       globalMessageSeq++;
       
+      const createdAt = milestoneDate ? new Date(milestoneDate).toISOString() : new Date().toISOString();
       const milestoneMessage: DialogueMessage = {
         id: tempId,
         sender: 'me',
         message: milestoneContent,
-        created_at: new Date().toISOString(),
+        created_at: createdAt,
         status: 'pending',
         localSeq: globalMessageSeq,
         chat_mode: 'self'
@@ -2436,6 +2445,17 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                           </div>
                         )}
                         
+                        {/* Date/Time Editor */}
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs text-white/60">تاريخ ووقت التسجيل</span>
+                          <Input
+                            type="datetime-local"
+                            value={milestoneDate}
+                            onChange={(e) => setMilestoneDate(e.target.value)}
+                            className="h-8 text-xs bg-white/5 border-white/15 text-white"
+                          />
+                        </div>
+
                         {/* Simple Interface for All Types */}
                         <>
                           {/* Show only notes for fall type */}
