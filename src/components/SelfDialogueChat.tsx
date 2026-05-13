@@ -1616,11 +1616,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       const tempId = crypto.randomUUID();
       globalMessageSeq++;
       
+      const createdAt = milestoneDate ? new Date(milestoneDate).toISOString() : new Date().toISOString();
       const milestoneMessage: DialogueMessage = {
         id: tempId,
         sender: 'me',
         message: milestoneContent,
-        created_at: new Date().toISOString(),
+        created_at: createdAt,
         status: 'pending',
         localSeq: globalMessageSeq,
         chat_mode: 'self'
