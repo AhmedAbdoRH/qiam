@@ -1575,11 +1575,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       try {
         console.log('Updating milestone:', { editingMilestoneId, userId: user?.id, content: milestoneContent });
         
+        const newCreatedAt = milestoneDate ? new Date(milestoneDate).toISOString() : undefined;
+        const updatePayload: any = { message: milestoneContent };
+        if (newCreatedAt) updatePayload.created_at = newCreatedAt;
         const { data, error } = await supabase
           .from('self_dialogue_messages')
-          .update({
-            message: milestoneContent
-          })
+          .update(updatePayload)
           .eq('id', editingMilestoneId);
 
         if (error) {
