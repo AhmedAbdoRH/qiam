@@ -1591,8 +1591,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         console.log('Update successful:', data);
 
         // Update local state
-        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
-        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent } : m));
+        setMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent, created_at: newCreatedAt || m.created_at } : m));
+        setAllMessages(prev => prev.map(m => m.id === editingMilestoneId ? { ...m, message: milestoneContent, created_at: newCreatedAt || m.created_at } : m));
         
         setShowMilestoneDialog(false);
         setIsEditingMilestone(false);
