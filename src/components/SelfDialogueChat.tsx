@@ -446,7 +446,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
         if (intention) line += ` | نية: ${intention}`;
         if (durationLabel) line += ` | المدة: ${durationLabel}`;
-        if (outputLabel) line += ` | الخروج: ${outputLabel}`;
+        if (outputLabel) line += ` | القذف: ${outputLabel}`;
         if (notes) line += ` | ملاحظات: ${notes}`;
         return line;
       }
