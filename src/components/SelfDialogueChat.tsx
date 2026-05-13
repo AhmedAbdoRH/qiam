@@ -446,7 +446,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         let line = `[${time}] ⭐ ${title} - تقييم: ${rating}`;
         if (intention) line += ` | نية: ${intention}`;
         if (durationLabel) line += ` | المدة: ${durationLabel}`;
-        if (outputLabel) line += ` | الخروج: ${outputLabel}`;
+        if (outputLabel) line += ` | القذف: ${outputLabel}`;
         if (notes) line += ` | ملاحظات: ${notes}`;
         return line;
       }
@@ -1661,7 +1661,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   }, [allMessages]);
 
   const exportMilestonesCSV = () => {
-    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'المدة', 'الخروج', 'الملاحظات', 'النية']];
+    const rows = [['التاريخ', 'الوقت', 'النوع', 'التقييم', 'المدة', 'القذف', 'الملاحظات', 'النية']];
     [...milestoneMessages].reverse().forEach(m => {
       const date = new Date(m.created_at);
       const dateStr = date.toLocaleDateString('en-US');
@@ -1765,7 +1765,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     const text = `التاريخ: ${date.toLocaleDateString('en-US')}
 الوقت: ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
 النوع: ${parts[0] || ''}
-التقييم: ${parts[1] || ''}${durationLabel ? `\nالمدة: ${durationLabel}` : ''}${outputLabel ? `\nالخروج: ${outputLabel}` : ''}
+التقييم: ${parts[1] || ''}${durationLabel ? `\nالمدة: ${durationLabel}` : ''}${outputLabel ? `\nالقذف: ${outputLabel}` : ''}
 الملاحظات: ${notes}
 النية: ${intention}`;
     navigator.clipboard.writeText(text);
@@ -2332,7 +2332,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                                 {intention && <div className="text-[9px] text-white/50 mb-0.5">نية: {intention}</div>}
                                 <div className="flex gap-2 text-[9px] text-white/40 mb-0.5">
                                   {durationLabel && <span>المدة: {durationLabel}</span>}
-                                  {outputLabel && <span>الخروج: {outputLabel}</span>}
+                                  {outputLabel && <span>القذف: {outputLabel}</span>}
                                 </div>
                                 {notes && <div className="text-[9px] text-white/40">ملاحظات: {notes}</div>}
                               </div>
@@ -2515,7 +2515,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                               {/* Output Radio */}
                               <div className="flex flex-col gap-1.5">
-                                <span className="text-xs text-white/60">الخروج</span>
+                                <span className="text-xs text-white/60">القذف</span>
                                 <div className="flex gap-2 justify-end">
                                   {[
                                     { value: 'full', label: 'كامل' },
