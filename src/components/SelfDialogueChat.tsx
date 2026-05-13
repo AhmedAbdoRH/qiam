@@ -2445,6 +2445,17 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                           </div>
                         )}
                         
+                        {/* Date/Time Editor */}
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs text-white/60">تاريخ ووقت التسجيل</span>
+                          <Input
+                            type="datetime-local"
+                            value={milestoneDate}
+                            onChange={(e) => setMilestoneDate(e.target.value)}
+                            className="h-8 text-xs bg-white/5 border-white/15 text-white"
+                          />
+                        </div>
+
                         {/* Simple Interface for All Types */}
                         <>
                           {/* Show only notes for fall type */}
