@@ -1065,52 +1065,46 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
             );
           }
 
+          const speaker = getSpeaker(msg);
+          const meta = SPEAKER_META[speaker];
+          const SpeakerIcon = meta.Icon;
           return (
             <React.Fragment key={msg.id}>
               {showAutoSpacer && <div className="h-10" />}
-              <div
-                className={`flex ${shouldAnimate ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'
-                  }`}
-              >
-                <div
-                  className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
-                  onClick={() => handleMessageClick(msg.message)}
-                  onMouseDown={() => handleMouseDown(msg.id)}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown(msg.id)}
-                  onTouchEnd={handleMouseUp}
-                >
-                  <div
-                    className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-                      ? 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] rounded-bl-sm border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]'
-                      : msg.chat_mode === 'nurturing'
-                        ? 'bg-[#7B5230]/20 backdrop-blur-md text-[#D4A520] rounded-br-sm border border-[#7B5230]/30 shadow-[inset_0_1px_12px_rgba(123,82,48,0.2)]'
-                        : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
-                      }`}
-                  >
-                    <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
+              <div className={`flex justify-end ${shouldAnimate ? 'animate-message-pop' : ''}`}>
+                <div className="flex items-start gap-1.5 max-w-[85%] flex-row-reverse">
+                  {/* Speaker avatar/icon next to message */}
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center border ${meta.bubbleClass}`}>
+                    <SpeakerIcon className={`h-3 w-3 ${meta.iconClass}`} />
                   </div>
-                  <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-                    {msg.sender === 'me' ? (
-                      <User className="h-2 w-2 text-[#626FC4]/40" />
-                    ) : (
-                      <Heart className={`h-2 w-2 ${msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/40' : 'text-pink-400/30'}`} />
-                    )}
-                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/50' : 'text-pink-400/15'}`}>
-                      {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
-                    </span>
 
-                    {/* Status Indicator */}
-                    {msg.status === 'pending' && (
-                      <RefreshCw className="h-2 w-2 text-[#626FC4]/50 animate-spin ml-0.5" />
-                    )}
-                    {msg.status === 'error' && (
-                      <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
-                    )}
-                    {msg.status === 'synced' && (
-                      <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
-                    )}
+                  <div
+                    className="cursor-pointer select-none active:scale-95 transition-transform"
+                    onClick={() => handleMessageClick(msg.message)}
+                    onMouseDown={() => handleMouseDown(msg.id)}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchStart={() => handleMouseDown(msg.id)}
+                    onTouchEnd={handleMouseUp}
+                  >
+                    <div className={`inline-block p-2 rounded-2xl rounded-tr-sm break-words ${meta.bubbleClass}`}>
+                      <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 mt-0.5 justify-end">
+                      <SpeakerIcon className={`h-2 w-2 ${meta.labelClass}`} />
+                      <span className={`text-[7px] ${meta.labelClass}`}>
+                        {meta.name} • {formatTime(msg.created_at)}
+                      </span>
+                      {msg.status === 'pending' && (
+                        <RefreshCw className="h-2 w-2 text-white/40 animate-spin ml-0.5" />
+                      )}
+                      {msg.status === 'error' && (
+                        <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
+                      )}
+                      {msg.status === 'synced' && (
+                        <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
