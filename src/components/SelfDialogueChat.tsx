@@ -1884,10 +1884,11 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     // Create optimistic update with sequence number to ensure stable ordering
     const tempId = crypto.randomUUID();
-    const senderForThisMessage = currentSender;
-    const chatModeForMsg: ChatMode = senderForThisMessage === 'myself'
-      ? (animaPersona === 'nurturing' ? 'nurturing' : 'anima')
-      : 'self';
+    const senderForThisMessage: 'me' | 'myself' = currentSpeaker === 'sovereign' ? 'me' : 'myself';
+    const chatModeForMsg: ChatMode =
+      currentSpeaker === 'sovereign' ? 'sovereign'
+      : currentSpeaker === 'nafs' ? 'nafs'
+      : (animaPersona === 'nurturing' ? 'nurturing' : 'anima');
     globalMessageSeq++;
     const newMessage: DialogueMessage = {
       id: tempId,
