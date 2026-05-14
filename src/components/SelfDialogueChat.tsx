@@ -353,7 +353,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [displayCount, setDisplayCount] = useState(20);
   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
+  const [currentSpeaker, setCurrentSpeaker] = useState<Speaker>('anima');
+  const currentSender: 'me' | 'myself' = currentSpeaker === 'sovereign' ? 'me' : 'myself';
+  const setCurrentSender = (s: 'me' | 'myself') => setCurrentSpeaker(s === 'me' ? 'sovereign' : 'anima');
   const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [milestoneIntention, setMilestoneIntention] = useState('');
   const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(9);
