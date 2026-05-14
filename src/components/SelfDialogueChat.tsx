@@ -270,8 +270,51 @@ interface DialogueMessage {
 }
 
 // chat_mode doubles as persona marker:
-// 'self' = me sender | 'anima' = anima persona | 'nurturing' = nurturing persona
-type ChatMode = 'self' | 'anima' | 'nurturing';
+// 'self'/'sovereign' = sovereign-self | 'anima'/'nurturing' = anima persona | 'nafs' = self-soul
+type ChatMode = 'self' | 'anima' | 'nurturing' | 'nafs' | 'sovereign';
+
+// Three speakers in dialogue, ordered: anima, nafs, sovereign
+export type Speaker = 'anima' | 'nafs' | 'sovereign';
+
+export const getSpeaker = (msg: { sender?: string; chat_mode?: string | null }): Speaker => {
+  if (msg.chat_mode === 'nafs') return 'nafs';
+  if (msg.chat_mode === 'sovereign' || msg.sender === 'me') return 'sovereign';
+  return 'anima';
+};
+
+// Visual metadata for each speaker. Anima = pink (current), Sovereign = indigo (current "أنا"),
+// Nafs = violet (blend of the two).
+export const SPEAKER_META: Record<Speaker, {
+  name: string;
+  bubbleClass: string;
+  labelClass: string;
+  iconClass: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = {
+  anima: {
+    name: 'الأنيما',
+    bubbleClass: 'bg-pink-500/20 backdrop-blur-md text-pink-50 border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]',
+    labelClass: 'text-pink-400/40',
+    iconClass: 'text-pink-400/60',
+    Icon: Heart,
+  },
+  nafs: {
+    name: 'النفس',
+    bubbleClass: 'bg-[#9569C0]/20 backdrop-blur-md text-[#E8D8F0] border border-[#9569C0]/30 shadow-[inset_0_1px_12px_rgba(149,105,192,0.2)]',
+    labelClass: 'text-[#9569C0]/50',
+    iconClass: 'text-[#B894D9]/70',
+    Icon: Sparkles,
+  },
+  sovereign: {
+    name: 'الذات السيادية',
+    bubbleClass: 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]',
+    labelClass: 'text-[#626FC4]/50',
+    iconClass: 'text-[#8A95D8]/70',
+    Icon: User,
+  },
+};
+
+const SPEAKER_ORDER: Speaker[] = ['anima', 'nafs', 'sovereign'];
 
 interface AnimaCapability {
   id: string;
