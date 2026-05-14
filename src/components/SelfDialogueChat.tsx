@@ -1910,9 +1910,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       localStorage.setItem(PENDING_MESSAGES_KEY, JSON.stringify([...pending, newMessage]));
     }
 
-    // Switch sender if auto-switch is enabled
+    // Switch speaker if auto-switch is enabled (cycle anima → nafs → sovereign → anima)
     if (isAutoSwitch) {
-      setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
+      setCurrentSpeaker(prev => {
+        const idx = SPEAKER_ORDER.indexOf(prev);
+        return SPEAKER_ORDER[(idx + 1) % SPEAKER_ORDER.length];
+      });
     }
 
     // Focus input after state updates to keep keyboard open
