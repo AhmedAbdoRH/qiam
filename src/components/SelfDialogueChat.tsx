@@ -2865,7 +2865,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                     <div className="flex flex-col gap-2">
                       <Textarea
                         ref={inputRef}
-                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : isNurturing ? 'اكتب كـ "الراعية الحنون"...' : 'اكتب كـ "الأنيما"...'}
+                        placeholder={`اكتب كـ "${SPEAKER_META[currentSpeaker].name}"...`}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => {
