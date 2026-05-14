@@ -2709,132 +2709,116 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                         <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                       </button>
 
-                      {/* Main Toggle Switch - زجاجي */}
-                      <div dir="ltr" className="relative flex items-center justify-center bg-white/5 backdrop-blur-md rounded-full p-0.5 w-[140px] border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                      {/* Three-speaker switcher: anima, nafs, sovereign — all on the right */}
+                      <div dir="rtl" className="relative flex items-center justify-end gap-1 bg-white/5 backdrop-blur-md rounded-full p-0.5 border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                        {SPEAKER_ORDER.map((sp) => {
+                          const meta = SPEAKER_META[sp];
+                          const Icon = meta.Icon;
+                          const isActive = currentSpeaker === sp;
+                          const baseBtn = `relative z-10 px-2.5 py-1 text-[10px] flex items-center justify-center gap-1 rounded-full transition-all duration-300 ${
+                            isActive
+                              ? `${meta.bubbleClass} text-white font-bold drop-shadow-md`
+                              : 'text-gray-400 font-medium hover:text-gray-200'
+                          }`;
 
-                        {/* الخلفية المتحركة - زجاجية */}
-                        <div
-                          className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 backdrop-blur-md ${currentSender === 'myself'
-                            ? `left-0.5 ${animaColors.toggleActiveBg}`
-                            : 'left-[calc(50%+2px)] bg-[#626FC4]/40 border border-[#626FC4]/40 shadow-[inset_0_1px_10px_rgba(98,111,196,0.3),0_0_15px_rgba(98,111,196,0.2)]'
-                            }`}
-                        />
-
-                        {/* زر الوضع الحالي (أمومتي/أنوثتي) */}
-                        <Popover open={showCapabilitiesMenu} onOpenChange={setShowCapabilitiesMenu}>
-                          <PopoverTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleManualSwitch('myself');
-                              }}
-                              onMouseDown={(e) => e.preventDefault()}
-                              className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
-                                ? 'text-white font-bold drop-shadow-md'
-                                : 'text-gray-400 font-medium hover:text-gray-200'
-                                }`}
-                            >
-                              <Heart className="h-3 w-3" />
-                              الأنيما
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent 
-                            className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-[60vh] overflow-hidden flex flex-col"
-                            side="top"
-                            align="center"
-                          >
-                            <div className="flex flex-col gap-2 h-full">
-                              <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                                إمكانات الأنيما
-                              </p>
-                              
-                              {/* Capabilities List */}
-                              <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-                                {loadingCapabilities ? (
-                                  <div className="flex items-center justify-center py-4">
-                                    <Loader2 className="h-4 w-4 animate-spin text-white/40" />
-                                  </div>
-                                ) : capabilities.length === 0 ? (
-                                  <p className="text-[10px] text-white/30 text-center py-4">
-                                    لا توجد إمكانات بعد
-                                  </p>
-                                ) : (
-                                  capabilities.map((cap, index) => (
-                                    <div 
-                                      key={cap.id}
-                                      className="flex items-center gap-1 p-2 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors"
-                                    >
-                                      <div className="flex flex-col gap-0.5">
-                                        <button
-                                          onClick={() => handleMoveCapability(cap.id, 'up')}
-                                          disabled={index === 0}
-                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          <GripVertical className="h-2.5 w-2.5 rotate-90" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleMoveCapability(cap.id, 'down')}
-                                          disabled={index === capabilities.length - 1}
-                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          <GripVertical className="h-2.5 w-2.5 -rotate-90" />
-                                        </button>
-                                      </div>
-                                      <span className="flex-1 text-xs text-white/80 pr-1">
-                                        {cap.capability_text}
-                                      </span>
+                          // Anima keeps capabilities popover when active
+                          if (sp === 'anima') {
+                            return (
+                              <Popover key={sp} open={showCapabilitiesMenu && isActive} onOpenChange={(o) => setShowCapabilitiesMenu(o && isActive)}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setCurrentSpeaker('anima');
+                                      setTimeout(() => inputRef.current?.focus(), 0);
+                                    }}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    className={baseBtn}
+                                  >
+                                    <Icon className="h-3 w-3" />
+                                    {meta.name}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-[60vh] overflow-hidden flex flex-col"
+                                  side="top"
+                                  align="center"
+                                >
+                                  <div className="flex flex-col gap-2 h-full">
+                                    <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
+                                      إمكانات الأنيما
+                                    </p>
+                                    <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+                                      {loadingCapabilities ? (
+                                        <div className="flex items-center justify-center py-4">
+                                          <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                                        </div>
+                                      ) : capabilities.length === 0 ? (
+                                        <p className="text-[10px] text-white/30 text-center py-4">
+                                          لا توجد إمكانات بعد
+                                        </p>
+                                      ) : (
+                                        capabilities.map((cap, index) => (
+                                          <div key={cap.id} className="flex items-center gap-1 p-2 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors">
+                                            <div className="flex flex-col gap-0.5">
+                                              <button onClick={() => handleMoveCapability(cap.id, 'up')} disabled={index === 0} className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                                                <GripVertical className="h-2.5 w-2.5 rotate-90" />
+                                              </button>
+                                              <button onClick={() => handleMoveCapability(cap.id, 'down')} disabled={index === capabilities.length - 1} className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                                                <GripVertical className="h-2.5 w-2.5 -rotate-90" />
+                                              </button>
+                                            </div>
+                                            <span className="flex-1 text-xs text-white/80 pr-1">{cap.capability_text}</span>
+                                            <button onClick={() => handleDeleteCapability(cap.id)} className="p-1 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                      <Input
+                                        value={newCapabilityText}
+                                        onChange={(e) => setNewCapabilityText(e.target.value)}
+                                        placeholder="إضافة إمكانية..."
+                                        className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddCapability();
+                                          }
+                                        }}
+                                      />
                                       <button
-                                        onClick={() => handleDeleteCapability(cap.id)}
-                                        className="p-1 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={handleAddCapability}
+                                        disabled={!newCapabilityText.trim()}
+                                        className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
                                       >
-                                        <X className="h-3 w-3" />
+                                        <Plus className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
-                                  ))
-                                )}
-                              </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          }
 
-                              {/* Add New Capability */}
-                              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                                <Input
-                                  value={newCapabilityText}
-                                  onChange={(e) => setNewCapabilityText(e.target.value)}
-                                  placeholder="إضافة إمكانية..."
-                                  className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddCapability();
-                                    }
-                                  }}
-                                />
-                                <button
-                                  onClick={handleAddCapability}
-                                  disabled={!newCapabilityText.trim()}
-                                  className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-
-                        {/* زر "أنا" */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleManualSwitch('me');
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'me'
-                            ? 'text-white font-bold drop-shadow-md'
-                            : 'text-gray-400 font-medium hover:text-gray-200'
-                            }`}
-                        >
-                          <User className="h-3 w-3" />
-                          أنا
-                        </button>
+                          return (
+                            <button
+                              key={sp}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentSpeaker(sp);
+                                setTimeout(() => inputRef.current?.focus(), 0);
+                              }}
+                              onMouseDown={(e) => e.preventDefault()}
+                              className={baseBtn}
+                            >
+                              <Icon className="h-3 w-3" />
+                              {meta.name}
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
