@@ -1180,7 +1180,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         .select('*')
         .eq('user_id', user.id)
         .eq('is_archived', false)
-        .in('chat_mode', ['self', 'anima', 'nurturing'])
+        .in('chat_mode', ['self', 'anima', 'nurturing', 'nafs', 'sovereign'])
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .limit(100);
@@ -1205,7 +1205,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         if (stored) {
           const allPending = JSON.parse(stored);
           pendingMessages = allPending.filter((m: DialogueMessage) =>
-            ['self', 'anima', 'nurturing'].includes(m.chat_mode || 'self')
+            ['self', 'anima', 'nurturing', 'nafs', 'sovereign'].includes(m.chat_mode || 'self')
           );
         }
       }
@@ -1888,7 +1888,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     const chatModeForMsg: ChatMode =
       currentSpeaker === 'sovereign' ? 'sovereign'
       : currentSpeaker === 'nafs' ? 'nafs'
-      : (animaPersona === 'nurturing' ? 'nurturing' : 'anima');
+      : (animaPersona === 'nurturing' ? 'nurturing' : 'self');
     globalMessageSeq++;
     const newMessage: DialogueMessage = {
       id: tempId,
