@@ -270,8 +270,51 @@ interface DialogueMessage {
 }
 
 // chat_mode doubles as persona marker:
-// 'self' = me sender | 'anima' = anima persona | 'nurturing' = nurturing persona
-type ChatMode = 'self' | 'anima' | 'nurturing';
+// 'self'/'sovereign' = sovereign-self | 'anima'/'nurturing' = anima persona | 'nafs' = self-soul
+type ChatMode = 'self' | 'anima' | 'nurturing' | 'nafs' | 'sovereign';
+
+// Three speakers in dialogue, ordered: anima, nafs, sovereign
+export type Speaker = 'anima' | 'nafs' | 'sovereign';
+
+export const getSpeaker = (msg: { sender?: string; chat_mode?: string | null }): Speaker => {
+  if (msg.chat_mode === 'nafs') return 'nafs';
+  if (msg.chat_mode === 'sovereign' || msg.sender === 'me') return 'sovereign';
+  return 'anima';
+};
+
+// Visual metadata for each speaker. Anima = pink (current), Sovereign = indigo (current "أنا"),
+// Nafs = violet (blend of the two).
+export const SPEAKER_META: Record<Speaker, {
+  name: string;
+  bubbleClass: string;
+  labelClass: string;
+  iconClass: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = {
+  anima: {
+    name: 'الأنيما',
+    bubbleClass: 'bg-pink-500/20 backdrop-blur-md text-pink-50 border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]',
+    labelClass: 'text-pink-400/40',
+    iconClass: 'text-pink-400/60',
+    Icon: Heart,
+  },
+  nafs: {
+    name: 'النفس',
+    bubbleClass: 'bg-[#9569C0]/20 backdrop-blur-md text-[#E8D8F0] border border-[#9569C0]/30 shadow-[inset_0_1px_12px_rgba(149,105,192,0.2)]',
+    labelClass: 'text-[#9569C0]/50',
+    iconClass: 'text-[#B894D9]/70',
+    Icon: Sparkles,
+  },
+  sovereign: {
+    name: 'الذات السيادية',
+    bubbleClass: 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]',
+    labelClass: 'text-[#626FC4]/50',
+    iconClass: 'text-[#8A95D8]/70',
+    Icon: User,
+  },
+};
+
+const SPEAKER_ORDER: Speaker[] = ['anima', 'nafs', 'sovereign'];
 
 interface AnimaCapability {
   id: string;
@@ -310,7 +353,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [displayCount, setDisplayCount] = useState(20);
   const [allMessages, setAllMessages] = useState<DialogueMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [currentSender, setCurrentSender] = useState<'me' | 'myself'>('myself');
+  const [currentSpeaker, setCurrentSpeaker] = useState<Speaker>('anima');
+  const currentSender: 'me' | 'myself' = currentSpeaker === 'sovereign' ? 'me' : 'myself';
+  const setCurrentSender = (s: 'me' | 'myself') => setCurrentSpeaker(s === 'me' ? 'sovereign' : 'anima');
   const [isAutoSwitch, setIsAutoSwitch] = useState(false);
   const [milestoneIntention, setMilestoneIntention] = useState('');
   const [milestoneIntentionAchievement, setMilestoneIntentionAchievement] = useState(9);
@@ -1022,52 +1067,46 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
             );
           }
 
+          const speaker = getSpeaker(msg);
+          const meta = SPEAKER_META[speaker];
+          const SpeakerIcon = meta.Icon;
           return (
             <React.Fragment key={msg.id}>
               {showAutoSpacer && <div className="h-10" />}
-              <div
-                className={`flex ${shouldAnimate ? 'animate-message-pop' : ''} ${msg.sender === 'me' ? 'justify-start' : 'justify-end'
-                  }`}
-              >
-                <div
-                  className="max-w-[80%] cursor-pointer select-none active:scale-95 transition-transform"
-                  onClick={() => handleMessageClick(msg.message)}
-                  onMouseDown={() => handleMouseDown(msg.id)}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown(msg.id)}
-                  onTouchEnd={handleMouseUp}
-                >
-                  <div
-                    className={`inline-block p-2 rounded-2xl break-words ${msg.sender === 'me'
-                      ? 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] rounded-bl-sm border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]'
-                      : msg.chat_mode === 'nurturing'
-                        ? 'bg-[#7B5230]/20 backdrop-blur-md text-[#D4A520] rounded-br-sm border border-[#7B5230]/30 shadow-[inset_0_1px_12px_rgba(123,82,48,0.2)]'
-                        : 'bg-pink-500/20 backdrop-blur-md text-pink-50 rounded-br-sm border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]'
-                      }`}
-                  >
-                    <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
+              <div className={`flex justify-end ${shouldAnimate ? 'animate-message-pop' : ''}`}>
+                <div className="flex items-start gap-1.5 max-w-[85%] flex-row-reverse">
+                  {/* Speaker avatar/icon next to message */}
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center border ${meta.bubbleClass}`}>
+                    <SpeakerIcon className={`h-3 w-3 ${meta.iconClass}`} />
                   </div>
-                  <div className={`flex items-center gap-0.5 mt-0.5 ${msg.sender === 'me' ? 'justify-start' : 'justify-end'}`}>
-                    {msg.sender === 'me' ? (
-                      <User className="h-2 w-2 text-[#626FC4]/40" />
-                    ) : (
-                      <Heart className={`h-2 w-2 ${msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/40' : 'text-pink-400/30'}`} />
-                    )}
-                    <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : msg.chat_mode === 'nurturing' ? 'text-[#7B5230]/50' : 'text-pink-400/15'}`}>
-                      {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
-                    </span>
 
-                    {/* Status Indicator */}
-                    {msg.status === 'pending' && (
-                      <RefreshCw className="h-2 w-2 text-[#626FC4]/50 animate-spin ml-0.5" />
-                    )}
-                    {msg.status === 'error' && (
-                      <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
-                    )}
-                    {msg.status === 'synced' && (
-                      <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
-                    )}
+                  <div
+                    className="cursor-pointer select-none active:scale-95 transition-transform"
+                    onClick={() => handleMessageClick(msg.message)}
+                    onMouseDown={() => handleMouseDown(msg.id)}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchStart={() => handleMouseDown(msg.id)}
+                    onTouchEnd={handleMouseUp}
+                  >
+                    <div className={`inline-block p-2 rounded-2xl rounded-tr-sm break-words ${meta.bubbleClass}`}>
+                      <p className="text-xs leading-tight whitespace-pre-wrap" style={{ unicodeBidi: 'plaintext' }}>{msg.message}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 mt-0.5 justify-end">
+                      <SpeakerIcon className={`h-2 w-2 ${meta.labelClass}`} />
+                      <span className={`text-[7px] ${meta.labelClass}`}>
+                        {meta.name} • {formatTime(msg.created_at)}
+                      </span>
+                      {msg.status === 'pending' && (
+                        <RefreshCw className="h-2 w-2 text-white/40 animate-spin ml-0.5" />
+                      )}
+                      {msg.status === 'error' && (
+                        <CloudOff className="h-2 w-2 text-red-400/60 ml-0.5" />
+                      )}
+                      {msg.status === 'synced' && (
+                        <Cloud className="h-2 w-2 text-green-400/20 ml-0.5" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1845,10 +1884,11 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     // Create optimistic update with sequence number to ensure stable ordering
     const tempId = crypto.randomUUID();
-    const senderForThisMessage = currentSender;
-    const chatModeForMsg: ChatMode = senderForThisMessage === 'myself'
-      ? (animaPersona === 'nurturing' ? 'nurturing' : 'anima')
-      : 'self';
+    const senderForThisMessage: 'me' | 'myself' = currentSpeaker === 'sovereign' ? 'me' : 'myself';
+    const chatModeForMsg: ChatMode =
+      currentSpeaker === 'sovereign' ? 'sovereign'
+      : currentSpeaker === 'nafs' ? 'nafs'
+      : (animaPersona === 'nurturing' ? 'nurturing' : 'anima');
     globalMessageSeq++;
     const newMessage: DialogueMessage = {
       id: tempId,
@@ -1871,9 +1911,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       localStorage.setItem(PENDING_MESSAGES_KEY, JSON.stringify([...pending, newMessage]));
     }
 
-    // Switch sender if auto-switch is enabled
+    // Switch speaker if auto-switch is enabled (cycle anima → nafs → sovereign → anima)
     if (isAutoSwitch) {
-      setCurrentSender(prev => prev === 'me' ? 'myself' : 'me');
+      setCurrentSpeaker(prev => {
+        const idx = SPEAKER_ORDER.indexOf(prev);
+        return SPEAKER_ORDER[(idx + 1) % SPEAKER_ORDER.length];
+      });
     }
 
     // Focus input after state updates to keep keyboard open
@@ -2666,132 +2709,116 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                         <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
                       </button>
 
-                      {/* Main Toggle Switch - زجاجي */}
-                      <div dir="ltr" className="relative flex items-center justify-center bg-white/5 backdrop-blur-md rounded-full p-0.5 w-[140px] border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                      {/* Three-speaker switcher: anima, nafs, sovereign — all on the right */}
+                      <div dir="rtl" className="relative flex items-center justify-end gap-1 bg-white/5 backdrop-blur-md rounded-full p-0.5 border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                        {SPEAKER_ORDER.map((sp) => {
+                          const meta = SPEAKER_META[sp];
+                          const Icon = meta.Icon;
+                          const isActive = currentSpeaker === sp;
+                          const baseBtn = `relative z-10 px-2.5 py-1 text-[10px] flex items-center justify-center gap-1 rounded-full transition-all duration-300 ${
+                            isActive
+                              ? `${meta.bubbleClass} text-white font-bold drop-shadow-md`
+                              : 'text-gray-400 font-medium hover:text-gray-200'
+                          }`;
 
-                        {/* الخلفية المتحركة - زجاجية */}
-                        <div
-                          className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-full transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] z-0 backdrop-blur-md ${currentSender === 'myself'
-                            ? `left-0.5 ${animaColors.toggleActiveBg}`
-                            : 'left-[calc(50%+2px)] bg-[#626FC4]/40 border border-[#626FC4]/40 shadow-[inset_0_1px_10px_rgba(98,111,196,0.3),0_0_15px_rgba(98,111,196,0.2)]'
-                            }`}
-                        />
-
-                        {/* زر الوضع الحالي (أمومتي/أنوثتي) */}
-                        <Popover open={showCapabilitiesMenu} onOpenChange={setShowCapabilitiesMenu}>
-                          <PopoverTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleManualSwitch('myself');
-                              }}
-                              onMouseDown={(e) => e.preventDefault()}
-                              className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'myself'
-                                ? 'text-white font-bold drop-shadow-md'
-                                : 'text-gray-400 font-medium hover:text-gray-200'
-                                }`}
-                            >
-                              <Heart className="h-3 w-3" />
-                              الأنيما
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent 
-                            className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-[60vh] overflow-hidden flex flex-col"
-                            side="top"
-                            align="center"
-                          >
-                            <div className="flex flex-col gap-2 h-full">
-                              <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
-                                إمكانات الأنيما
-                              </p>
-                              
-                              {/* Capabilities List */}
-                              <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-                                {loadingCapabilities ? (
-                                  <div className="flex items-center justify-center py-4">
-                                    <Loader2 className="h-4 w-4 animate-spin text-white/40" />
-                                  </div>
-                                ) : capabilities.length === 0 ? (
-                                  <p className="text-[10px] text-white/30 text-center py-4">
-                                    لا توجد إمكانات بعد
-                                  </p>
-                                ) : (
-                                  capabilities.map((cap, index) => (
-                                    <div 
-                                      key={cap.id}
-                                      className="flex items-center gap-1 p-2 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors"
-                                    >
-                                      <div className="flex flex-col gap-0.5">
-                                        <button
-                                          onClick={() => handleMoveCapability(cap.id, 'up')}
-                                          disabled={index === 0}
-                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          <GripVertical className="h-2.5 w-2.5 rotate-90" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleMoveCapability(cap.id, 'down')}
-                                          disabled={index === capabilities.length - 1}
-                                          className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          <GripVertical className="h-2.5 w-2.5 -rotate-90" />
-                                        </button>
-                                      </div>
-                                      <span className="flex-1 text-xs text-white/80 pr-1">
-                                        {cap.capability_text}
-                                      </span>
+                          // Anima keeps capabilities popover when active
+                          if (sp === 'anima') {
+                            return (
+                              <Popover key={sp} open={showCapabilitiesMenu && isActive} onOpenChange={(o) => setShowCapabilitiesMenu(o && isActive)}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setCurrentSpeaker('anima');
+                                      setTimeout(() => inputRef.current?.focus(), 0);
+                                    }}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    className={baseBtn}
+                                  >
+                                    <Icon className="h-3 w-3" />
+                                    {meta.name}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-64 p-3 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl max-h-[60vh] overflow-hidden flex flex-col"
+                                  side="top"
+                                  align="center"
+                                >
+                                  <div className="flex flex-col gap-2 h-full">
+                                    <p className="text-[11px] text-white/50 px-1 pb-2 border-b border-white/10 font-medium">
+                                      إمكانات الأنيما
+                                    </p>
+                                    <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+                                      {loadingCapabilities ? (
+                                        <div className="flex items-center justify-center py-4">
+                                          <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                                        </div>
+                                      ) : capabilities.length === 0 ? (
+                                        <p className="text-[10px] text-white/30 text-center py-4">
+                                          لا توجد إمكانات بعد
+                                        </p>
+                                      ) : (
+                                        capabilities.map((cap, index) => (
+                                          <div key={cap.id} className="flex items-center gap-1 p-2 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors">
+                                            <div className="flex flex-col gap-0.5">
+                                              <button onClick={() => handleMoveCapability(cap.id, 'up')} disabled={index === 0} className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                                                <GripVertical className="h-2.5 w-2.5 rotate-90" />
+                                              </button>
+                                              <button onClick={() => handleMoveCapability(cap.id, 'down')} disabled={index === capabilities.length - 1} className="p-0.5 text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                                                <GripVertical className="h-2.5 w-2.5 -rotate-90" />
+                                              </button>
+                                            </div>
+                                            <span className="flex-1 text-xs text-white/80 pr-1">{cap.capability_text}</span>
+                                            <button onClick={() => handleDeleteCapability(cap.id)} className="p-1 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                      <Input
+                                        value={newCapabilityText}
+                                        onChange={(e) => setNewCapabilityText(e.target.value)}
+                                        placeholder="إضافة إمكانية..."
+                                        className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddCapability();
+                                          }
+                                        }}
+                                      />
                                       <button
-                                        onClick={() => handleDeleteCapability(cap.id)}
-                                        className="p-1 text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={handleAddCapability}
+                                        disabled={!newCapabilityText.trim()}
+                                        className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
                                       >
-                                        <X className="h-3 w-3" />
+                                        <Plus className="h-3.5 w-3.5" />
                                       </button>
                                     </div>
-                                  ))
-                                )}
-                              </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          }
 
-                              {/* Add New Capability */}
-                              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                                <Input
-                                  value={newCapabilityText}
-                                  onChange={(e) => setNewCapabilityText(e.target.value)}
-                                  placeholder="إضافة إمكانية..."
-                                  className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddCapability();
-                                    }
-                                  }}
-                                />
-                                <button
-                                  onClick={handleAddCapability}
-                                  disabled={!newCapabilityText.trim()}
-                                  className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-
-                        {/* زر "أنا" */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleManualSwitch('me');
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className={`relative z-10 w-1/2 py-1 text-[10px] flex items-center justify-center gap-1 transition-colors duration-1000 ${currentSender === 'me'
-                            ? 'text-white font-bold drop-shadow-md'
-                            : 'text-gray-400 font-medium hover:text-gray-200'
-                            }`}
-                        >
-                          <User className="h-3 w-3" />
-                          أنا
-                        </button>
+                          return (
+                            <button
+                              key={sp}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentSpeaker(sp);
+                                setTimeout(() => inputRef.current?.focus(), 0);
+                              }}
+                              onMouseDown={(e) => e.preventDefault()}
+                              className={baseBtn}
+                            >
+                              <Icon className="h-3 w-3" />
+                              {meta.name}
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
@@ -2838,7 +2865,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                     <div className="flex flex-col gap-2">
                       <Textarea
                         ref={inputRef}
-                        placeholder={currentSender === 'me' ? 'اكتب كـ "أنا"...' : isNurturing ? 'اكتب كـ "الراعية الحنون"...' : 'اكتب كـ "الأنيما"...'}
+                        placeholder={`اكتب كـ "${SPEAKER_META[currentSpeaker].name}"...`}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => {
