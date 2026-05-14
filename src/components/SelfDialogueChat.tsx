@@ -1268,6 +1268,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   const handleDeleteMessage = async (messageId: string) => {
     const messageToDelete = messages.find(m => m.id === messageId);
+    console.log('=== Deleting message ===');
+    console.log('Message ID:', messageId);
+    console.log('Message status:', messageToDelete?.status);
+    
     setMessages(prev => prev.filter(m => m.id !== messageId));
     setAllMessages(prev => prev.filter(m => m.id !== messageId));
 
@@ -1290,19 +1294,25 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     // Only try to delete from Supabase if it wasn't just a local pending message
     if (messageToDelete && messageToDelete.status === 'synced') {
       try {
+        console.log('Attempting to delete from Supabase...');
         const { error } = await supabase
           .from('self_dialogue_messages')
           .delete()
           .eq('id', messageId);
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Supabase delete error:', error);
+          throw error;
+        }
+        console.log('Message deleted successfully from Supabase');
       } catch (error) {
         console.error('Error deleting message:', error);
-        toast.error('حدث خطأ أثناء حذف الرسالة من الكلاود');
-        loadMessages();
+        toast.error('فشل حذف الرسالة من السحابة');
       }
+    } else {
+      console.log('Message was not synced, skipping Supabase delete');
     }
   };
-
 
   const handleUpdateSessionTitle = async (newTitle: string) => {
     if (!user || !newTitle.trim()) return;
