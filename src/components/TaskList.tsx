@@ -70,17 +70,6 @@ export const TaskList = ({ value, onChange, onPersist }: TaskListProps) => {
     updateTasks(tasks.filter((task) => task.id !== taskId), true);
   };
 
-  // remove old defs below
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const deleteTask = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
-  };
 
   return (
     <div className="space-y-2 mt-2">
