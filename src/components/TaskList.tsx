@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "./ui/input";
@@ -12,44 +12,54 @@ interface Task {
 interface TaskListProps {
   value: string;
   onChange: (value: string) => void;
+  onPersist?: (value: string) => void;
 }
 
-export const TaskList = ({ value, onChange }: TaskListProps) => {
+export const TaskList = ({ value, onChange, onPersist }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
+  const lastSerialized = useRef<string>("");
 
-  // Parse tasks from the value string on initial load
+  // Parse tasks from the value string when it changes externally
   useEffect(() => {
-    if (value) {
-      try {
-        const parsedTasks = JSON.parse(value);
-        if (Array.isArray(parsedTasks)) {
-          setTasks(parsedTasks);
-        }
-      } catch (e) {
-        // If parsing fails, treat the entire value as a single task
-        if (value.trim() !== "") {
-          setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
-        }
+    if (value === lastSerialized.current) return;
+    if (!value) {
+      setTasks([]);
+      lastSerialized.current = "";
+      return;
+    }
+    try {
+      const parsedTasks = JSON.parse(value);
+      if (Array.isArray(parsedTasks)) {
+        setTasks(parsedTasks);
+      } else if (value.trim() !== "") {
+        setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
+      }
+    } catch {
+      if (value.trim() !== "") {
+        setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
       }
     }
+    lastSerialized.current = value;
   }, [value]);
 
-  // Update the parent's value when tasks change
-  useEffect(() => {
-    onChange(JSON.stringify(tasks));
-  }, [tasks, onChange]);
+  const updateTasks = (next: Task[], persist = false) => {
+    setTasks(next);
+    const serialized = JSON.stringify(next);
+    lastSerialized.current = serialized;
+    onChange(serialized);
+    if (persist) onPersist?.(serialized);
+  };
 
   const addTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTask.trim() === "") return;
-    
-    setTasks([...tasks, { id: Date.now().toString(), text: newTask, completed: false }]);
+    updateTasks([...tasks, { id: Date.now().toString(), text: newTask, completed: false }], true);
     setNewTask("");
   };
 
   const toggleTask = (taskId: string) => {
-    setTasks(
+    updateTasks(
       tasks.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
       )
@@ -57,8 +67,9 @@ export const TaskList = ({ value, onChange }: TaskListProps) => {
   };
 
   const deleteTask = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
+    updateTasks(tasks.filter((task) => task.id !== taskId), true);
   };
+
 
   return (
     <div className="space-y-2 mt-2">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -143,6 +144,21 @@ export const ValueSheet = ({
     setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
   }, []);
 
+  const persistFeelingNote = useCallback((feeling: string, note: string) => {
+    const latest = latestRef.current;
+    const nextNotes = { ...latest.localFeelingNotes, [feeling]: note };
+    setLocalFeelingNotes(nextNotes);
+    onUpdate(
+      latest.localSelectedFeelings,
+      latest.localPositiveFeelings,
+      latest.localPositiveFeelingDates,
+      nextNotes,
+      latest.localNotes,
+      latest.localBalancePercentage
+    );
+    toast.success("تم حفظ الارتباط");
+  }, [onUpdate]);
+
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
   }, []);
@@ -269,6 +285,7 @@ export const ValueSheet = ({
                     <TaskList
                       value={localFeelingNotes[feeling] || ""}
                       onChange={(value) => handleFeelingNoteChange(feeling, value)}
+                      onPersist={(value) => persistFeelingNote(feeling, value)}
                     />
                   </div>
                 </div>
