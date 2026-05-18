@@ -285,6 +285,7 @@ export const ValueSheet = ({
                     <TaskList
                       value={localFeelingNotes[feeling] || ""}
                       onChange={(value) => handleFeelingNoteChange(feeling, value)}
+                      onPersist={(value) => persistFeelingNote(feeling, value)}
                     />
                   </div>
                 </div>
