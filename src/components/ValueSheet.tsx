@@ -158,9 +158,6 @@ export const ValueSheet = ({
     );
     toast.success("تم حفظ الارتباط");
   }, [onUpdate]);
-  // legacy below removed
-    setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
-  }, []);
 
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
