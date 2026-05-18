@@ -681,8 +681,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const loadCapabilities = useCallback(async (mode?: ChatMode) => {
     if (!user) return;
     const modeToLoad = mode || currentChatMode;
+    console.log('=== Loading capabilities ===');
+    console.log('Chat mode:', modeToLoad);
     setLoadingCapabilities(true);
     try {
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from('anima_capabilities')
         .select('*')
@@ -690,7 +694,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         .eq('chat_mode', modeToLoad)
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Capabilities loaded in ${duration}ms, count: ${data?.length || 0}`);
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+      
       setCapabilities(data || []);
     } catch (error) {
       console.error('Error loading capabilities:', error);
@@ -707,7 +718,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       ? Math.max(...capabilities.map(c => c.order_index)) + 1 
       : 0;
 
+    console.log('=== Adding capability ===');
+    console.log('Chat mode:', currentChatMode);
+    console.log('Capability text:', newCapabilityText.trim());
+    console.log('Order index:', maxOrder);
+
     try {
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from('anima_capabilities')
         .insert({
@@ -719,8 +737,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         .select()
         .single();
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Capability added in ${duration}ms`);
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
       
+      console.log('Capability saved successfully');
       setCapabilities(prev => [...prev, data]);
       setNewCapabilityText('');
       toast.success('تم إضافة الإمكانية');
@@ -732,14 +757,26 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   // Delete capability
   const handleDeleteCapability = async (id: string) => {
+    console.log('=== Deleting capability ===');
+    console.log('Capability ID:', id);
+
     try {
+      const startTime = Date.now();
+      
       const { error } = await supabase
         .from('anima_capabilities')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Capability deleted in ${duration}ms`);
+
+      if (error) {
+        console.error('Supabase delete error:', error);
+        throw error;
+      }
       
+      console.log('Capability deleted successfully');
       setCapabilities(prev => prev.filter(c => c.id !== id));
       toast.success('تم حذف الإمكانية');
     } catch (error) {
@@ -755,6 +792,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     if (direction === 'up' && index === 0) return;
     if (direction === 'down' && index === capabilities.length - 1) return;
 
+    console.log('=== Reordering capability ===');
+    console.log('Capability ID:', id);
+    console.log('Direction:', direction);
+
     const newCapabilities = [...capabilities];
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     
@@ -763,6 +804,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     newCapabilities[index].order_index = newCapabilities[swapIndex].order_index;
     newCapabilities[swapIndex].order_index = tempOrder;
     
+    console.log('New order index for item:', newCapabilities[index].order_index);
+    console.log('New order index for swap item:', newCapabilities[swapIndex].order_index);
+    
     // Swap positions in array
     [newCapabilities[index], newCapabilities[swapIndex]] = [newCapabilities[swapIndex], newCapabilities[index]];
     
@@ -770,6 +814,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     // Update in database
     try {
+      const startTime = Date.now();
+      
       await Promise.all([
         supabase
           .from('anima_capabilities')
@@ -780,6 +826,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
           .update({ order_index: newCapabilities[swapIndex].order_index })
           .eq('id', newCapabilities[swapIndex].id)
       ]);
+
+      const duration = Date.now() - startTime;
+      console.log(`Capabilities reordered in ${duration}ms`);
+      console.log('Reorder completed successfully');
     } catch (error) {
       console.error('Error reordering capabilities:', error);
     }

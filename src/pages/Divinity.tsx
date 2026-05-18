@@ -52,12 +52,21 @@ export default function Divinity() {
     queryKey: ['divineNamesData', user?.id],
     queryFn: async () => {
       if (!user) return {};
+      console.log('=== Loading divine names data ===');
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from('divine_names')
         .select('*')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Divine names data loaded in ${duration}ms, count: ${data?.length || 0}`);
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
 
       return (data || []).reduce((acc: any, item) => ({
         ...acc,
@@ -150,8 +159,12 @@ export default function Divinity() {
 
   const loadMonologues = useCallback(async (name: string) => {
     if (!user) return;
+    console.log('=== Loading monologues ===');
+    console.log('Divine name:', name);
     setLoadingMonologues(true);
     try {
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from('divine_name_monologues')
         .select('*')
@@ -159,7 +172,14 @@ export default function Divinity() {
         .eq('divine_name', name)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Monologues loaded in ${duration}ms, count: ${data?.length || 0}`);
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+      
       setMonologues(data || []);
     } catch (err) {
       console.error('Error loading monologues:', err);
@@ -182,9 +202,16 @@ export default function Divinity() {
     if (!newMonologue.trim() || !user || !selectedName) return;
 
     const messageText = newMonologue.trim();
+    console.log('=== Sending monologue ===');
+    console.log('Divine name:', selectedName);
+    console.log('Message length:', messageText.length);
+    
     setNewMonologue('');
 
     try {
+      console.log('Attempting to save monologue to Supabase...');
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from('divine_name_monologues')
         .insert({
@@ -195,8 +222,16 @@ export default function Divinity() {
         .select()
         .single();
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Monologue save completed in ${duration}ms`);
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+      
       if (data) {
+        console.log('Monologue saved successfully');
         setMonologues(prev => [...prev, data]);
       }
     } catch (err) {
@@ -209,14 +244,27 @@ export default function Divinity() {
   const handleDeleteMonologue = async (id: string) => {
     if (!window.confirm('هل تريد حذف هذه الرسالة؟')) return;
 
+    console.log('=== Deleting monologue ===');
+    console.log('Monologue ID:', id);
+
     try {
+      console.log('Attempting to delete from Supabase...');
+      const startTime = Date.now();
+      
       const { error } = await supabase
         .from('divine_name_monologues')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      const duration = Date.now() - startTime;
+      console.log(`Delete operation completed in ${duration}ms`);
 
+      if (error) {
+        console.error('Supabase delete error:', error);
+        throw error;
+      }
+
+      console.log('Monologue deleted successfully');
       setMonologues(prev => prev.filter(m => m.id !== id));
       toast.success('تم حذف الرسالة');
     } catch (err) {
@@ -229,12 +277,21 @@ export default function Divinity() {
     if (selectedName && user) {
       const validatedProgress = Math.min(100, Math.max(0, currentProgress));
 
+      console.log('=== Saving divine name data ===');
+      console.log('Divine name:', selectedName);
+      console.log('Notes length:', currentNote.length);
+      console.log('Progress:', validatedProgress);
+      console.log('Verses link:', currentLink);
+
       // Update Local State for immediate feedback
       setNotes(prev => ({ ...prev, [selectedName]: currentNote }));
       setProgress(prev => ({ ...prev, [selectedName]: validatedProgress }));
       setVersesLinks(prev => ({ ...prev, [selectedName]: currentLink }));
 
       try {
+        console.log('Attempting to save to Supabase...');
+        const startTime = Date.now();
+        
         const { error } = await supabase
           .from('divine_names')
           .upsert({
@@ -246,7 +303,15 @@ export default function Divinity() {
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id, divine_name' });
 
-        if (error) throw error;
+        const duration = Date.now() - startTime;
+        console.log(`Save operation completed in ${duration}ms`);
+
+        if (error) {
+          console.error('Supabase upsert error:', error);
+          throw error;
+        }
+
+        console.log('Data saved successfully to Supabase');
 
         // Invalidate query to refresh data from server
         queryClient.invalidateQueries({ queryKey: ['divineNamesData', user.id] });
