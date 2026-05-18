@@ -59,6 +59,18 @@ export const TaskList = ({ value, onChange, onPersist }: TaskListProps) => {
   };
 
   const toggleTask = (taskId: string) => {
+    updateTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const deleteTask = (taskId: string) => {
+    updateTasks(tasks.filter((task) => task.id !== taskId), true);
+  };
+
+  // remove old defs below
     setTasks(
       tasks.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
