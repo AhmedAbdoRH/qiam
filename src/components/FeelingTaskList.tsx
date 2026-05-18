@@ -28,12 +28,6 @@ const getIntensityColor = (intensity: number): string => {
   }
 };
 
-const getSliderBackground = (intensity: number): string => {
-  // Create gradient based on intensity position
-  const percentage = intensity * 10;
-  return `linear-gradient(to right, hsl(142, 76%, 36%) 0%, hsl(48, 96%, 53%) 50%, hsl(0, 84%, 60%) 100%)`;
-};
-
 export const FeelingTaskList = ({ tasks, onTasksChange }: FeelingTaskListProps) => {
   const [newTask, setNewTask] = useState("");
 
@@ -106,11 +100,21 @@ export const FeelingTaskList = ({ tasks, onTasksChange }: FeelingTaskListProps) 
                 </span>
               </div>
               
+              {/* Intensity Bar with +/- Buttons */}
               <div className="flex items-center gap-3" dir="ltr">
-                <span className="text-xs font-mono text-muted-foreground w-8">
-                  0.0
-                </span>
-                <div className="flex-1 relative">
+                {/* Minus Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full shrink-0"
+                  onClick={() => updateIntensity(task.id, Math.max(0, task.intensity - 1))}
+                >
+                  <span className="text-xl font-semibold text-muted-foreground">−</span>
+                </Button>
+
+                {/* Slider */}
+                <div className="flex-1 relative px-1">
                   <div 
                     className="absolute inset-0 h-2 rounded-full opacity-30 top-1/2 -translate-y-1/2"
                     style={{
@@ -126,10 +130,20 @@ export const FeelingTaskList = ({ tasks, onTasksChange }: FeelingTaskListProps) 
                     className="relative z-10"
                   />
                 </div>
-                <span className="text-xs font-mono text-muted-foreground w-8">
-                  10.0
-                </span>
-                <div className="flex items-center gap-1.5 min-w-16 justify-end">
+
+                {/* Plus Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full shrink-0"
+                  onClick={() => updateIntensity(task.id, Math.min(10, task.intensity + 1))}
+                >
+                  <span className="text-xl font-semibold text-muted-foreground">+</span>
+                </Button>
+
+                {/* Value Display */}
+                <div className="flex items-center gap-1.5 min-w-[68px] justify-end">
                   <span 
                     className={`w-3 h-3 rounded-full ${getIntensityColor(task.intensity)}`}
                   />
