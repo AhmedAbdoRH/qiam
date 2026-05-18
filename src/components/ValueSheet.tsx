@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -6,7 +6,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
@@ -54,6 +53,24 @@ export const ValueSheet = ({
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
 
+  // Ref to track latest state for callbacks
+  const latestRef = useRef({
+    localSelectedFeelings,
+    localPositiveFeelings,
+    localPositiveFeelingDates,
+    localFeelingNotes,
+    localNotes,
+    localBalancePercentage,
+  });
+  latestRef.current = {
+    localSelectedFeelings,
+    localPositiveFeelings,
+    localPositiveFeelingDates,
+    localFeelingNotes,
+    localNotes,
+    localBalancePercentage,
+  };
+
   useEffect(() => {
     setLocalSelectedFeelings(selectedFeelings);
     setLocalPositiveFeelings(positiveFeelings || []);
@@ -61,77 +78,81 @@ export const ValueSheet = ({
     setLocalFeelingNotes(feelingNotes);
     setLocalNotes(notes);
     setLocalBalancePercentage(balancePercentage);
-  }, [selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, valueName]);
+  }, [isOpen, selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, valueName]);
 
-  // Get feeling state: null (unselected), 'negative' (red), 'positive' (green)
+  // Save all data at once when closing the sheet (both button click + backdrop/cross click)
+  const handleClose = useCallback(() => {
+    const latest = latestRef.current;
+    onUpdate(
+      latest.localSelectedFeelings,
+      latest.localPositiveFeelings,
+      latest.localPositiveFeelingDates,
+      latest.localFeelingNotes,
+      latest.localNotes,
+      latest.localBalancePercentage
+    );
+    // Delay close slightly to avoid flicker - let state update settle first
+    requestAnimationFrame(() => {
+      onClose();
+    });
+  }, [onUpdate, onClose]);
+
+  // Get feeling state
   const getFeelingState = useCallback((feeling: string): 'negative' | 'positive' | null => {
-    if (localSelectedFeelings.includes(feeling)) return 'negative';
-    if (localPositiveFeelings.includes(feeling)) return 'positive';
+    const latest = latestRef.current;
+    if (latest.localSelectedFeelings.includes(feeling)) return 'negative';
+    if (latest.localPositiveFeelings.includes(feeling)) return 'positive';
     return null;
-  }, [localSelectedFeelings, localPositiveFeelings]);
+  }, []);
 
   const handleFeelingToggle = useCallback((feeling: string) => {
-    const currentState = getFeelingState(feeling);
-    
-    let newSelectedFeelings = [...localSelectedFeelings];
-    let newPositiveFeelings = [...localPositiveFeelings];
-    let newPositiveFeelingDates = { ...localPositiveFeelingDates };
-    
+    const latest = latestRef.current;
+    let newSelected = [...latest.localSelectedFeelings];
+    let newPositive = [...latest.localPositiveFeelings];
+    let newDates = { ...latest.localPositiveFeelingDates };
+
+    const currentState = latest.localSelectedFeelings.includes(feeling) ? 'negative' : 
+                         latest.localPositiveFeelings.includes(feeling) ? 'positive' : null;
+
     if (currentState === null) {
-      // First click: set to negative (red)
-      newSelectedFeelings = [...newSelectedFeelings, feeling];
+      newSelected = [...newSelected, feeling];
     } else if (currentState === 'negative') {
-      // Second click: change from negative to positive (green) and add timestamp
-      newSelectedFeelings = newSelectedFeelings.filter((f) => f !== feeling);
-      newPositiveFeelings = [...newPositiveFeelings, feeling];
-      newPositiveFeelingDates[feeling] = new Date().toISOString();
+      newSelected = newSelected.filter((f) => f !== feeling);
+      newPositive = [...newPositive, feeling];
+      newDates[feeling] = new Date().toISOString();
     } else {
-      // Third click: remove selection and timestamp
-      newPositiveFeelings = newPositiveFeelings.filter((f) => f !== feeling);
-      delete newPositiveFeelingDates[feeling];
+      newPositive = newPositive.filter((f) => f !== feeling);
+      delete newDates[feeling];
     }
-    
-    // Calculate new balance percentage
-    const positiveCount = newPositiveFeelings.length;
-    const negativeCount = newSelectedFeelings.length;
+
+    const positiveCount = newPositive.length;
+    const negativeCount = newSelected.length;
     const totalFeelings = 7;
     const balanceChangePerFeeling = 50 / totalFeelings;
+    let newBalance = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
+    newBalance = Math.max(0, Math.min(100, Math.round(newBalance)));
 
-    let newBalancePercentage = 50; // Default to 50%
-    
-    newBalancePercentage = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
-    
-    // Ensure balance percentage is within 0-100
-    newBalancePercentage = Math.max(0, Math.min(100, Math.round(newBalancePercentage)));
+    setLocalSelectedFeelings(newSelected);
+    setLocalPositiveFeelings(newPositive);
+    setLocalPositiveFeelingDates(newDates);
+    setLocalBalancePercentage(newBalance);
+  }, []);
 
-    setLocalSelectedFeelings(newSelectedFeelings);
-    setLocalPositiveFeelings(newPositiveFeelings);
-    setLocalPositiveFeelingDates(newPositiveFeelingDates);
-    setLocalBalancePercentage(newBalancePercentage);
-    // Save to database via onUpdate
-    onUpdate(newSelectedFeelings, newPositiveFeelings, newPositiveFeelingDates, localFeelingNotes, localNotes, newBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate, getFeelingState]);
-
+  // Update local state only — save to DB happens when sheet closes (handleClose)
   const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
-    const newFeelingNotes = { ...localFeelingNotes, [feeling]: note };
-    setLocalFeelingNotes(newFeelingNotes);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, newFeelingNotes, localNotes, localBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, localBalancePercentage, onUpdate]);
+    setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
+  }, []);
 
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, value, localBalancePercentage);
-  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localBalancePercentage, onUpdate]);
+  }, []);
 
   const handleBalanceChange = useCallback((value: number[]) => {
-    const newBalance = value[0];
-    setLocalBalancePercentage(newBalance);
-    onUpdate(localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, newBalance);
-  }, [localSelectedFeelings, localPositiveFeelings, localPositiveFeelingDates, localFeelingNotes, localNotes, onUpdate]);
+    setLocalBalancePercentage(value[0]);
+  }, []);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
-  // Convert an HSL color string like "hsl(h, s%, l%)" to HSLA with given alpha
   const withAlpha = (hsl: string, alpha: number): string => {
     return hsl.startsWith("hsl(")
       ? hsl.replace("hsl(", "hsla(").replace(")", `, ${alpha})`)
@@ -139,7 +160,7 @@ export const ValueSheet = ({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-3xl font-bold text-primary text-center mb-4">
@@ -183,7 +204,6 @@ export const ValueSheet = ({
           />
 
           <div className="space-y-3">
-            {/* <h3 className="text-lg font-semibold text-foreground">المشاعر السلبية</h3> */}
             <div className="space-y-2">
               {FEELINGS.map((feeling) => (
                 <div
@@ -271,7 +291,7 @@ export const ValueSheet = ({
         </div>
         <Button
           variant="ghost"
-          onClick={onClose}
+          onClick={handleClose}
           className="fixed bottom-4 left-1/2 -translate-x-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground rounded-full bg-background/30 backdrop-blur-lg"
         >
           <ArrowRight className="h-5 w-5" />
@@ -280,4 +300,3 @@ export const ValueSheet = ({
     </Sheet>
   );
 };
-

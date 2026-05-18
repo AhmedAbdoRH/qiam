@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -43,7 +44,6 @@ const Index = () => {
     };
   }, [valuesData]);
   
-  // Pinned values - loaded from database
   const pinnedValues = useMemo(() => {
     const pinned = new Set<string>();
     Object.values(valuesData).forEach(value => {
@@ -60,7 +60,6 @@ const Index = () => {
     const currentValue = getValueData(valueId);
     const newPinnedState = !currentValue.isPinned;
     
-    // Update local state immediately
     setValuesData(prev => ({
       ...prev,
       [valueId]: {
@@ -69,9 +68,8 @@ const Index = () => {
       },
     }));
     
-    // Update database
     try {
-        await supabase
+      await supabase
         .from("spiritual_values")
         .upsert({
           user_id: user.id,
@@ -87,7 +85,6 @@ const Index = () => {
         }, { onConflict: 'user_id,value_id' });
     } catch (error) {
       console.error("Error updating pin status:", error);
-      // Revert on error
       setValuesData(prev => ({
         ...prev,
         [valueId]: {
@@ -98,14 +95,12 @@ const Index = () => {
     }
   }, [user, getValueData]);
 
-  // Redirect to auth if not logged in
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
 
-  // Load values from database
   const loadValuesData = useCallback(async () => {
     if (!user) return;
     
@@ -126,7 +121,6 @@ const Index = () => {
             return;
           }
           
-          // Load feeling tasks from first record found
           if (loadedTasks.length === 0 && item.feeling_tasks) {
             const tasks = item.feeling_tasks as unknown;
             if (Array.isArray(tasks)) {
@@ -197,32 +191,31 @@ const Index = () => {
   ) => {
     const valueIndex = parseInt(valueId);
     const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
-    const currentValue = getValueData(valueId);
-    const newValueData = {
-      id: valueId,
-      name: valueName,
-      selectedFeelings,
-      positiveFeelings,
-      positiveFeelingDates,
-      feelingNotes,
-      notes,
-      balancePercentage,
-      isPinned: currentValue.isPinned || false,
-    };
 
-    // Update local state
+    // Keep existing isPinned from current state
+    const currentIsPinned = valuesData[valueId]?.isPinned || false;
+
+    // Update local state immediately
     setValuesData(prev => ({
       ...prev,
-      [valueId]: newValueData,
+      [valueId]: {
+        id: valueId,
+        name: valueName,
+        selectedFeelings,
+        positiveFeelings,
+        positiveFeelingDates,
+        feelingNotes,
+        notes,
+        balancePercentage,
+        isPinned: currentIsPinned,
+      },
     }));
 
-    // Update database
+    // Save to DB
     if (!user) return;
-    
-    console.log("positiveFeelingDates being sent to Supabase:", positiveFeelingDates);
 
     try {
-      await supabase
+      const { data, error } = await supabase
         .from("spiritual_values")
         .upsert({
           user_id: user.id,
@@ -234,19 +227,28 @@ const Index = () => {
           feeling_notes: feelingNotes,
           notes: notes,
           balance_percentage: balancePercentage,
-          is_pinned: currentValue.isPinned || false,
-        }, { onConflict: 'user_id,value_id' });
+          is_pinned: currentIsPinned,
+        }, { onConflict: 'user_id,value_id' })
+        .select();
+      
+      if (error) {
+        console.error("❌ Upsert error:", valueName, error.message);
+        toast.error(`فشل حفظ ${valueName}`);
+      } else {
+        console.log("✅ Saved to DB:", valueName, data);
+        toast.success(`تم حفظ ${valueName} في قاعدة البيانات`);
+      }
     } catch (error) {
-      console.error("Unexpected error during Supabase upsert:", error);
+      console.error("❌ Unexpected error:", valueName, error);
+      toast.error(`خطأ غير متوقع في حفظ ${valueName}`);
     }
-  }, [user, getValueData]);
+  }, [user, valuesData]);
 
   const handleTasksChange = useCallback(async (newTasks: FeelingTask[]) => {
     setFeelingTasks(newTasks);
     
     if (!user) return;
     
-    // Save to first value record
     try {
       await supabase
         .from("spiritual_values")
@@ -273,7 +275,6 @@ const Index = () => {
     [selectedValue, getValueData]
   );
 
-  // Sort values: pinned first, then by balance percentage
   const sortedValues = useMemo(() => {
     const allValues = VALUES.map((valueName, index) => ({
       index,
@@ -324,9 +325,6 @@ const Index = () => {
         </div>
       </div>
 
-
-
-{/* Sign out button in footer */}
       <div className="flex justify-center mt-8">
         <Button
           onClick={signOut}
@@ -367,10 +365,7 @@ const Index = () => {
         />
       )}
 
-      {/* Self Dialogue Chat */}
       <SelfDialogueChat onLongPress={() => setMonologueOpen(true)} />
-
-      {/* مناجاة - triggered by long press */}
       <ChatWidget externalOpen={monologueOpen} onExternalClose={() => setMonologueOpen(false)} />
     </div>
   );
