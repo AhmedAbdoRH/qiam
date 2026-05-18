@@ -144,6 +144,24 @@ export const ValueSheet = ({
     setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
   }, []);
 
+  const persistFeelingNote = useCallback((feeling: string, note: string) => {
+    const latest = latestRef.current;
+    const nextNotes = { ...latest.localFeelingNotes, [feeling]: note };
+    setLocalFeelingNotes(nextNotes);
+    onUpdate(
+      latest.localSelectedFeelings,
+      latest.localPositiveFeelings,
+      latest.localPositiveFeelingDates,
+      nextNotes,
+      latest.localNotes,
+      latest.localBalancePercentage
+    );
+    toast.success("تم حفظ الارتباط");
+  }, [onUpdate]);
+  // legacy below removed
+    setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
+  }, []);
+
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
   }, []);
