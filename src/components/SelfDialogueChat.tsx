@@ -948,7 +948,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         const description = parts[1] || '';
 
-        return `[${time}] � سقوط: ${description}`;
+        return `[${time}] 📉 سقوط: ${description}`;
 
       }
 
@@ -2391,7 +2391,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         .eq('is_archived', false)
 
-        .in('chat_mode', ['self', 'anima', 'nurturing'])
+        .in('chat_mode', ['self', 'anima', 'nurturing', 'nafs', 'sovereign'])
 
         .order('created_at', { ascending: false })
 
@@ -2441,7 +2441,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
           pendingMessages = allPending.filter((m: DialogueMessage) =>
 
-            ['self', 'anima', 'nurturing'].includes(m.chat_mode || 'self')
+            ['self', 'anima', 'nurturing', 'nafs', 'sovereign'].includes(m.chat_mode || 'self')
 
           );
 
@@ -4693,7 +4693,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                       </button>
 
-                                      <button onClick={() => { navigator.clipboard.writeText(`� سقوط - ${dateStr} ${timeStr}: ${fallDescription}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <button onClick={() => { navigator.clipboard.writeText(`📉 سقوط - ${dateStr} ${timeStr}: ${fallDescription}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
 
                                         <Copy className="h-3 w-3" />
 
@@ -5940,4 +5940,3 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   );
 
 }
-
