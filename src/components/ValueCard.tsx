@@ -112,7 +112,6 @@ function getValueIcon(name: string): LucideIcon {
   return valueIconMap[name] ?? Star;
 }
 
-// Convert an HSL color string like "hsl(h, s%, l%)" to HSLA with given alpha
 function withAlpha(hsl: string, alpha: number): string {
   return hsl.startsWith("hsl(")
     ? hsl.replace("hsl(", "hsla(").replace(")", `, ${alpha})`)
@@ -133,41 +132,34 @@ export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinne
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl p-5 min-h-[140px] transition-all duration-300 hover:scale-[1.03] active:scale-95"
+      className="group relative overflow-hidden rounded-xl p-4 min-h-[110px] transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center"
       style={{
         background: `var(--gradient-card)`,
-        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.25)`,
+        boxShadow: `0 10px 30px rgba(0, 0, 0, 0.2)`,
       }}
     >
-      {/* Optimized glow effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -bottom-16 -right-12 w-[320px] h-[220px] opacity-75 group-hover:opacity-90 transition-opacity duration-300"
+          className="absolute -bottom-12 -right-8 w-[220px] h-[160px] opacity-70 group-hover:opacity-85 transition-opacity duration-300"
           style={{
-            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.35)} 0%, transparent 75%)`,
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.3)} 0%, transparent 70%)`,
           }}
         />
-        <div 
-          className="absolute inset-0 border border-transparent rounded-2xl transition-shadow duration-300"
-          style={{
-            boxShadow: `inset 0 0 18px ${withAlpha(accentColor, 0.3)}`,
-          }}
-        />
-        {isPinned && (
-          <div className="absolute top-3 right-3 z-20">
-            <Pin className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          </div>
-        )}
       </div>
       
-      <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
-        <div className="flex items-center justify-center w-14 h-14">
-          <Icon className="w-8 h-8 text-white" strokeWidth={1.2} />
+      <div className="relative z-10 flex flex-col items-center justify-center h-full gap-2 text-center">
+        <div className="flex items-center justify-center w-10 h-10">
+          <Icon className="w-6 h-6 text-white" strokeWidth={1.3} />
         </div>
-        <h3 className="text-white font-bold text-base md:text-xl text-center leading-tight drop-shadow-lg">
+        <h3 className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-md">
           {name}
         </h3>
       </div>
+      {isPinned && (
+        <div className="absolute top-2 right-2 z-20">
+          <Pin className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+        </div>
+      )}
     </button>
   );
 });
