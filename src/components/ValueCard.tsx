@@ -132,32 +132,32 @@ export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinne
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-xl p-4 min-h-[110px] transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center"
+      className="group relative overflow-hidden rounded-lg p-3 min-h-[80px] transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-row items-center justify-start gap-3"
       style={{
         background: `var(--gradient-card)`,
-        boxShadow: `0 10px 30px rgba(0, 0, 0, 0.2)`,
+        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.15)`,
       }}
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -bottom-12 -right-8 w-[220px] h-[160px] opacity-70 group-hover:opacity-85 transition-opacity duration-300"
+          className="absolute -bottom-8 -right-6 w-[180px] h-[120px] opacity-60 group-hover:opacity-75 transition-opacity duration-300"
           style={{
-            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.3)} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.25)} 0%, transparent 70%)`,
           }}
         />
       </div>
       
-      <div className="relative z-10 flex flex-col items-center justify-center h-full gap-2 text-center">
-        <div className="flex items-center justify-center w-10 h-10">
-          <Icon className="w-6 h-6 text-white" strokeWidth={1.3} />
+      <div className="relative z-10 flex items-center gap-3 flex-1">
+        <div className="flex items-center justify-center w-8 h-8 shrink-0">
+          <Icon className="w-4.5 h-4.5 text-white" strokeWidth={1.5} />
         </div>
-        <h3 className="text-white font-semibold text-sm md:text-base leading-tight drop-shadow-md">
+        <h3 className="text-white font-medium text-xs md:text-sm leading-tight drop-shadow-md text-right">
           {name}
         </h3>
       </div>
       {isPinned && (
-        <div className="absolute top-2 right-2 z-20">
-          <Pin className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+        <div className="absolute top-1.5 right-1.5 z-20">
+          <Pin className="w-3 h-3 text-yellow-400 fill-yellow-400" />
         </div>
       )}
     </button>

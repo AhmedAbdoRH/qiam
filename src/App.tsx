@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BottomNavBar from "./components/BottomNavBar";
 import { AuthProvider } from './hooks/useAuth';
+import { SwipeNavigation } from './components/SwipeNavigation';
 
 const queryClient = new QueryClient();
 
@@ -21,16 +22,18 @@ const AppContent = () => {
 
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Behavioral />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/feelings" element={<Index />} />
-        <Route path="/anima" element={<Anima />} />
-        <Route path="/nurturing" element={<Nurturing />} />
-        <Route path="/behavioral" element={<Behavioral />} />
-        <Route path="/divinity" element={<Divinity />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <SwipeNavigation>
+        <Routes>
+          <Route path="/" element={<Behavioral />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/feelings" element={<Index />} />
+          <Route path="/anima" element={<Anima />} />
+          <Route path="/nurturing" element={<Nurturing />} />
+          <Route path="/behavioral" element={<Behavioral />} />
+          <Route path="/divinity" element={<Divinity />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </SwipeNavigation>
       {showBottomNavBar && <BottomNavBar />}
     </AuthProvider>
   );

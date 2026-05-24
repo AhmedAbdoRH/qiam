@@ -13,7 +13,8 @@ export const CalendarTaskList = () => {
   const [newTitle, setNewTitle] = useState("");
   const [tagTargetId, setTagTargetId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
-  const [localProgress, setLocalProgress] = useState<Record<string, number>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
@@ -46,8 +47,28 @@ export const CalendarTaskList = () => {
 
   const handleProgress = async (id: string, progress: number) => {
     if (!user) return;
+    // Optimistic update - update local state immediately
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) => {
+      if (!old) return old;
+      return old.map((item: any) => item.id === id ? { ...item, progress } : item);
+    });
+    // Then update database in background
     await supabase.from('anima_calendar').update({ progress }).eq('id', id).eq('user_id', user.id);
     invalidate();
+  };
+
+  const handleUpdateTitle = async (id: string, newTitle: string) => {
+    if (!user || !newTitle.trim()) return;
+    // Optimistic update
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) => {
+      if (!old) return old;
+      return old.map((item: any) => item.id === id ? { ...item, title: newTitle.trim() } : item);
+    });
+    await supabase.from('anima_calendar').update({ title: newTitle.trim() }).eq('id', id).eq('user_id', user.id);
+    invalidate();
+    setEditingId(null);
+    setEditingTitle("");
+    toast.success('تم تحديث العنوان');
   };
 
   const handleDelete = async (id: string) => {
@@ -106,40 +127,64 @@ export const CalendarTaskList = () => {
 
       <div className="space-y-4">
         {sorted.map((item: any) => (
-          <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
+          <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8 active:bg-white/12">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <CheckCircle2 className={`w-4 h-4 ${item.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                <span className="text-sm font-medium text-white/90">{item.title}</span>
+                {editingId === item.id ? (
+                  <input
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onBlur={() => handleUpdateTitle(item.id, editingTitle)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUpdateTitle(item.id, editingTitle);
+                      } else if (e.key === 'Escape') {
+                        setEditingId(null);
+                        setEditingTitle("");
+                      }
+                    }}
+                    autoFocus
+                    className="flex-1 px-2 py-1 rounded bg-white/10 border border-lime-300/40 text-sm text-white/90 focus:outline-none focus:border-lime-300/60"
+                  />
+                ) : (
+                  <span 
+                    onClick={() => { setEditingId(item.id); setEditingTitle(item.title); }}
+                    className="text-sm font-medium text-white/90 cursor-pointer hover:text-white/70 transition-colors"
+                  >
+                    {item.title}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{(localProgress[item.id] ?? item.progress).toFixed(1)}</span>
-                <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(0)}</span>
+                <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 active:text-red-500 transition-colors active:scale-95">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <Slider
-              value={[localProgress[item.id] ?? item.progress]}
-              onValueChange={(val) => setLocalProgress(prev => ({ ...prev, [item.id]: val[0] }))}
-              onValueCommit={(val) => { handleProgress(item.id, val[0]); setLocalProgress(prev => { const n = { ...prev }; delete n[item.id]; return n; }); }}
-              max={10} min={0} step={0.1}
-              className="w-full"
-              rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
-            />
+            <div className="px-1">
+              <Slider
+                value={[item.progress]}
+                onValueChange={(val) => handleProgress(item.id, val[0])}
+                max={10} min={0} step={1}
+                className="w-full cursor-pointer"
+                rangeClassName="bg-gradient-to-r from-green-500 to-lime-400"
+              />
+            </div>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {((item as any).tags || []).map((tag: string, idx: number) => (
-                <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag(item.id, idx)}>
+                <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 active:bg-red-500/10 transition-all" onClick={() => handleDeleteTag(item.id, idx)}>
                   {tag}
                 </span>
               ))}
               {tagTargetId === item.id ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleAddTag(item.id, newTag); }} className="flex gap-1">
-                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
-                  <button type="submit" className="text-[10px] text-lime-300 hover:text-lime-200">+</button>
+                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none focus:border-lime-300/40" autoFocus />
+                  <button type="submit" className="text-[10px] text-lime-300 hover:text-lime-200 active:text-lime-100">+</button>
                 </form>
               ) : (
-                <button onClick={() => setTagTargetId(item.id)} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
+                <button onClick={() => setTagTargetId(item.id)} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 active:bg-white/10 transition-all">
                   + سمة
                 </button>
               )}
