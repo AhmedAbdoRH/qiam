@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
-import { VALUES, ValueData } from "@/types/value";
+import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ const Index = () => {
       positiveFeelings: [],
       positiveFeelingDates: {},
       notes: "",
-      balancePercentage: 50,
+      balancePercentage: DEFAULT_BALANCE_PERCENTAGES[valueName] || 50,
       isPinned: false,
     };
   }, [valuesData]);
