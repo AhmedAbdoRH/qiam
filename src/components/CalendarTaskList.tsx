@@ -121,7 +121,7 @@ export const CalendarTaskList = () => {
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
           <ListTodo className="w-5 h-5 text-green-400" />
-          <h2 className="text-lg font-bold text-green-100">التذكية - تقويم</h2>
+          <h2 className="text-lg font-bold text-green-100">التذكية</h2>
         </div>
         <button onClick={() => setIsAdding(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-lime-300 transition-all">
           <Plus className="w-4 h-4" />

@@ -17,7 +17,7 @@ const BottomNavBar = () => {
       icon: BrickWall,
     },
     {
-      name: "المهام",
+      name: "التطهير",
       path: "/tasks",
       icon: CheckSquare,
     },
