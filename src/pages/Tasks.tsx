@@ -161,6 +161,18 @@ const Tasks = () => {
     return "text-red-400";
   };
 
+  const getSliderGradient = (intensity: number): string => {
+    // High intensity = red, Low intensity = green
+    const percentage = (intensity / 10) * 100;
+    if (percentage <= 50) {
+      // Green to yellow
+      return `linear-gradient(to right, hsl(142, 76%, 36%) ${percentage}%, hsl(48, 96%, 53%) ${percentage}%)`;
+    } else {
+      // Yellow to red
+      return `linear-gradient(to right, hsl(48, 96%, 53%) ${percentage}%, hsl(0, 84%, 60%) ${percentage}%)`;
+    }
+  };
+
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -267,6 +279,9 @@ const Tasks = () => {
                     max={10} min={0} step={0.1}
                     className="w-full cursor-pointer"
                     rangeClassName="bg-gradient-to-r from-green-500 to-red-500"
+                    style={{
+                      background: getSliderGradient(item.intensity)
+                    }}
                   />
                 </div>
               </div>
