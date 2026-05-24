@@ -2,9 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
-import { FeelingTaskList, FeelingTask } from "@/components/FeelingTaskList";
-import { SelfDialogueChat } from "@/components/SelfDialogueChat";
-import { ChatWidget } from "@/components/ChatWidget";
 import { VALUES, ValueData } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,8 +13,6 @@ const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [feelingTasks, setFeelingTasks] = useState<FeelingTask[]>([]);
-  const [monologueOpen, setMonologueOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -44,6 +39,7 @@ const Index = () => {
     };
   }, [valuesData]);
   
+  // Pinned values - loaded from database
   const pinnedValues = useMemo(() => {
     const pinned = new Set<string>();
     Object.values(valuesData).forEach(value => {
@@ -60,6 +56,7 @@ const Index = () => {
     const currentValue = getValueData(valueId);
     const newPinnedState = !currentValue.isPinned;
     
+    // Update local state immediately
     setValuesData(prev => ({
       ...prev,
       [valueId]: {
@@ -68,8 +65,9 @@ const Index = () => {
       },
     }));
     
+    // Update database
     try {
-      await supabase
+        await supabase
         .from("spiritual_values")
         .upsert({
           user_id: user.id,
@@ -85,6 +83,7 @@ const Index = () => {
         }, { onConflict: 'user_id,value_id' });
     } catch (error) {
       console.error("Error updating pin status:", error);
+      // Revert on error
       setValuesData(prev => ({
         ...prev,
         [valueId]: {
@@ -95,37 +94,29 @@ const Index = () => {
     }
   }, [user, getValueData]);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
-
   const loadValuesData = useCallback(async () => {
     if (!user) return;
-    
+
     try {
+      console.log('=== Loading values data ===');
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from("spiritual_values")
         .select("*")
         .eq("user_id", user.id);
 
+      const duration = Date.now() - startTime;
+      console.log(`Values data loaded in ${duration}ms`);
+
       if (error) throw error;
 
       if (data) {
         const formattedData: Record<string, ValueData> = {};
-        let loadedTasks: FeelingTask[] = [];
         
         data.forEach((item) => {
           if (!item.value_id || typeof item.value_id !== 'string' || item.value_id.trim() === '') {
             return;
-          }
-          
-          if (loadedTasks.length === 0 && item.feeling_tasks) {
-            const tasks = item.feeling_tasks as unknown;
-            if (Array.isArray(tasks)) {
-              loadedTasks = tasks as FeelingTask[];
-            }
           }
           
           const selectedFeelings = Array.isArray(item.selected_feelings)
@@ -151,21 +142,23 @@ const Index = () => {
               : {};
 
           const valueIndex = parseInt(item.value_id);
-          const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
+          const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length 
+            ? VALUES[valueIndex] 
+            : "Unknown Value";
+
           formattedData[item.value_id] = {
             id: item.value_id,
             name: valueName,
             selectedFeelings,
+            feelingNotes,
             positiveFeelings,
             positiveFeelingDates,
-            feelingNotes,
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
         });
         setValuesData(formattedData);
-        setFeelingTasks(loadedTasks);
       }
     } catch (error) {
       console.error("Error loading values:", error);
@@ -191,10 +184,10 @@ const Index = () => {
   ) => {
     const valueIndex = parseInt(valueId);
     const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
-
+    
     // Keep existing isPinned from current state
     const currentIsPinned = valuesData[valueId]?.isPinned || false;
-
+    
     // Update local state immediately
     setValuesData(prev => ({
       ...prev,
@@ -215,6 +208,10 @@ const Index = () => {
     if (!user) return;
 
     try {
+      console.log('=== Saving value data ===');
+      console.log('Value:', valueName);
+      const startTime = Date.now();
+      
       const { data, error } = await supabase
         .from("spiritual_values")
         .upsert({
@@ -230,7 +227,10 @@ const Index = () => {
           is_pinned: currentIsPinned,
         }, { onConflict: 'user_id,value_id' })
         .select();
-      
+
+      const duration = Date.now() - startTime;
+      console.log(`Value data saved in ${duration}ms`);
+
       if (error) {
         console.error("❌ Upsert error:", valueName, error.message);
         toast.error(`فشل حفظ ${valueName}`);
@@ -244,34 +244,8 @@ const Index = () => {
     }
   }, [user, valuesData]);
 
-  const handleTasksChange = useCallback(async (newTasks: FeelingTask[]) => {
-    setFeelingTasks(newTasks);
-    
-    if (!user) return;
-    
-    try {
-      await supabase
-        .from("spiritual_values")
-        .upsert([{
-          user_id: user.id,
-          value_id: "0",
-          value_name: VALUES[0],
-          feeling_tasks: JSON.parse(JSON.stringify(newTasks)),
-          selected_feelings: valuesData["0"]?.selectedFeelings || [],
-          positive_feelings: valuesData["0"]?.positiveFeelings || [],
-          positive_feeling_dates: valuesData["0"]?.positiveFeelingDates || {},
-          feeling_notes: valuesData["0"]?.feelingNotes || {},
-          notes: valuesData["0"]?.notes || "",
-          balance_percentage: valuesData["0"]?.balancePercentage || 50,
-          is_pinned: valuesData["0"]?.isPinned || false,
-        }], { onConflict: 'user_id,value_id' });
-    } catch (error) {
-      console.error("Error saving feeling tasks:", error);
-    }
-  }, [user, valuesData]);
-
   const selectedValueData = useMemo(
-    () => selectedValue ? getValueData(selectedValue) : null,
+    () => selectedValue ? getValueData(selectedValue) : null, 
     [selectedValue, getValueData]
   );
 
@@ -281,7 +255,7 @@ const Index = () => {
       valueName,
       valueData: getValueData(index.toString()),
     }));
-    
+
     const pinned = allValues.filter(v => pinnedValues.has(v.index.toString()));
     const unpinned = allValues.filter(v => !pinnedValues.has(v.index.toString()));
     
@@ -306,12 +280,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        
-        <FeelingTaskList 
-          tasks={feelingTasks} 
-          onTasksChange={handleTasksChange} 
-        />
-
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ index, valueName, valueData }) => (
             <ValueCard
@@ -365,8 +333,6 @@ const Index = () => {
         />
       )}
 
-      <SelfDialogueChat onLongPress={() => setMonologueOpen(true)} />
-      <ChatWidget externalOpen={monologueOpen} onExternalClose={() => setMonologueOpen(false)} />
     </div>
   );
 };

@@ -53,6 +53,7 @@ import {
   Wand2,
   Zap,
   ExternalLink,
+  Scale,
 } from "lucide-react";
 
 const valueIconMap: Record<string, LucideIcon> = {
@@ -106,6 +107,7 @@ const valueIconMap: Record<string, LucideIcon> = {
   "الحياة": Activity,
   "العلم": Lightbulb,
   "الخلاقية": Palette,
+  "الحق": Scale,
 };
 
 function getValueIcon(name: string): LucideIcon {
