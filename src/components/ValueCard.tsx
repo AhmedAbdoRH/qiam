@@ -142,9 +142,9 @@ export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinne
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -bottom-8 -right-6 w-[180px] h-[120px] opacity-60 group-hover:opacity-75 transition-opacity duration-300"
+          className="absolute -bottom-8 -right-6 w-[180px] h-[120px] opacity-80 group-hover:opacity-95 transition-opacity duration-300"
           style={{
-            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.25)} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.35)} 0%, transparent 70%)`,
           }}
         />
       </div>

@@ -278,7 +278,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ index, valueName, valueData }) => (

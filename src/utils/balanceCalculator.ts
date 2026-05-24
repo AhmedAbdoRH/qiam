@@ -13,7 +13,7 @@ export const getBalanceColor = (percentage: number): string => {
   }
 
   // Keep saturation relatively constant for a vibrant look
-  const saturation = 85; // You can adjust this value
+  const saturation = 95; // Increased for more vibrant colors
 
   // Interpolate lightness from dark (30%) to normal (50%) based on percentage
   const lightness = 30 + (percentage / 100) * 20; // 0% -> 30%, 100% -> 50%

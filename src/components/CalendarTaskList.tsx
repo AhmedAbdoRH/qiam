@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ListTodo, Plus, CheckCircle2, Trash2 } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Trash2, Minus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
@@ -15,6 +15,8 @@ export const CalendarTaskList = () => {
   const [newTag, setNewTag] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [sortedItems, setSortedItems] = useState<any[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
@@ -32,6 +34,19 @@ export const CalendarTaskList = () => {
   });
 
   const sorted = useMemo(() => [...items].sort((a, b) => a.progress - b.progress), [items]);
+
+  // Delayed reordering with smooth animation
+  useEffect(() => {
+    if (isReordering) {
+      const timer = setTimeout(() => {
+        setSortedItems(sorted);
+        setIsReordering(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    } else {
+      setSortedItems(sorted);
+    }
+  }, [sorted, isReordering]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['animaCalendar', user?.id] });
 
@@ -52,6 +67,8 @@ export const CalendarTaskList = () => {
       if (!old) return old;
       return old.map((item: any) => item.id === id ? { ...item, progress } : item);
     });
+    // Trigger delayed reordering
+    setIsReordering(true);
     // Then update database in background
     await supabase.from('anima_calendar').update({ progress }).eq('id', id).eq('user_id', user.id);
     invalidate();
@@ -126,8 +143,15 @@ export const CalendarTaskList = () => {
       )}
 
       <div className="space-y-4">
-        {sorted.map((item: any) => (
-          <div key={item.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8 active:bg-white/12">
+        {sortedItems.map((item: any, index: number) => (
+          <div 
+            key={item.id} 
+            className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all duration-500 ease-out hover:bg-white/8 active:bg-white/12 ${isReordering ? 'animate-pulse' : ''}`}
+            style={{ 
+              transitionDelay: isReordering ? `${index * 50}ms` : '0ms',
+              transform: isReordering ? 'scale(0.98)' : 'scale(1)'
+            }}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 flex-1">
                 <CheckCircle2 className={`w-4 h-4 ${item.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
@@ -156,8 +180,22 @@ export const CalendarTaskList = () => {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full">{item.progress.toFixed(0)}</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleProgress(item.id, Math.max(0, item.progress - 1))}
+                  disabled={item.progress <= 0}
+                  className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-95"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full min-w-[2rem] text-center">{item.progress.toFixed(0)}</span>
+                <button 
+                  onClick={() => handleProgress(item.id, Math.min(10, item.progress + 1))}
+                  disabled={item.progress >= 10}
+                  className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 active:text-red-500 transition-colors active:scale-95">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
