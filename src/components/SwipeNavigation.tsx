@@ -23,15 +23,15 @@ export const SwipeNavigation = ({ children }: SwipeNavigationProps) => {
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
-      // Swipe left -> go to next page
-      if (currentIndex < PAGES.length - 1) {
-        navigate(PAGES[currentIndex + 1]);
+      // Swipe left -> go to previous page
+      if (currentIndex > 0) {
+        navigate(PAGES[currentIndex - 1]);
       }
     },
     onSwipedRight: () => {
-      // Swipe right -> go to previous page
-      if (currentIndex > 0) {
-        navigate(PAGES[currentIndex - 1]);
+      // Swipe right -> go to next page
+      if (currentIndex < PAGES.length - 1) {
+        navigate(PAGES[currentIndex + 1]);
       }
     },
     trackMouse: true, // Enable swipe with mouse for desktop testing

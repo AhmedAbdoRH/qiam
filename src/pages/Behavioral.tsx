@@ -10,7 +10,8 @@ import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Download } from "lucide-react";
+import { downloadComprehensiveReport } from "@/utils/reportGenerator";
 
 interface SubTask {
   id: string;
@@ -293,6 +294,12 @@ const Behavioral = () => {
     }
   }, [selectedBehavioralValueForTasks, getValueData, handleValueUpdate]);
 
+  const handleDownloadReport = useCallback(async () => {
+    if (user) {
+      await downloadComprehensiveReport(user.id, user.email || undefined);
+    }
+  }, [user]);
+
   const currentOverallBalancePercentage = useMemo(() => {
     if (!selectedBehavioralValueForTasks) return 100;
     const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
@@ -351,7 +358,16 @@ const Behavioral = () => {
 
 
 {/* Sign out button in footer */}
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-8 gap-3">
+        <Button
+          onClick={handleDownloadReport}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          تحميل التقرير الشامل
+        </Button>
         <Button
           onClick={signOut}
           variant="ghost"
