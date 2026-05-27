@@ -358,7 +358,7 @@ const Behavioral = () => {
 
 
 {/* Sign out button in footer */}
-      <div className="flex justify-center mt-8 pb-20">
+      <div className="flex justify-center mt-8 pb-32">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
