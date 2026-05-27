@@ -94,6 +94,7 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 dir="ltr"
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -106,6 +107,7 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
                 dir="ltr"
+                autoComplete="current-password"
               />
             </div>
             <Button
