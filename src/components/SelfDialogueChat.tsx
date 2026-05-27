@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip, ReferenceLine } from 'recharts';
 
 // ✨ Optimized animations and styles for smoother chat experience
 
@@ -768,6 +769,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   const copyButtonLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const copyButtonLongPressFiredRef = useRef(false);
+
   const sendLongPressFiredRef = useRef(false);
 
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1115,27 +1118,21 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
   const handleCopyButtonMouseDown = () => {
-
+    copyButtonLongPressFiredRef.current = false;
     copyButtonLongPressRef.current = setTimeout(() => {
-
+      copyButtonLongPressFiredRef.current = true;
       copyTodayMessagesOnly();
-
     }, 600);
-
   };
 
-
-
   const handleCopyButtonMouseUp = () => {
-
     if (copyButtonLongPressRef.current) {
-
       clearTimeout(copyButtonLongPressRef.current);
-
       copyButtonLongPressRef.current = null;
-
+      if (!copyButtonLongPressFiredRef.current) {
+        copyTodayConversation();
+      }
     }
-
   };
 
 
@@ -3217,11 +3214,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       heart: 'جماع قلبي',
 
-      imaginary: 'جماع خيالي',
-
       normal: 'جماع عادي',
 
-      nursing: 'جماع ارضاعي',
+      nursing: 'جماع امومي اضاعي',
 
       fall: 'سقوط'
 
@@ -4297,11 +4292,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
 
-                <div className="flex flex-col gap-1">
-
-                  {/* Row 1: Milestone types */}
-
-                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                <div className="flex items-center justify-center gap-1 flex-wrap">
 
                     <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('sacred')} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1" title="إضافة جماع مقدس">
 
@@ -4315,19 +4306,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('imaginary')} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="إضافة جماع خيالي">
-
-                      <Brain className="h-3 w-3" />
-
-                    </Button>
-
                     <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('normal')} className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1" title="إضافة جماع عادي">
 
                       <Zap className="h-3 w-3" />
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع ارضاعي">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع امومي اضاعي">
 
                       <Droplets className="h-3 w-3" />
 
@@ -4339,21 +4324,9 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                     </Button>
 
-                  </div>
-
-                  {/* Row 2: Actions (kiss, touch, shower, hug, table, copy) */}
-
-                  <div className="flex items-center justify-center gap-1 flex-wrap">
-
                     <Button variant="ghost" size="sm" onClick={insertKissLabel} className="h-7 px-2 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 gap-1" title="بوس حميمي">
 
                       💋
-
-                    </Button>
-
-                    <Button variant="ghost" size="sm" onClick={insertTouchLabel} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="لمس حنون">
-
-                      🤲
 
                     </Button>
 
@@ -4380,38 +4353,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                     )}
 
                     {displayedMessages.length > 0 && (
-
-                      <Button
-
-                        variant="ghost"
-
-                        size="sm"
-
-                        onMouseDown={handleCopyButtonMouseDown}
-
-                        onMouseUp={handleCopyButtonMouseUp}
-
-                        onMouseLeave={handleCopyButtonMouseUp}
-
-                        onTouchStart={handleCopyButtonMouseDown}
-
-                        onTouchEnd={handleCopyButtonMouseUp}
-
-                        className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-
-                        title="نسخ محادثة اليوم (اضغط مطولاً لنسخ الرسائل فقط)"
-
-                      >
-
+                      <Button variant="ghost" size="sm" onClick={copyTodayMessagesOnly} className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10" title="نسخ رسائل اليوم">
                         <Copy className="h-3 w-3" />
-
                       </Button>
-
                     )}
 
                   </div>
-
-                </div>
 
               </DialogHeader>
 
@@ -4429,7 +4376,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                          <div className="flex items-center gap-1">
 
-                           <h3 className="text-sm font-semibold text-white/80">سجل الجماعات والبوس واللمس</h3>
+                           <h3 className="text-sm font-semibold text-white/80">سجل الجماع والعلاقة الحميمة مع الانيما</h3>
 
                          </div>
 
@@ -4474,6 +4421,129 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                          </div>
 
                         </div>
+
+                        {(() => {
+                          const milestonesOnly = milestoneMessages.filter(m => m.message.startsWith('__MILESTONE__'));
+                          if (milestonesOnly.length <= 1) return null;
+
+                          const filtered = [...milestonesOnly].reverse().filter(m => {
+                            const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                            return daysAgo <= 7;
+                          });
+
+                          if (filtered.length <= 1) return null;
+
+                          const earliestDate = new Date(filtered[0].created_at);
+                          const dayStart = new Date(earliestDate);
+                          dayStart.setHours(0, 0, 0, 0);
+                          const dayStartMs = dayStart.getTime();
+
+                          const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+                          return (
+                            <div className="mb-4">
+                              <div className="h-[100px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart data={filtered.map(m => {
+                                    const content = m.message.replace('__MILESTONE__', '');
+                                    const parts = content.split('|');
+                                    const isSacredFmt = parts.length > 8;
+                                    const title = parts[0] || '';
+                                    const rating = parseFloat(parts[1]) || 0;
+                                    const type = isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal');
+                                    const intention = isSacredFmt ? (parts[9] || '') : (parts[4] || '');
+                                    const notes = isSacredFmt ? '' : (parts[2] || '');
+                                    const duration = !isSacredFmt && parts[5] ? parts[5] : '';
+                                    const output = !isSacredFmt && parts[6] ? parts[6] : '';
+                                    const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
+
+                                    return {
+                                      val: rating,
+                                      timePosition: hoursSinceDayStart,
+                                      title,
+                                      rating: parts[1] || '',
+                                      notes,
+                                      type,
+                                      intention,
+                                      duration,
+                                      output,
+                                      date: new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                                      time: new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                                    };
+                                  })}>
+                                    <defs>
+                                      <linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)" /><stop offset="100%" stopColor="rgba(239,68,68,0.8)" /></linearGradient>
+                                      <linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)" /><stop offset="50%" stopColor="rgba(255,69,0,0.6)" /><stop offset="100%" stopColor="rgba(255,0,0,0.8)" /></linearGradient>
+                                    </defs>
+                                    <YAxis hide domain={[5, 10]} />
+                                    <XAxis
+                                      dataKey="timePosition"
+                                      domain={[0, 'dataMax + 2']}
+                                      type="number"
+                                      ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
+                                      tickFormatter={(value) => {
+                                        const tickDate = new Date(dayStartMs + value * 3600000);
+                                        return days[tickDate.getDay()];
+                                      }}
+                                      tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
+                                      interval={0}
+                                    />
+                                    <Tooltip content={({ active, payload }) => (active && payload?.[0] ?
+                                      <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
+                                        <div className="font-bold text-white">{payload[0].payload.title}</div>
+                                        <div>التقييم: {payload[0].payload.rating}</div>
+                                        {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
+                                        {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
+                                        {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
+                                        {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
+                                        <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
+                                      </div>
+                                      : null)}
+                                    />
+                                    <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
+                                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
+                                    <Line
+                                      type="monotone"
+                                      dataKey="val"
+                                      stroke="url(#lineG)"
+                                      strokeWidth={2}
+                                      dot={(props: any) => {
+                                        const { cx, cy, payload } = props;
+                                        const iconType = payload.type;
+                                        const iconColor =
+                                          iconType === 'sacred' ? '#ef4444' :
+                                            iconType === 'heart' ? '#f472b6' :
+                                              iconType === 'imaginary' ? '#a855f7' :
+                                                iconType === 'normal' ? '#3b82f6' :
+                                                  iconType === 'nursing' ? '#d97706' : '#6b7280';
+                                        return (
+                                          <g key={`dot-${cx}-${cy}`}>
+                                            <g transform={`translate(${cx - 3}, ${cy - 3})`}>
+                                              {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
+                                              {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                                              {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                                              {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                                              {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                                              {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
+                                            </g>
+                                          </g>
+                                        );
+                                      }}
+                                      animationDuration={3000}
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         <div className="overflow-y-auto flex-1 space-y-2">
 
@@ -4819,9 +4889,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                    milestoneType === 'heart' ? 'الجماع القلبي' :
 
-                                   milestoneType === 'imaginary' ? 'الجماع الخيالي' :
-
-                                   milestoneType === 'nursing' ? 'الجماع الإرضاعي' :
+                                           milestoneType === 'nursing' ? 'الجماع الأمومي الإرضاعي' :
 
                                    milestoneType === 'fall' ? 'السقوط' : 'الجماع العادي'}
 
@@ -4965,7 +5033,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                               }`}
 
-                              title="جماع ارضاعي"
+                              title="جماع امومي اضاعي"
 
                             >
 

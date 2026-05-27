@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 // Define the order of pages for swipe navigation
-const PAGES = ['/feelings', '/behavioral', '/tasks', '/divinity'];
+const PAGES = ['/feelings', '/', '/tasks', '/divinity'];
 
 interface SwipeNavigationProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export const SwipeNavigation = ({ children }: SwipeNavigationProps) => {
   });
 
   return (
-    <div {...handlers} className="w-full h-full">
+    <div {...handlers} className="w-full min-h-screen bg-background">
       {children}
     </div>
   );

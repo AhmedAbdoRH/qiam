@@ -182,19 +182,19 @@ export const CalendarTaskList = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => handleProgress(item.id, Math.max(0, item.progress - 1))}
-                  disabled={item.progress <= 0}
-                  className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-95"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full min-w-[2rem] text-center">{item.progress.toFixed(0)}</span>
-                <button 
                   onClick={() => handleProgress(item.id, Math.min(10, item.progress + 1))}
                   disabled={item.progress >= 10}
                   className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] font-bold text-lime-300 bg-green-500/10 px-2 py-0.5 rounded-full min-w-[2rem] text-center">{item.progress.toFixed(0)}</span>
+                <button 
+                  onClick={() => handleProgress(item.id, Math.max(0, item.progress - 1))}
+                  disabled={item.progress <= 0}
+                  className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-95"
+                >
+                  <Minus className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 active:text-red-500 transition-colors active:scale-95">
                   <Trash2 className="w-3.5 h-3.5" />

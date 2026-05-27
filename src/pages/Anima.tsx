@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, Sparkles, ArrowRight, Star, Edit2, Save, X, Flame, HeartHandshake, Brain, Zap, Plus, Trash2, ListTodo, CheckCircle2, Send } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip, ReferenceLine } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -559,22 +558,6 @@ const Anima = () => {
     };
   }, [currentMilestoneIndex]);
 
-  const parseMilestone = (message: string) => {
-    const content = message.replace('__MILESTONE__', '');
-    const parts = content.split('|');
-    const isSacredFmt = parts.length > 8;
-
-    return {
-      title: parts[0] || 'جماع',
-      rating: parts[1] || '-',
-      notes: isSacredFmt ? '' : (parts[2] || ''),
-      type: isSacredFmt ? (parts[8] || 'normal') : (parts[3] || 'normal'),
-      intention: isSacredFmt ? (parts[9] || '') : (parts[4] || ''),
-      duration: !isSacredFmt && parts[5] ? parts[5] : '',
-      output: !isSacredFmt && parts[6] ? parts[6] : '',
-    };
-  };
-
   const getMilestoneIcon = (type: string) => {
     switch (type) {
       case 'sacred': return <Flame className="w-3.5 h-3.5 text-transparent fill-transparent" style={{ filter: 'drop-shadow(0 0 8px rgba(255,140,0,0.8))' }} />;
@@ -584,16 +567,6 @@ const Anima = () => {
       case 'normal': return <Zap className="w-3.5 h-3.5 text-blue-500" />;
       default: return <Zap className="w-3.5 h-3.5 text-blue-500" />;
     }
-  };
-
-  const getTimeDifference = (date: Date) => {
-    const diffMs = new Date().getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'منذ قليل';
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    const diffHours = Math.floor(diffMs / 3600000);
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    return `منذ ${Math.floor(diffMs / 86400000)} يوم`;
   };
 
   if (loading || !user) return null;
@@ -996,128 +969,7 @@ const Anima = () => {
             </div>
           </div>
 
-          {/* Chart Section */}
-          {latestMilestones.length > 1 && (
-            <div className="mt-8 w-full">
-              <h3 className="text-sm font-medium text-red-200/80 mb-3 px-1">الصحة الحميمية</h3>
-              <div className="h-[120px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={(() => {
-                    const filtered = [...latestMilestones]
-                      .reverse()
-                      .filter((m) => {
-                        const daysAgo = Math.floor((Date.now() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24));
-                        return daysAgo <= 7;
-                      });
 
-                    const earliestDate = filtered.length > 0 ? new Date(filtered[0].created_at) : new Date();
-                    const dayStart = new Date(earliestDate);
-                    dayStart.setHours(0, 0, 0, 0);
-                    const dayStartMs = dayStart.getTime();
-
-                    return filtered.map((m, i) => {
-                      const milestone = parseMilestone(m.message);
-                      const hoursSinceDayStart = (new Date(m.created_at).getTime() - dayStartMs) / (1000 * 60 * 60);
-
-                      return {
-                        val: parseFloat(milestone.rating) || 0,
-                        timePosition: hoursSinceDayStart,
-                        index: i,
-                        title: milestone.title,
-                        rating: milestone.rating,
-                        notes: milestone.notes,
-                        type: milestone.type,
-                        intention: milestone.intention,
-                        duration: milestone.duration,
-                        output: milestone.output,
-                        date: new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                        time: new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                        timeAgo: getTimeDifference(new Date(m.created_at)),
-                        dayName: new Date(m.created_at).toLocaleDateString('en-US', { weekday: 'short' }),
-                        dayStartMs,
-                      };
-                    });
-                  })()}
-                  >
-                    <defs><linearGradient id="lineG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(239,68,68,0.1)" /><stop offset="100%" stopColor="rgba(239,68,68,0.8)" /></linearGradient><linearGradient id="sacredGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgba(255,140,0,0.4)" /><stop offset="50%" stopColor="rgba(255,69,0,0.6)" /><stop offset="100%" stopColor="rgba(255,0,0,0.8)" /></linearGradient></defs>
-                    <YAxis hide domain={[5, 10]} />
-                    <XAxis
-                      dataKey="timePosition"
-                      domain={[0, 'dataMax + 2']}
-                      type="number"
-                      ticks={[0, 24, 48, 72, 96, 120, 144, 168]}
-                      tickFormatter={(value) => {
-                        const filtered = [...latestMilestones]
-                          .reverse()
-                          .filter((m) => Math.floor((Date.now() - new Date(m.created_at).getTime()) / 86400000) <= 7);
-                        if (filtered.length === 0) return '';
-                        const earliest = new Date(filtered[0].created_at);
-                        earliest.setHours(0, 0, 0, 0);
-                        const tickDate = new Date(earliest.getTime() + value * 3600000);
-                        const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                        return days[tickDate.getDay()];
-                      }}
-                      tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 9 }}
-                      interval={0}
-                    />
-                    <Tooltip content={({ active, payload }) => (active && payload?.[0] ?
-                      <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-lg text-[10px] text-red-100 space-y-1">
-                        <div className="font-bold text-white">{payload[0].payload.title}</div>
-                        <div>التقييم: {payload[0].payload.rating}</div>
-                        {payload[0].payload.intention && <div>النية: {payload[0].payload.intention}</div>}
-                        {payload[0].payload.duration && <div>المدة: {payload[0].payload.duration === 'long' ? 'طويل' : payload[0].payload.duration === 'medium' ? 'متوسط' : 'قصير'}</div>}
-                        {payload[0].payload.output && <div>الخروج: {payload[0].payload.output === 'full' ? 'كامل' : payload[0].payload.output === 'simple' ? 'بسيط' : 'محفوظ'}</div>}
-                        {payload[0].payload.notes && <div>الملاحظات: {payload[0].payload.notes}</div>}
-                        <div className="text-[9px] text-white/60">{payload[0].payload.date} - {payload[0].payload.time}</div>
-                      </div>
-                      : null)}
-                    />
-                    <ReferenceLine y={10} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
-                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={24} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={48} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={72} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={96} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={120} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={144} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <ReferenceLine x={168} stroke="rgba(255,255,255,0.03)" strokeDasharray="2 2" />
-                    <Line
-                      type="monotone"
-                      dataKey="val"
-                      stroke="url(#lineG)"
-                      strokeWidth={2}
-                      dot={(props: any) => {
-                        const { cx, cy, payload } = props;
-
-                        const iconType = payload.type;
-                        const iconColor =
-                          iconType === 'sacred' ? '#ef4444' :
-                            iconType === 'heart' ? '#f472b6' :
-                              iconType === 'imaginary' ? '#a855f7' :
-                                iconType === 'normal' ? '#3b82f6' :
-                                  iconType === 'nursing' ? '#d97706' :
-                                    '#6b7280';
-
-                        return (
-                          <g key={`dot-${cx}-${cy}`}>
-                            <g transform={`translate(${cx - 3}, ${cy - 3})`}>
-                              {iconType === 'sacred' && <circle cx="3" cy="3" r="2.0" fill="url(#sacredGradient)" />}
-                              {iconType === 'heart' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                              {iconType === 'imaginary' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                              {iconType === 'normal' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                              {iconType === 'nursing' && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                              {!['sacred', 'heart', 'imaginary', 'normal', 'nursing'].includes(iconType) && <circle cx="3" cy="3" r="2.0" fill={iconColor} />}
-                            </g>
-                          </g>
-                        );
-                      }}
-                      animationDuration={3000}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

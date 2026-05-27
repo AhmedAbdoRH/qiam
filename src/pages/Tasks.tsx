@@ -25,6 +25,13 @@ const Tasks = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
   const loadFeelingTasks = useCallback(async () => {
     if (!user) return;
     

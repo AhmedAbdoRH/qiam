@@ -6,8 +6,9 @@ import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
+import { downloadComprehensiveReport } from "@/utils/reportGenerator";
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -15,6 +16,13 @@ const Index = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   const getValueData = useCallback((valueId: string): ValueData => {
     if (valuesData[valueId]) {
@@ -244,6 +252,12 @@ const Index = () => {
     }
   }, [user, valuesData]);
 
+  const handleDownloadReport = useCallback(async () => {
+    if (user) {
+      await downloadComprehensiveReport(user.id, user.email || undefined);
+    }
+  }, [user]);
+
   const selectedValueData = useMemo(
     () => selectedValue ? getValueData(selectedValue) : null, 
     [selectedValue, getValueData]
@@ -293,7 +307,16 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-8 gap-3">
+        <Button
+          onClick={handleDownloadReport}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          تحميل التقرير الشامل
+        </Button>
         <Button
           onClick={signOut}
           variant="ghost"
