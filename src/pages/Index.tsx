@@ -309,15 +309,6 @@ const Index = () => {
 
       <div className="flex justify-center mt-8 gap-3">
         <Button
-          onClick={handleDownloadReport}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" />
-          تحميل التقرير الشامل
-        </Button>
-        <Button
           onClick={signOut}
           variant="ghost"
           size="sm"
@@ -325,6 +316,15 @@ const Index = () => {
         >
           <LogOut className="w-4 h-4" />
           تسجيل الخروج
+        </Button>
+        <Button
+          onClick={handleDownloadReport}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          تحميل التقرير الشامل
         </Button>
       </div>
 

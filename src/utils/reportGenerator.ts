@@ -120,16 +120,7 @@ function generateReportMarkdown(data: ReportData): string {
 
   md += "# التقرير الشامل\n\n";
   md += `مقياس الاتزان الروحي والنفسي — تم الإنشاء: ${data.generatedAt}`;
-  if (data.userEmail) md += ` — المستخدم: ${data.userEmail}`;
   md += "\n\n";
-
-  md += "## ملخص\n\n";
-  md += `- **القيم الروحانية:** ${data.spiritualValues.length}\n`;
-  md += `- **متوسط الاتزان:** ${avgBalance}%\n`;
-  md += `- **سجلات حميمية:** ${data.milestones.length}\n`;
-  md += `- **مهام التطهير:** ${data.cleansingTasks.length}\n`;
-  md += `- **مهام التذكية:** ${data.purificationTasks.length}\n`;
-  md += `- **رسائل المحادثة:** ${data.selfDialogue.length}\n\n`;
 
   md += "## القيم الروحانية\n\n";
   md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "ملاحظات"]) + "\n";
@@ -145,7 +136,7 @@ function generateReportMarkdown(data: ReportData): string {
   }
   md += "\n";
 
-  md += "## المشاعر\n\n";
+  md += "## تظهير القيم شعوريا\n\n";
   md += (feelingsLine || "لا توجد مشاعر مسجلة") + "\n\n";
 
   md += "## سجل العلاقة الحميمية (الجماعات)\n\n";
