@@ -307,16 +307,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-8 gap-3 pb-8">
-        <Button
-          onClick={signOut}
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          تسجيل الخروج
-        </Button>
+      <div className="flex justify-center mt-8 pb-20">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
