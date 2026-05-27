@@ -43,13 +43,8 @@ interface ReportData {
   }[];
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function escapeMd(text: string): string {
+  return text.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
 
 function parseMilestone(msg: { created_at: string; message: string }): MilestoneRecord | null {
@@ -97,7 +92,15 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
   return null;
 }
 
-function generateReportHtml(data: ReportData): string {
+function tableRow(cells: string[]): string {
+  return "| " + cells.join(" | ") + " |";
+}
+
+function tableSep(count: number): string {
+  return "|" + " --- |".repeat(count);
+}
+
+function generateReportMarkdown(data: ReportData): string {
   const feelingsTotal = FEELINGS.reduce((acc, f) => {
     const count = data.spiritualValues.filter(v => v.selectedFeelings.includes(f)).length;
     acc[f] = count;
@@ -108,189 +111,101 @@ function generateReportHtml(data: ReportData): string {
     ? (data.spiritualValues.reduce((s, v) => s + v.balancePercentage, 0) / data.spiritualValues.length).toFixed(1)
     : "0";
 
-  const valuesRows = data.spiritualValues.map(v => `
-    <tr>
-      <td>${escapeHtml(v.name)}</td>
-      <td>${v.balancePercentage}%</td>
-      <td>${v.selectedFeelings.length ? v.selectedFeelings.map(escapeHtml).join("، ") : "-"}</td>
-      <td>${v.positiveFeelings.length ? v.positiveFeelings.map(escapeHtml).join("، ") : "-"}</td>
-      <td>${v.notes ? escapeHtml(v.notes) : "-"}</td>
-    </tr>
-  `).join("");
-
-  const feelingsSummary = Object.entries(feelingsTotal)
+  const feelingsLine = Object.entries(feelingsTotal)
     .filter(([_, count]) => count > 0)
-    .map(([feeling, count]) => `<span class="feeling-badge">${escapeHtml(feeling)}: ${count}</span>`)
-    .join(" ");
+    .map(([f, c]) => `${f}: ${c}`)
+    .join(" — ");
 
-  const cleansingTasksRows = data.cleansingTasks.length
-    ? data.cleansingTasks.map(t => `
-      <tr>
-        <td>${escapeHtml(t.text)}</td>
-        <td><div class="progress-bar"><div class="progress-fill" style="width:${t.intensity * 10}%"></div></div></td>
-        <td>${t.intensity.toFixed(1)}/10</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="3" class="empty-cell">لا توجد مهام تطهير</td></tr>`;
+  let md = "";
 
-  const purificationTasksRows = data.purificationTasks.length
-    ? data.purificationTasks.map(t => `
-      <tr>
-        <td>${escapeHtml(t.title)}</td>
-        <td><div class="progress-bar"><div class="progress-fill" style="width:${t.progress * 10}%"></div></div></td>
-        <td>${t.progress.toFixed(1)}/10</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="3" class="empty-cell">لا توجد مهام تذكية</td></tr>`;
+  md += "# التقرير الشامل\n\n";
+  md += `مقياس الاتزان الروحي والنفسي — تم الإنشاء: ${data.generatedAt}`;
+  if (data.userEmail) md += ` — المستخدم: ${data.userEmail}`;
+  md += "\n\n";
 
-  const milestonesRows = data.milestones.length
-    ? [...data.milestones].reverse().map(m => `
-      <tr>
-        <td>${escapeHtml(m.dateStr)}</td>
-        <td>${escapeHtml(m.timeStr)}</td>
-        <td>${escapeHtml(m.type)}</td>
-        <td>${escapeHtml(m.rating)}</td>
-        <td>${escapeHtml(m.duration)}</td>
-        <td>${escapeHtml(m.output)}</td>
-        <td>${escapeHtml(m.notes)}</td>
-        <td>${escapeHtml(m.intention)}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="8" class="empty-cell">لا توجد سجلات حميمية</td></tr>`;
+  md += "## ملخص\n\n";
+  md += `- **القيم الروحانية:** ${data.spiritualValues.length}\n`;
+  md += `- **متوسط الاتزان:** ${avgBalance}%\n`;
+  md += `- **سجلات حميمية:** ${data.milestones.length}\n`;
+  md += `- **مهام التطهير:** ${data.cleansingTasks.length}\n`;
+  md += `- **مهام التذكية:** ${data.purificationTasks.length}\n`;
+  md += `- **رسائل المحادثة:** ${data.selfDialogue.length}\n\n`;
 
-  const selfDialogueRows = data.selfDialogue.length
-    ? data.selfDialogue.map(m => `
-      <tr>
-        <td>${escapeHtml(m.dateStr)}</td>
-        <td>${escapeHtml(m.timeStr)}</td>
-        <td>${escapeHtml(m.sender)}</td>
-        <td>${escapeHtml(m.message)}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="4" class="empty-cell">لا توجد رسائل محادثة</td></tr>`;
+  md += "## القيم الروحانية\n\n";
+  md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "ملاحظات"]) + "\n";
+  md += tableSep(5) + "\n";
+  for (const v of data.spiritualValues) {
+    md += tableRow([
+      escapeMd(v.name),
+      v.balancePercentage + "%",
+      v.selectedFeelings.length ? v.selectedFeelings.join("، ") : "-",
+      v.positiveFeelings.length ? v.positiveFeelings.join("، ") : "-",
+      v.notes ? escapeMd(v.notes) : "-",
+    ]) + "\n";
+  }
+  md += "\n";
 
-  return `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <title>التقرير الشامل - مقياس الاتزان الروحي والنفسي</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif; background: #f8fafc; color: #1e293b; padding: 20px; }
-    .container { max-width: 1100px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; }
-    h1 { font-size: 24px; color: #0f172a; margin-bottom: 8px; text-align: center; }
-    .subtitle { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 32px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
-    h2 { font-size: 18px; color: #1e293b; margin: 28px 0 12px; padding-right: 8px; border-right: 4px solid #8b5cf6; }
-    h2.milestone-header { border-right-color: #ec4899; }
-    h2.dialogue-header { border-right-color: #3b82f6; }
-    .summary-card { background: #f1f5f9; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 16px; }
-    .summary-card p { font-size: 14px; color: #475569; margin: 0; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
-    th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid #e2e8f0; word-break: break-word; }
-    th { background: #f1f5f9; color: #475569; font-weight: 600; white-space: nowrap; }
-    td { color: #334155; }
-    tr:hover td { background: #f8fafc; }
-    .feeling-badge { display: inline-block; background: #ede9fe; color: #6d28d9; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin: 2px; }
-    .progress-bar { width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; }
-    .progress-fill { height: 100%; background: linear-gradient(to right, #22c55e, #eab308, #ef4444); border-radius: 4px; }
-    .empty-cell { color: #94a3b8; font-style: italic; }
-    .footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
-    @media print { body { padding: 0; } .container { box-shadow: none; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>📊 التقرير الشامل</h1>
-    <p class="subtitle">مقياس الاتزان الروحي والنفسي — تم الإنشاء: ${escapeHtml(data.generatedAt)}${data.userEmail ? ` — المستخدم: ${escapeHtml(data.userEmail)}` : ""}</p>
+  md += "## المشاعر\n\n";
+  md += (feelingsLine || "لا توجد مشاعر مسجلة") + "\n\n";
 
-    <div class="summary-card">
-      <p><strong>القيم الروحانية:</strong> ${data.spiritualValues.length}</p>
-      <p><strong>متوسط الاتزان:</strong> ${avgBalance}%</p>
-      <p><strong>سجلات حميمية:</strong> ${data.milestones.length}</p>
-      <p><strong>مهام التطهير:</strong> ${data.cleansingTasks.length}</p>
-      <p><strong>مهام التذكية:</strong> ${data.purificationTasks.length}</p>
-      <p><strong>رسائل المحادثة:</strong> ${data.selfDialogue.length}</p>
-    </div>
+  md += "## سجل العلاقة الحميمية (الجماعات)\n\n";
+  if (data.milestones.length) {
+    md += tableRow(["التاريخ", "الوقت", "النوع", "التقييم", "المدة", "القذف", "الملاحظات", "النية"]) + "\n";
+    md += tableSep(8) + "\n";
+    for (const m of [...data.milestones].reverse()) {
+      md += tableRow([
+        escapeMd(m.dateStr), escapeMd(m.timeStr), escapeMd(m.type),
+        escapeMd(m.rating), escapeMd(m.duration), escapeMd(m.output),
+        escapeMd(m.notes), escapeMd(m.intention),
+      ]) + "\n";
+    }
+  } else {
+    md += "لا توجد سجلات حميمية\n";
+  }
+  md += "\n";
 
-    <h2>القيم الروحانية</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>القيمة</th>
-          <th>نسبة الاتزان</th>
-          <th>المشاعر السلبية</th>
-          <th>المشاعر الإيجابية</th>
-          <th>ملاحظات</th>
-        </tr>
-      </thead>
-      <tbody>${valuesRows}</tbody>
-    </table>
+  md += "## التطهير\n\n";
+  if (data.cleansingTasks.length) {
+    md += tableRow(["المهمة", "التقدم", "الشدة"]) + "\n";
+    md += tableSep(3) + "\n";
+    for (const t of data.cleansingTasks) {
+      const bar = "█".repeat(Math.round(t.intensity)) + "░".repeat(10 - Math.round(t.intensity));
+      md += tableRow([escapeMd(t.text), bar, t.intensity.toFixed(1) + "/10"]) + "\n";
+    }
+  } else {
+    md += "لا توجد مهام تطهير\n";
+  }
+  md += "\n";
 
-    <h2>المشاعر</h2>
-    <div class="summary-card">
-      ${feelingsSummary || "<span style='color:#94a3b8'>لا توجد مشاعر مسجلة</span>"}
-    </div>
+  md += "## التذكية\n\n";
+  if (data.purificationTasks.length) {
+    md += tableRow(["المهمة", "التقدم", "المستوى"]) + "\n";
+    md += tableSep(3) + "\n";
+    for (const t of data.purificationTasks) {
+      const bar = "█".repeat(Math.round(t.progress)) + "░".repeat(10 - Math.round(t.progress));
+      md += tableRow([escapeMd(t.title), bar, t.progress.toFixed(1) + "/10"]) + "\n";
+    }
+  } else {
+    md += "لا توجد مهام تذكية\n";
+  }
+  md += "\n";
 
-    <h2 class="milestone-header">سجل العلاقة الحميمية (الجماعات)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>التاريخ</th>
-          <th>الوقت</th>
-          <th>النوع</th>
-          <th>التقييم</th>
-          <th>المدة</th>
-          <th>القذف</th>
-          <th>الملاحظات</th>
-          <th>النية</th>
-        </tr>
-      </thead>
-      <tbody>${milestonesRows}</tbody>
-    </table>
+  md += "## المحادثة مع النفس\n\n";
+  if (data.selfDialogue.length) {
+    md += tableRow(["التاريخ", "الوقت", "المرسل", "الرسالة"]) + "\n";
+    md += tableSep(4) + "\n";
+    for (const m of data.selfDialogue) {
+      md += tableRow([escapeMd(m.dateStr), escapeMd(m.timeStr), escapeMd(m.sender), escapeMd(m.message)]) + "\n";
+    }
+  } else {
+    md += "لا توجد رسائل محادثة\n";
+  }
+  md += "\n";
 
-    <h2>التطهير</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>المهمة</th>
-          <th>التقدم</th>
-          <th>الشدة</th>
-        </tr>
-      </thead>
-      <tbody>${cleansingTasksRows}</tbody>
-    </table>
+  md += "---\n\n";
+  md += "*تم إنشاء هذا التقرير تلقائياً بواسطة مقياس الاتزان الروحي والنفسي*\n";
 
-    <h2>التذكية</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>المهمة</th>
-          <th>التقدم</th>
-          <th>المستوى</th>
-        </tr>
-      </thead>
-      <tbody>${purificationTasksRows}</tbody>
-    </table>
-
-    <h2 class="dialogue-header">المحادثة مع النفس</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>التاريخ</th>
-          <th>الوقت</th>
-          <th>المرسل</th>
-          <th>الرسالة</th>
-        </tr>
-      </thead>
-      <tbody>${selfDialogueRows}</tbody>
-    </table>
-
-    <div class="footer">
-      تم إنشاء هذا التقرير تلقائياً بواسطة مقياس الاتزان الروحي والنفسي
-    </div>
-  </div>
-</body>
-</html>`;
+  return md;
 }
 
 export async function downloadComprehensiveReport(userId: string, userEmail: string | undefined): Promise<void> {
@@ -383,14 +298,14 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       purificationTasks,
     };
 
-    const html = generateReportHtml(data);
-    const blob = new Blob(["\ufeff" + html], { type: "text/html;charset=utf-8" });
+    const md = generateReportMarkdown(data);
+    const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    a.download = `تقرير-شامل-${dateStr}.html`;
+    a.download = `تقرير-شامل-${dateStr}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
