@@ -358,7 +358,7 @@ const Behavioral = () => {
 
 
 {/* Sign out button in footer */}
-      <div className="flex justify-center mt-8 gap-3">
+      <div className="flex justify-center mt-8 gap-3 pb-8">
         <Button
           onClick={signOut}
           variant="ghost"
