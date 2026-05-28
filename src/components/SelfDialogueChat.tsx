@@ -736,6 +736,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [milestoneOutput, setMilestoneOutput] = useState<'full' | 'simple' | 'preserved'>('full');
 
   const [showMilestoneTable, setShowMilestoneTable] = useState(false);
+  const [showUnionSelector, setShowUnionSelector] = useState(false);
 
   const [isEditingMilestone, setIsEditingMilestone] = useState(false);
 
@@ -752,6 +753,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const [editingFallId, setEditingFallId] = useState<string | null>(null);
 
   const [expandedMilestoneNotes, setExpandedMilestoneNotes] = useState<Set<string>>(new Set());
+
+  const [realityNotes, setRealityNotes] = useState('');
+
+  const [dreamNotes, setDreamNotes] = useState('');
+
+  const [showRealityDialog, setShowRealityDialog] = useState(false);
+
+  const [showDreamDialog, setShowDreamDialog] = useState(false);
 
 
 
@@ -776,6 +785,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const toggleLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toggleLongPressFiredRef = useRef(false);
+  const unionLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unionLongPressFiredRef = useRef(false);
 
   
 
@@ -943,6 +954,26 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
 
+      if (msg.message === '__REALITY__' || msg.message.startsWith('__REALITY__|')) {
+
+        const notes = msg.message.startsWith('__REALITY__|') ? msg.message.replace('__REALITY__|', '') : '';
+
+        return notes ? `[${time}] 🌍 حدث في الواقع: ${notes}` : `[${time}] 🌍 حدث في الواقع`;
+
+      }
+
+
+
+      if (msg.message === '__DREAM__' || msg.message.startsWith('__DREAM__|')) {
+
+        const notes = msg.message.startsWith('__DREAM__|') ? msg.message.replace('__DREAM__|', '') : '';
+
+        return notes ? `[${time}] 🌙 حلم: ${notes}` : `[${time}] 🌙 حلم`;
+
+      }
+
+
+
       if (msg.message.startsWith('__FALL__')) {
 
         const content = msg.message.replace('__FALL__|', '');
@@ -1069,7 +1100,11 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       msg.message !== '__SHOWER__' &&
 
-      msg.message !== '__SELFHUG__'
+      msg.message !== '__SELFHUG__' &&
+
+      !msg.message.startsWith('__REALITY__') &&
+
+      !msg.message.startsWith('__DREAM__')
 
     );
 
@@ -1835,6 +1870,90 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                   </div>
 
                   <p className="text-xs text-amber-200 mt-0.5">حضن ذاتي</p>
+
+                </div>
+
+              </div>
+
+            );
+
+          }
+
+
+
+          // Render reality label
+
+          if (msg.message === '__REALITY__' || msg.message.startsWith('__REALITY__|')) {
+
+            const realityDate = new Date(msg.created_at);
+
+            const realityTime = realityDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+            const notes = msg.message.startsWith('__REALITY__|') ? msg.message.replace('__REALITY__|', '') : '';
+
+            return (
+
+              <div key={msg.id} className="flex justify-center py-3">
+
+                <div className="bg-green-500/20 border border-green-500/30 rounded-lg px-3 py-2 w-full max-w-md">
+
+                  <div className="flex items-center justify-between mb-1">
+
+                    <div className="flex items-center gap-2">
+
+                      <span className="text-green-400 text-sm">🌍</span>
+
+                      <span className="text-xs text-green-300/70">{realityTime}</span>
+
+                    </div>
+
+                  </div>
+
+                  <p className="text-xs text-green-200">حدث في الواقع</p>
+
+                  {notes && <p className="text-[10px] text-green-200/70 mt-1">{notes}</p>}
+
+                </div>
+
+              </div>
+
+            );
+
+          }
+
+
+
+          // Render dream label
+
+          if (msg.message === '__DREAM__' || msg.message.startsWith('__DREAM__|')) {
+
+            const dreamDate = new Date(msg.created_at);
+
+            const dreamTime = dreamDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+            const notes = msg.message.startsWith('__DREAM__|') ? msg.message.replace('__DREAM__|', '') : '';
+
+            return (
+
+              <div key={msg.id} className="flex justify-center py-3">
+
+                <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-2 w-full max-w-md">
+
+                  <div className="flex items-center justify-between mb-1">
+
+                    <div className="flex items-center gap-2">
+
+                      <span className="text-purple-400 text-sm">🌙</span>
+
+                      <span className="text-xs text-purple-300/70">{dreamTime}</span>
+
+                    </div>
+
+                  </div>
+
+                  <p className="text-xs text-purple-200">حلم</p>
+
+                  {notes && <p className="text-[10px] text-purple-200/70 mt-1">{notes}</p>}
 
                 </div>
 
@@ -2818,6 +2937,130 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
 
+  const insertRealityLabel = async () => {
+
+    if (!user) return;
+
+    const tempId = crypto.randomUUID();
+
+    globalMessageSeq++;
+
+    const realityMessage: DialogueMessage = {
+
+      id: tempId,
+
+      sender: 'me',
+
+      message: `__REALITY__|${realityNotes}`,
+
+      created_at: new Date().toISOString(),
+
+      status: 'pending',
+
+      localSeq: globalMessageSeq,
+
+      chat_mode: 'self'
+
+    };
+
+    setMessages(prev => [...prev, realityMessage]);
+
+    setAllMessages(prev => [...prev, realityMessage]);
+
+    setRealityNotes('');
+
+    try {
+
+      await supabase.from('self_dialogue_messages').insert({
+
+        user_id: user.id,
+
+        sender: 'me',
+
+        message: `__REALITY__|${realityNotes}`,
+
+        created_at: realityMessage.created_at,
+
+        session_title: sessionTitle || null,
+
+        chat_mode: 'self'
+
+      });
+
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+
+    } catch {
+
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+
+    }
+
+  };
+
+
+
+  const insertDreamLabel = async () => {
+
+    if (!user) return;
+
+    const tempId = crypto.randomUUID();
+
+    globalMessageSeq++;
+
+    const dreamMessage: DialogueMessage = {
+
+      id: tempId,
+
+      sender: 'me',
+
+      message: `__DREAM__|${dreamNotes}`,
+
+      created_at: new Date().toISOString(),
+
+      status: 'pending',
+
+      localSeq: globalMessageSeq,
+
+      chat_mode: 'self'
+
+    };
+
+    setMessages(prev => [...prev, dreamMessage]);
+
+    setAllMessages(prev => [...prev, dreamMessage]);
+
+    setDreamNotes('');
+
+    try {
+
+      await supabase.from('self_dialogue_messages').insert({
+
+        user_id: user.id,
+
+        sender: 'me',
+
+        message: `__DREAM__|${dreamNotes}`,
+
+        created_at: dreamMessage.created_at,
+
+        session_title: sessionTitle || null,
+
+        chat_mode: 'self'
+
+      });
+
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'synced' } : m));
+
+    } catch {
+
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+
+    }
+
+  };
+
+
+
   const insertTouchLabel = async () => {
 
     if (!user) return;
@@ -3418,7 +3661,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   const milestoneMessages = useMemo(() => {
 
-    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__');
+    return allMessages.filter(m => m.message.startsWith('__MILESTONE__') || m.message === '__KISS__' || m.message === '__TOUCH__' || m.message === '__SHOWER__' || m.message === '__SELFHUG__' || m.message.startsWith('__REALITY__') || m.message.startsWith('__DREAM__'));
 
   }, [allMessages]);
 
@@ -3471,6 +3714,30 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       if (m.message === '__SELFHUG__') {
 
         rows.push([dateStr, timeStr, 'حضن ذاتي', '-', '-', '-', '-', '-']);
+
+        return;
+
+      }
+
+
+
+      if (m.message === '__REALITY__' || m.message.startsWith('__REALITY__|')) {
+
+        const notes = m.message.startsWith('__REALITY__|') ? m.message.replace('__REALITY__|', '') : '';
+
+        rows.push([dateStr, timeStr, 'حدث في الواقع', '-', '-', '-', notes || '-', '-']);
+
+        return;
+
+      }
+
+
+
+      if (m.message === '__DREAM__' || m.message.startsWith('__DREAM__|')) {
+
+        const notes = m.message.startsWith('__DREAM__|') ? m.message.replace('__DREAM__|', '') : '';
+
+        rows.push([dateStr, timeStr, 'حلم', '-', '-', '-', notes || '-', '-']);
 
         return;
 
@@ -3561,6 +3828,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       m.message !== '__SHOWER__' && 
 
       m.message !== '__SELFHUG__' &&
+
+      !m.message.startsWith('__REALITY__') &&
+
+      !m.message.startsWith('__DREAM__') &&
 
       !m.message.startsWith('__FALL__')
 
@@ -4294,31 +4565,62 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                 <div className="flex items-center justify-center gap-1 flex-wrap">
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('sacred')} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-500/10 gap-1" title="إضافة جماع مقدس">
+                    <Button variant="ghost" size="sm" onClick={(e) => {
+                        e.preventDefault();
+                        if (unionLongPressFiredRef.current) {
+                          unionLongPressFiredRef.current = false;
+                          return;
+                        }
+                        setShowUnionSelector(true);
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        unionLongPressFiredRef.current = false;
+                        unionLongPressRef.current = setTimeout(() => {
+                          unionLongPressFiredRef.current = true;
+                          openMilestoneDialog('sacred');
+                        }, 500);
+                      }}
+                      onMouseUp={() => {
+                        if (unionLongPressRef.current) clearTimeout(unionLongPressRef.current);
+                      }}
+                      onMouseLeave={() => {
+                        if (unionLongPressRef.current) clearTimeout(unionLongPressRef.current);
+                      }}
+                      onTouchStart={() => {
+                        unionLongPressFiredRef.current = false;
+                        unionLongPressRef.current = setTimeout(() => {
+                          unionLongPressFiredRef.current = true;
+                          openMilestoneDialog('sacred');
+                        }, 500);
+                      }}
+                      onTouchEnd={() => {
+                        if (unionLongPressRef.current) clearTimeout(unionLongPressRef.current);
+                      }} className="h-7 px-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1" title="اختيار نوع الجماع (اضغط مطولاً للمقدس)">
 
                       <Flame className="h-3 w-3" />
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('heart')} className="h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1" title="إضافة جماع قلبي">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('heart')} className="hidden h-7 px-2 text-[10px] text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 gap-1" title="إضافة جماع قلبي">
 
                       <HeartHandshake className="h-3 w-3" />
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('normal')} className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1" title="إضافة جماع عادي">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('normal')} className="hidden h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1" title="إضافة جماع عادي">
 
                       <Zap className="h-3 w-3" />
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع امومي اضاعي">
+                    <Button variant="ghost" size="sm" onClick={() => openMilestoneDialog('nursing')} className="hidden h-7 px-2 text-[10px] text-amber-700 hover:text-amber-600 hover:bg-amber-600/10 gap-1" title="إضافة جماع امومي اضاعي">
 
                       <Droplets className="h-3 w-3" />
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={openFallDialog} className="h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1" title="سقوط">
+                    <Button variant="ghost" size="sm" onClick={openFallDialog} className="hidden h-7 px-2 text-[10px] text-red-500 hover:text-red-400 hover:bg-red-600/10 gap-1" title="سقوط">
 
                       📉
 
@@ -4352,6 +4654,18 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                     )}
 
+                    <Button variant="ghost" size="sm" onClick={() => setShowRealityDialog(true)} className="h-7 px-2 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1" title="حدث في الواقع">
+
+                      🌍
+
+                    </Button>
+
+                    <Button variant="ghost" size="sm" onClick={() => setShowDreamDialog(true)} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="حلم">
+
+                      🌙
+
+                    </Button>
+
                     {displayedMessages.length > 0 && (
                       <Button variant="ghost" size="sm" onClick={copyTodayMessagesOnly} className="h-7 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10" title="نسخ رسائل اليوم">
                         <Copy className="h-3 w-3" />
@@ -4363,6 +4677,42 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
               </DialogHeader>
 
 
+
+                  {/* Union Type Selector Modal */}
+                  {showUnionSelector && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUnionSelector(false)}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-5 w-[85vw] max-w-[320px] flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-center text-sm font-semibold text-white/80">اختر نوع الجماع</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('sacred'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all">
+                            <Flame className="h-5 w-5 text-red-400" />
+                            <span className="text-[11px] text-red-300 font-medium">مقدس</span>
+                          </button>
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('heart'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 hover:bg-pink-500/20 transition-all">
+                            <HeartHandshake className="h-5 w-5 text-pink-400" />
+                            <span className="text-[11px] text-pink-300 font-medium">قلبي</span>
+                          </button>
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('imaginary'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 transition-all">
+                            <Brain className="h-5 w-5 text-purple-400" />
+                            <span className="text-[11px] text-purple-300 font-medium">خيالي</span>
+                          </button>
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('normal'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 transition-all">
+                            <Zap className="h-5 w-5 text-blue-400" />
+                            <span className="text-[11px] text-blue-300 font-medium">عادي</span>
+                          </button>
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('nursing'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-all">
+                            <Droplets className="h-5 w-5 text-amber-400" />
+                            <span className="text-[11px] text-amber-300 font-medium">أمومي</span>
+                          </button>
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('fall'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-600/10 border border-red-600/30 hover:bg-red-600/20 transition-all">
+                            <span className="text-xl">📉</span>
+                            <span className="text-[11px] text-red-400 font-medium">سقوط</span>
+                          </button>
+                        </div>
+                        <Button variant="ghost" onClick={() => setShowUnionSelector(false)} className="h-8 text-xs text-white/50 hover:text-white mt-2">إلغاء</Button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Milestone Table View */}
 
@@ -4720,6 +5070,94 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                                   </div>
 
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+
+                                </div>
+
+                              );
+
+                            }
+
+
+
+                            // Reality entry
+
+                            if (m.message === '__REALITY__' || m.message.startsWith('__REALITY__|')) {
+
+                              const notes = m.message.startsWith('__REALITY__|') ? m.message.replace('__REALITY__|', '') : '';
+
+                              return (
+
+                                <div key={m.id} className="bg-green-500/10 rounded-lg p-3 border border-green-400/20 text-right" dir="rtl">
+
+                                  <div className="flex items-center justify-between mb-1">
+
+                                    <span className="text-xs font-semibold text-green-300">🌍 حدث في الواقع</span>
+
+                                    <div className="flex items-center gap-1">
+
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+
+                                        <Trash2 className="h-3 w-3" />
+
+                                      </button>
+
+                                      <button onClick={() => { navigator.clipboard.writeText(`🌍 حدث في الواقع${notes ? `: ${notes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+
+                                        <Copy className="h-3 w-3" />
+
+                                      </button>
+
+                                    </div>
+
+                                  </div>
+
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+
+                                  {notes && <div className="text-[10px] text-green-200/70 mt-1">{notes}</div>}
+
+                                </div>
+
+                              );
+
+                            }
+
+
+
+                            // Dream entry
+
+                            if (m.message === '__DREAM__' || m.message.startsWith('__DREAM__|')) {
+
+                              const notes = m.message.startsWith('__DREAM__|') ? m.message.replace('__DREAM__|', '') : '';
+
+                              return (
+
+                                <div key={m.id} className="bg-purple-500/10 rounded-lg p-3 border border-purple-400/20 text-right" dir="rtl">
+
+                                  <div className="flex items-center justify-between mb-1">
+
+                                    <span className="text-xs font-semibold text-purple-300">🌙 حلم</span>
+
+                                    <div className="flex items-center gap-1">
+
+                                      <button onClick={() => deleteMilestone(m.id)} className="p-1 text-white/30 hover:text-red-400 transition-colors">
+
+                                        <Trash2 className="h-3 w-3" />
+
+                                      </button>
+
+                                      <button onClick={() => { navigator.clipboard.writeText(`🌙 حلم${notes ? `: ${notes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+
+                                        <Copy className="h-3 w-3" />
+
+                                      </button>
+
+                                    </div>
+
+                                  </div>
+
+                                  <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
+
+                                  {notes && <div className="text-[10px] text-purple-200/70 mt-1">{notes}</div>}
 
                                 </div>
 
@@ -6002,6 +6440,130 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
         </DialogContent>
 
       </Dialog>
+
+
+
+      {/* Reality Notes Dialog */}
+
+      {showRealityDialog && (
+
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowRealityDialog(false)}>
+
+          <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+
+            <h3 className="text-lg font-semibold text-green-300">🌍 حدث في الواقع</h3>
+
+            <Textarea
+
+              value={realityNotes}
+
+              onChange={(e) => setRealityNotes(e.target.value)}
+
+              placeholder="اكتب ملاحظاتك عن الحدث..."
+
+              className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30"
+
+              autoFocus
+
+            />
+
+            <div className="flex gap-2 justify-end">
+
+              <Button
+
+                variant="ghost"
+
+                onClick={() => { setShowRealityDialog(false); setRealityNotes(''); }}
+
+                className="h-9 text-xs text-white/50 hover:text-white"
+
+              >
+
+                إلغاء
+
+              </Button>
+
+              <Button
+
+                onClick={() => { setShowRealityDialog(false); insertRealityLabel(); }}
+
+                className="h-9 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30"
+
+              >
+
+                إضافة
+
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+
+      {/* Dream Notes Dialog */}
+
+      {showDreamDialog && (
+
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowDreamDialog(false)}>
+
+          <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+
+            <h3 className="text-lg font-semibold text-purple-300">🌙 حلم</h3>
+
+            <Textarea
+
+              value={dreamNotes}
+
+              onChange={(e) => setDreamNotes(e.target.value)}
+
+              placeholder="اكتب ملاحظاتك عن الحلم..."
+
+              className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30"
+
+              autoFocus
+
+            />
+
+            <div className="flex gap-2 justify-end">
+
+              <Button
+
+                variant="ghost"
+
+                onClick={() => { setShowDreamDialog(false); setDreamNotes(''); }}
+
+                className="h-9 text-xs text-white/50 hover:text-white"
+
+              >
+
+                إلغاء
+
+              </Button>
+
+              <Button
+
+                onClick={() => { setShowDreamDialog(false); insertDreamLabel(); }}
+
+                className="h-9 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30"
+
+              >
+
+                إضافة
+
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </>
 
