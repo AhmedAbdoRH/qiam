@@ -36,10 +36,12 @@ interface ReportData {
   cleansingTasks: {
     text: string;
     intensity: number;
+    tags: string[];
   }[];
   purificationTasks: {
     title: string;
     progress: number;
+    tags: string[];
   }[];
 }
 
@@ -157,11 +159,12 @@ function generateReportMarkdown(data: ReportData): string {
 
   md += "## التطهير\n\n";
   if (data.cleansingTasks.length) {
-    md += tableRow(["المهمة", "التقدم", "الشدة"]) + "\n";
-    md += tableSep(3) + "\n";
+    md += tableRow(["المهمة", "التقدم", "الشدة", "التاجات"]) + "\n";
+    md += tableSep(4) + "\n";
     for (const t of data.cleansingTasks) {
       const bar = "█".repeat(Math.round(t.intensity)) + "░".repeat(10 - Math.round(t.intensity));
-      md += tableRow([escapeMd(t.text), bar, t.intensity.toFixed(1) + "/10"]) + "\n";
+      const tagsStr = t.tags.length ? t.tags.join("، ") : "-";
+      md += tableRow([escapeMd(t.text), bar, t.intensity.toFixed(1) + "/10", escapeMd(tagsStr)]) + "\n";
     }
   } else {
     md += "لا توجد مهام تطهير\n";
@@ -170,11 +173,12 @@ function generateReportMarkdown(data: ReportData): string {
 
   md += "## التذكية\n\n";
   if (data.purificationTasks.length) {
-    md += tableRow(["المهمة", "التقدم", "المستوى"]) + "\n";
-    md += tableSep(3) + "\n";
+    md += tableRow(["المهمة", "التقدم", "المستوى", "التاجات"]) + "\n";
+    md += tableSep(4) + "\n";
     for (const t of data.purificationTasks) {
       const bar = "█".repeat(Math.round(t.progress)) + "░".repeat(10 - Math.round(t.progress));
-      md += tableRow([escapeMd(t.title), bar, t.progress.toFixed(1) + "/10"]) + "\n";
+      const tagsStr = t.tags.length ? t.tags.join("، ") : "-";
+      md += tableRow([escapeMd(t.title), bar, t.progress.toFixed(1) + "/10", escapeMd(tagsStr)]) + "\n";
     }
   } else {
     md += "لا توجد مهام تذكية\n";
@@ -269,6 +273,7 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
           cleansingTasks.push({
             text: task.text || task.title || "",
             intensity: typeof task.intensity === "number" ? task.intensity : 0,
+            tags: Array.isArray(task.tags) ? task.tags : [],
           });
         }
       }
@@ -277,6 +282,7 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     const purificationTasks: ReportData["purificationTasks"] = (calendarRes.data || []).map(t => ({
       title: t.title || "",
       progress: typeof t.progress === "number" ? t.progress : 0,
+      tags: Array.isArray((t as any).tags) ? (t as any).tags : [],
     }));
 
     const data: ReportData = {

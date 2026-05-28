@@ -11,6 +11,7 @@ export interface FeelingTask {
   id: string;
   text: string;
   intensity: number;
+  tags: string[];
 }
 
 const Tasks = () => {
@@ -22,6 +23,8 @@ const Tasks = () => {
   const [editingTitle, setEditingTitle] = useState("");
   const [sortedItems, setSortedItems] = useState<FeelingTask[]>([]);
   const [isReordering, setIsReordering] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const [tagTarget, setTagTarget] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -59,7 +62,12 @@ const Tasks = () => {
       } else if (data && data.feeling_tasks) {
         const tasks = data.feeling_tasks as unknown;
         if (Array.isArray(tasks)) {
-          setFeelingTasks(tasks as FeelingTask[]);
+          setFeelingTasks(tasks.map((t: any) => ({
+            id: t.id,
+            text: t.text,
+            intensity: t.intensity,
+            tags: Array.isArray(t.tags) ? t.tags : []
+          })));
         }
       } else {
         setFeelingTasks([]);
@@ -124,6 +132,7 @@ const Tasks = () => {
       id: Date.now().toString(),
       text: newTitle.trim(),
       intensity: 5.0,
+      tags: [],
     };
     const updatedTasks = [...feelingTasks, newTask];
     setFeelingTasks(updatedTasks);
@@ -161,22 +170,48 @@ const Tasks = () => {
     toast.success('تم حذف مهمة التطهير');
   };
 
+  const handleAddTag = async (id: string) => {
+    if (!newTag.trim() || !user) return;
+    const updatedTasks = feelingTasks.map((task) =>
+      task.id === id ? { ...task, tags: [...task.tags, newTag.trim()] } : task
+    );
+    setFeelingTasks(updatedTasks);
+    await handleTasksChange(updatedTasks);
+    setNewTag("");
+    setTagTarget(null);
+    toast.success('تمت إضافة التاج');
+  };
+
+  const handleDeleteTag = async (id: string, tagIndex: number) => {
+    const updatedTasks = feelingTasks.map((task) => {
+      if (task.id === id) {
+        const newTags = [...task.tags];
+        newTags.splice(tagIndex, 1);
+        return { ...task, tags: newTags };
+      }
+      return task;
+    });
+    setFeelingTasks(updatedTasks);
+    await handleTasksChange(updatedTasks);
+    toast.success('تم حذف التاج');
+  };
+
   const getIntensityColor = (intensity: number): string => {
-    if (intensity <= 3) return "text-green-400";
+    if (intensity <= 3) return "text-red-400";
     if (intensity <= 5) return "text-yellow-400";
     if (intensity <= 7) return "text-orange-400";
-    return "text-red-400";
+    return "text-green-400";
   };
 
   const getSliderGradient = (intensity: number): string => {
-    // High intensity = red, Low intensity = green
+    // High intensity = green, Low intensity = red (reversed)
     const percentage = (intensity / 10) * 100;
     if (percentage <= 50) {
-      // Green to yellow
-      return `linear-gradient(to right, hsl(142, 76%, 36%) ${percentage}%, hsl(48, 96%, 53%) ${percentage}%)`;
+      // Red to yellow
+      return `linear-gradient(to right, hsl(0, 84%, 60%) ${percentage}%, hsl(48, 96%, 53%) ${percentage}%)`;
     } else {
-      // Yellow to red
-      return `linear-gradient(to right, hsl(48, 96%, 53%) ${percentage}%, hsl(0, 84%, 60%) ${percentage}%)`;
+      // Yellow to green
+      return `linear-gradient(to right, hsl(48, 96%, 53%) ${percentage}%, hsl(142, 76%, 36%) ${percentage}%)`;
     }
   };
 
@@ -285,11 +320,51 @@ const Tasks = () => {
                     onValueChange={(val) => handleProgress(item.id, val[0])}
                     max={10} min={0} step={0.1}
                     className="w-full cursor-pointer"
-                    rangeClassName="bg-gradient-to-r from-green-500 to-red-500"
+                    rangeClassName="bg-gradient-to-r from-red-500 to-green-500"
                     style={{
                       background: getSliderGradient(item.intensity)
                     }}
                   />
+                </div>
+                {/* Tags */}
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {item.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="text-sm font-bold px-2.5 py-1 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-red-400 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all"
+                        onClick={() => handleDeleteTag(item.id, idx)}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    <button
+                      onClick={() => setTagTarget(tagTarget === item.id ? null : item.id)}
+                      className="text-sm font-bold px-2.5 py-1 rounded-md bg-red-500/10 border border-red-300/20 text-red-300 hover:bg-red-500/20 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {tagTarget === item.id && (
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); handleAddTag(item.id); }}
+                      className="flex gap-2"
+                    >
+                      <input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        autoFocus
+                        placeholder="تاج جديد..."
+                        className="flex-1 px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-sm text-white/90 placeholder:text-white/30 focus:outline-none focus:border-lime-300/40"
+                      />
+                      <button
+                        type="submit"
+                        className="px-2.5 py-1.5 rounded bg-lime-500/20 border border-lime-300/30 text-lime-200 text-sm"
+                      >
+                        إضافة
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
             ))}
