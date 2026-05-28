@@ -67,12 +67,18 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
     return { date: msg.created_at, dateStr, timeStr, type: "حضن ذاتي", rating: "-", duration: "-", output: "-", notes: "-", intention: "-" };
   }
   if (msg.message === "__REALITY__" || msg.message.startsWith("__REALITY__|")) {
-    const notes = msg.message.startsWith('__REALITY__|') ? msg.message.replace('__REALITY__|', '') : '';
-    return { date: msg.created_at, dateStr, timeStr, type: "حدث في الواقع", rating: "-", duration: "-", output: "-", notes: notes || "-", intention: "-" };
+    const parts = msg.message.split('|');
+    const eventDate = parts.length > 2 ? parts[1] : '';
+    const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+    const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-');
+    return { date: msg.created_at, dateStr, timeStr, type: "حدث في الواقع", rating: "-", duration: "-", output: "-", notes: displayNotes, intention: "-" };
   }
   if (msg.message === "__DREAM__" || msg.message.startsWith("__DREAM__|")) {
-    const notes = msg.message.startsWith('__DREAM__|') ? msg.message.replace('__DREAM__|', '') : '';
-    return { date: msg.created_at, dateStr, timeStr, type: "حلم", rating: "-", duration: "-", output: "-", notes: notes || "-", intention: "-" };
+    const parts = msg.message.split('|');
+    const eventDate = parts.length > 2 ? parts[1] : '';
+    const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+    const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-');
+    return { date: msg.created_at, dateStr, timeStr, type: "حلم", rating: "-", duration: "-", output: "-", notes: displayNotes, intention: "-" };
   }
   if (msg.message.startsWith("__FALL__")) {
     const fallContent = msg.message.replace("__FALL__|", "");

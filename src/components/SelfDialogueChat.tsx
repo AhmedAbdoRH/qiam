@@ -758,6 +758,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   const [dreamNotes, setDreamNotes] = useState('');
 
+  const [realityDate, setRealityDate] = useState('');
+
+  const [dreamDate, setDreamDate] = useState('');
+
   const [showRealityDialog, setShowRealityDialog] = useState(false);
 
   const [showDreamDialog, setShowDreamDialog] = useState(false);
@@ -956,9 +960,19 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       if (msg.message === '__REALITY__' || msg.message.startsWith('__REALITY__|')) {
 
-        const notes = msg.message.startsWith('__REALITY__|') ? msg.message.replace('__REALITY__|', '') : '';
+        const parts = msg.message.split('|');
 
-        return notes ? `[${time}] 🌍 حدث في الواقع: ${notes}` : `[${time}] 🌍 حدث في الواقع`;
+        const eventDate = parts.length > 2 ? parts[1] : '';
+
+        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+        let text = `[${time}] 🌍 حدث في الواقع`;
+
+        if (eventDate) text += ` (${eventDate})`;
+
+        if (notes) text += `: ${notes}`;
+
+        return text;
 
       }
 
@@ -966,9 +980,19 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       if (msg.message === '__DREAM__' || msg.message.startsWith('__DREAM__|')) {
 
-        const notes = msg.message.startsWith('__DREAM__|') ? msg.message.replace('__DREAM__|', '') : '';
+        const parts = msg.message.split('|');
 
-        return notes ? `[${time}] 🌙 حلم: ${notes}` : `[${time}] 🌙 حلم`;
+        const eventDate = parts.length > 2 ? parts[1] : '';
+
+        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+        let text = `[${time}] 🌙 حلم`;
+
+        if (eventDate) text += ` (${eventDate})`;
+
+        if (notes) text += `: ${notes}`;
+
+        return text;
 
       }
 
@@ -1889,7 +1913,11 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
             const realityTime = realityDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-            const notes = msg.message.startsWith('__REALITY__|') ? msg.message.replace('__REALITY__|', '') : '';
+            const parts = msg.message.split('|');
+
+            const eventDate = parts.length > 2 ? parts[1] : '';
+
+            const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
 
             return (
 
@@ -1911,6 +1939,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   <p className="text-xs text-green-200">حدث في الواقع</p>
 
+                  {eventDate && <p className="text-[10px] text-green-200/70 mt-1">التاريخ: {eventDate}</p>}
+
                   {notes && <p className="text-[10px] text-green-200/70 mt-1">{notes}</p>}
 
                 </div>
@@ -1931,7 +1961,11 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
             const dreamTime = dreamDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-            const notes = msg.message.startsWith('__DREAM__|') ? msg.message.replace('__DREAM__|', '') : '';
+            const parts = msg.message.split('|');
+
+            const eventDate = parts.length > 2 ? parts[1] : '';
+
+            const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
 
             return (
 
@@ -1952,6 +1986,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                   </div>
 
                   <p className="text-xs text-purple-200">حلم</p>
+
+                  {eventDate && <p className="text-[10px] text-purple-200/70 mt-1">التاريخ: {eventDate}</p>}
 
                   {notes && <p className="text-[10px] text-purple-200/70 mt-1">{notes}</p>}
 
@@ -2945,13 +2981,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     globalMessageSeq++;
 
+    const messageContent = realityDate ? `__REALITY__|${realityDate}|${realityNotes}` : `__REALITY__|${realityNotes}`;
+
     const realityMessage: DialogueMessage = {
 
       id: tempId,
 
       sender: 'me',
 
-      message: `__REALITY__|${realityNotes}`,
+      message: messageContent,
 
       created_at: new Date().toISOString(),
 
@@ -2969,6 +3007,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     setRealityNotes('');
 
+    setRealityDate('');
+
     try {
 
       await supabase.from('self_dialogue_messages').insert({
@@ -2977,7 +3017,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         sender: 'me',
 
-        message: `__REALITY__|${realityNotes}`,
+        message: messageContent,
 
         created_at: realityMessage.created_at,
 
@@ -3007,13 +3047,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     globalMessageSeq++;
 
+    const messageContent = dreamDate ? `__DREAM__|${dreamDate}|${dreamNotes}` : `__DREAM__|${dreamNotes}`;
+
     const dreamMessage: DialogueMessage = {
 
       id: tempId,
 
       sender: 'me',
 
-      message: `__DREAM__|${dreamNotes}`,
+      message: messageContent,
 
       created_at: new Date().toISOString(),
 
@@ -3031,6 +3073,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     setDreamNotes('');
 
+    setDreamDate('');
+
     try {
 
       await supabase.from('self_dialogue_messages').insert({
@@ -3039,7 +3083,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         sender: 'me',
 
-        message: `__DREAM__|${dreamNotes}`,
+        message: messageContent,
 
         created_at: dreamMessage.created_at,
 
@@ -3723,9 +3767,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       if (m.message === '__REALITY__' || m.message.startsWith('__REALITY__|')) {
 
-        const notes = m.message.startsWith('__REALITY__|') ? m.message.replace('__REALITY__|', '') : '';
+        const parts = m.message.split('|');
 
-        rows.push([dateStr, timeStr, 'حدث في الواقع', '-', '-', '-', notes || '-', '-']);
+        const eventDate = parts.length > 2 ? parts[1] : '';
+
+        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+        const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-');
+
+        rows.push([dateStr, timeStr, 'حدث في الواقع', '-', '-', '-', displayNotes, '-']);
 
         return;
 
@@ -3735,9 +3785,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       if (m.message === '__DREAM__' || m.message.startsWith('__DREAM__|')) {
 
-        const notes = m.message.startsWith('__DREAM__|') ? m.message.replace('__DREAM__|', '') : '';
+        const parts = m.message.split('|');
 
-        rows.push([dateStr, timeStr, 'حلم', '-', '-', '-', notes || '-', '-']);
+        const eventDate = parts.length > 2 ? parts[1] : '';
+
+        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+        const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-');
+
+        rows.push([dateStr, timeStr, 'حلم', '-', '-', '-', displayNotes, '-']);
 
         return;
 
@@ -5083,7 +5139,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                             if (m.message === '__REALITY__' || m.message.startsWith('__REALITY__|')) {
 
-                              const notes = m.message.startsWith('__REALITY__|') ? m.message.replace('__REALITY__|', '') : '';
+                              const parts = m.message.split('|');
+
+                              const eventDate = parts.length > 2 ? parts[1] : '';
+
+                              const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+                              const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '');
 
                               return (
 
@@ -5101,7 +5163,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                       </button>
 
-                                      <button onClick={() => { navigator.clipboard.writeText(`🌍 حدث في الواقع${notes ? `: ${notes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <button onClick={() => { navigator.clipboard.writeText(`🌍 حدث في الواقع${displayNotes ? `: ${displayNotes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
 
                                         <Copy className="h-3 w-3" />
 
@@ -5113,7 +5175,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
 
-                                  {notes && <div className="text-[10px] text-green-200/70 mt-1">{notes}</div>}
+                                  {displayNotes && <div className="text-[10px] text-green-200/70 mt-1">{displayNotes}</div>}
 
                                 </div>
 
@@ -5127,7 +5189,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                             if (m.message === '__DREAM__' || m.message.startsWith('__DREAM__|')) {
 
-                              const notes = m.message.startsWith('__DREAM__|') ? m.message.replace('__DREAM__|', '') : '';
+                              const parts = m.message.split('|');
+
+                              const eventDate = parts.length > 2 ? parts[1] : '';
+
+                              const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+
+                              const displayNotes = eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '');
 
                               return (
 
@@ -5145,7 +5213,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                       </button>
 
-                                      <button onClick={() => { navigator.clipboard.writeText(`🌙 حلم${notes ? `: ${notes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
+                                      <button onClick={() => { navigator.clipboard.writeText(`🌙 حلم${displayNotes ? `: ${displayNotes}` : ''} - ${dateStr} ${timeStr}`); toast.success('تم نسخ البيانات'); }} className="p-1 text-white/30 hover:text-white/60">
 
                                         <Copy className="h-3 w-3" />
 
@@ -5157,7 +5225,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                   <div className="text-[9px] text-white/40">{dateStr} • {timeStr}</div>
 
-                                  {notes && <div className="text-[10px] text-purple-200/70 mt-1">{notes}</div>}
+                                  {displayNotes && <div className="text-[10px] text-purple-200/70 mt-1">{displayNotes}</div>}
 
                                 </div>
 
@@ -6453,6 +6521,18 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
             <h3 className="text-lg font-semibold text-green-300">🌍 حدث في الواقع</h3>
 
+            <Input
+
+              type="date"
+
+              value={realityDate}
+
+              onChange={(e) => setRealityDate(e.target.value)}
+
+              className="bg-white/5 border-white/10 text-white"
+
+            />
+
             <Textarea
 
               value={realityNotes}
@@ -6473,7 +6553,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                 variant="ghost"
 
-                onClick={() => { setShowRealityDialog(false); setRealityNotes(''); }}
+                onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(''); }}
 
                 className="h-9 text-xs text-white/50 hover:text-white"
 
@@ -6515,6 +6595,18 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
             <h3 className="text-lg font-semibold text-purple-300">🌙 حلم</h3>
 
+            <Input
+
+              type="date"
+
+              value={dreamDate}
+
+              onChange={(e) => setDreamDate(e.target.value)}
+
+              className="bg-white/5 border-white/10 text-white"
+
+            />
+
             <Textarea
 
               value={dreamNotes}
@@ -6535,7 +6627,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                 variant="ghost"
 
-                onClick={() => { setShowDreamDialog(false); setDreamNotes(''); }}
+                onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(''); }}
 
                 className="h-9 text-xs text-white/50 hover:text-white"
 
