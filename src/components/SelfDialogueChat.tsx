@@ -768,6 +768,10 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     return today.toISOString().split('T')[0];
   });
 
+  const [realityTime, setRealityTime] = useState('');
+
+  const [dreamTime, setDreamTime] = useState('');
+
   const [showRealityDialog, setShowRealityDialog] = useState(false);
 
   const [showDreamDialog, setShowDreamDialog] = useState(false);
@@ -968,16 +972,18 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         const parts = msg.message.split('|');
 
-        const eventDate = parts.length > 2 ? parts[1] : '';
+        const eventDate = parts.length >= 3 ? parts[1] : '';
 
-        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+        const eventTime = parts.length >= 4 ? parts[2] : '';
+
+        const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
 
         // Format event date for display
         const formattedEventDate = eventDate ? new Date(eventDate + 'T00:00:00').toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
         let text = `[${time}] 🌍 حدث في الواقع`;
 
-        if (formattedEventDate) text += ` (${formattedEventDate})`;
+        if (formattedEventDate) text += ` (${formattedEventDate}${eventTime ? ` ${eventTime}` : ''})`;
 
         if (notes) text += `: ${notes}`;
 
@@ -991,13 +997,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         const parts = msg.message.split('|');
 
-        const eventDate = parts.length > 2 ? parts[1] : '';
+        const eventDate = parts.length >= 3 ? parts[1] : '';
 
-        const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+        const eventTime = parts.length >= 4 ? parts[2] : '';
+
+        const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
 
         let text = `[${time}] 🌙 حلم`;
 
-        if (eventDate) text += ` (${eventDate})`;
+        if (eventDate) text += ` (${eventDate}${eventTime ? ` ${eventTime}` : ''})`;
 
         if (notes) text += `: ${notes}`;
 
@@ -1920,18 +1928,21 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
           if (msg.message === '__REALITY__' || msg.message.startsWith('__REALITY__|')) {
 
-            const realityDate = new Date(msg.created_at);
+            const msgDate = new Date(msg.created_at);
 
-            const realityTime = realityDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const msgTime = msgDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
             const parts = msg.message.split('|');
 
-            const eventDate = parts.length > 2 ? parts[1] : '';
+            const eventDate = parts.length >= 3 ? parts[1] : '';
 
-            const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+            const eventTime = parts.length >= 4 ? parts[2] : '';
 
-            // Format event date for display
+            const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+
             const formattedEventDate = eventDate ? new Date(eventDate + 'T00:00:00').toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
+            const formattedEventTime = eventTime || '';
 
             return (
 
@@ -1945,7 +1956,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                       <span className="text-green-400 text-sm">🌍</span>
 
-                      <span className="text-xs text-green-300/70">{realityTime}</span>
+                      <span className="text-xs text-green-300/70">{msgTime}</span>
 
                     </div>
 
@@ -1953,7 +1964,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   <p className="text-xs text-green-200">حدث في الواقع</p>
 
-                  {formattedEventDate && <p className="text-[10px] text-green-200/70 mt-1">التاريخ: {formattedEventDate}</p>}
+                  {formattedEventDate && <p className="text-[10px] text-green-200/70 mt-1">التاريخ: {formattedEventDate}{formattedEventTime ? ` ${formattedEventTime}` : ''}</p>}
 
                   {notes && <p className="text-[10px] text-green-200/70 mt-1">{notes}</p>}
 
@@ -1971,18 +1982,21 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
           if (msg.message === '__DREAM__' || msg.message.startsWith('__DREAM__|')) {
 
-            const dreamDate = new Date(msg.created_at);
+            const msgDate = new Date(msg.created_at);
 
-            const dreamTime = dreamDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            const msgTime = msgDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
             const parts = msg.message.split('|');
 
-            const eventDate = parts.length > 2 ? parts[1] : '';
+            const eventDate = parts.length >= 3 ? parts[1] : '';
 
-            const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
+            const eventTime = parts.length >= 4 ? parts[2] : '';
 
-            // Format event date for display
+            const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+
             const formattedEventDate = eventDate ? new Date(eventDate + 'T00:00:00').toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
+            const formattedEventTime = eventTime || '';
 
             return (
 
@@ -1996,7 +2010,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                       <span className="text-purple-400 text-sm">🌙</span>
 
-                      <span className="text-xs text-purple-300/70">{dreamTime}</span>
+                      <span className="text-xs text-purple-300/70">{msgTime}</span>
 
                     </div>
 
@@ -2004,7 +2018,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   <p className="text-xs text-purple-200">حلم</p>
 
-                  {formattedEventDate && <p className="text-[10px] text-purple-200/70 mt-1">التاريخ: {formattedEventDate}</p>}
+                  {formattedEventDate && <p className="text-[10px] text-purple-200/70 mt-1">التاريخ: {formattedEventDate}{formattedEventTime ? ` ${formattedEventTime}` : ''}</p>}
 
                   {notes && <p className="text-[10px] text-purple-200/70 mt-1">{notes}</p>}
 
@@ -2998,7 +3012,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     globalMessageSeq++;
 
-    const messageContent = realityDate ? `__REALITY__|${realityDate}|${realityNotes}` : `__REALITY__|${realityNotes}`;
+    const messageContent = realityDate ? `__REALITY__|${realityDate}|${realityTime}|${realityNotes}` : `__REALITY__|${realityNotes}`;
 
     const realityMessage: DialogueMessage = {
 
@@ -3025,6 +3039,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setRealityNotes('');
 
     setRealityDate('');
+
+    setRealityTime('');
 
     try {
 
@@ -3064,7 +3080,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
     globalMessageSeq++;
 
-    const messageContent = dreamDate ? `__DREAM__|${dreamDate}|${dreamNotes}` : `__DREAM__|${dreamNotes}`;
+    const messageContent = dreamDate ? `__DREAM__|${dreamDate}|${dreamTime}|${dreamNotes}` : `__DREAM__|${dreamNotes}`;
 
     const dreamMessage: DialogueMessage = {
 
@@ -3091,6 +3107,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
     setDreamNotes('');
 
     setDreamDate('');
+
+    setDreamTime('');
 
     try {
 
@@ -4733,13 +4751,13 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                     )}
 
-                    <Button variant="ghost" size="sm" onClick={() => { setRealityDate(new Date().toISOString().split('T')[0]); setShowRealityDialog(true); }} className="h-7 px-2 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1" title="حدث في الواقع">
+                    <Button variant="ghost" size="sm" onClick={() => { setRealityDate(new Date().toISOString().split('T')[0]); setRealityTime(''); setShowRealityDialog(true); }} className="h-7 px-2 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1" title="حدث في الواقع">
 
                       🌍
 
                     </Button>
 
-                    <Button variant="ghost" size="sm" onClick={() => { setDreamDate(new Date().toISOString().split('T')[0]); setShowDreamDialog(true); }} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="حلم">
+                    <Button variant="ghost" size="sm" onClick={() => { setDreamDate(new Date().toISOString().split('T')[0]); setDreamTime(''); setShowDreamDialog(true); }} className="h-7 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 gap-1" title="حلم">
 
                       🌙
 
@@ -5875,13 +5893,16 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   {/* Reality Notes Dialog */}
                   {showRealityDialog && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); setRealityTime(''); }}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                         <h3 className="text-lg font-semibold text-green-300">🌍 حدث في الواقع</h3>
-                        <Input type="date" value={realityDate} onChange={(e) => setRealityDate(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+                        <div className="flex gap-2">
+                          <Input type="date" value={realityDate} onChange={(e) => setRealityDate(e.target.value)} className="flex-1 bg-white/5 border-white/10 text-white" />
+                          <Input type="time" value={realityTime} onChange={(e) => setRealityTime(e.target.value)} className="w-28 bg-white/5 border-white/10 text-white" />
+                        </div>
                         <Textarea value={realityNotes} onChange={(e) => setRealityNotes(e.target.value)} placeholder="اكتب ملاحظاتك عن الحدث..." className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30" autoFocus />
                         <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
+                          <Button variant="ghost" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); setRealityTime(''); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
                           <Button onClick={() => { setShowRealityDialog(false); insertRealityLabel(); }} className="h-9 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30">إضافة</Button>
                         </div>
                       </div>
@@ -5891,13 +5912,16 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   {/* Dream Notes Dialog */}
                   {showDreamDialog && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }}>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); setDreamTime(''); }}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                         <h3 className="text-lg font-semibold text-purple-300">🌙 حلم</h3>
-                        <Input type="date" value={dreamDate} onChange={(e) => setDreamDate(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+                        <div className="flex gap-2">
+                          <Input type="date" value={dreamDate} onChange={(e) => setDreamDate(e.target.value)} className="flex-1 bg-white/5 border-white/10 text-white" />
+                          <Input type="time" value={dreamTime} onChange={(e) => setDreamTime(e.target.value)} className="w-28 bg-white/5 border-white/10 text-white" />
+                        </div>
                         <Textarea value={dreamNotes} onChange={(e) => setDreamNotes(e.target.value)} placeholder="اكتب ملاحظاتك عن الحلم..." className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30" autoFocus />
                         <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
+                          <Button variant="ghost" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); setDreamTime(''); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
                           <Button onClick={() => { setShowDreamDialog(false); insertDreamLabel(); }} className="h-9 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30">إضافة</Button>
                         </div>
                       </div>
