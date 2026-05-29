@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { Button } from './ui/button';
 
@@ -6202,35 +6202,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                                         ))
 
 )}
-
-
-
-
-</>
-    </>
-  );
-}
-
-                                        }}
-
-                                      />
-
-                                      <button
-
-                                        onClick={handleAddCapability}
-
-                                        disabled={!newCapabilityText.trim()}
-
-                                        className={`p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors ${animaColors.capabilitiesBtn}`}
-
-                                      >
-
-                                        <Plus className="h-3.5 w-3.5" />
-
-                                      </button>
-
                                     </div>
-
                                   </div>
 
                                 </PopoverContent>
