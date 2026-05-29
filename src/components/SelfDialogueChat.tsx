@@ -1708,6 +1708,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       longPressFiredRef.current = true;
 
+      if (!window.confirm('هل أنت متأكد من حذف هذه الرسالة؟')) return;
+
       handleDeleteMessage(id);
 
       toast.success('تم حذف الرسالة');
@@ -5871,11 +5873,36 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                   )}
 
 
+                  {/* Reality Notes Dialog */}
+                  {showRealityDialog && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-green-300">🌍 حدث في الواقع</h3>
+                        <Input type="date" value={realityDate} onChange={(e) => setRealityDate(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+                        <Textarea value={realityNotes} onChange={(e) => setRealityNotes(e.target.value)} placeholder="اكتب ملاحظاتك عن الحدث..." className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30" autoFocus />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
+                          <Button onClick={() => { setShowRealityDialog(false); insertRealityLabel(); }} className="h-9 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30">إضافة</Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
 
-
-
-
+                  {/* Dream Notes Dialog */}
+                  {showDreamDialog && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-purple-300">🌙 حلم</h3>
+                        <Input type="date" value={dreamDate} onChange={(e) => setDreamDate(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+                        <Textarea value={dreamNotes} onChange={(e) => setDreamNotes(e.target.value)} placeholder="اكتب ملاحظاتك عن الحلم..." className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30" autoFocus />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }} className="h-9 text-xs text-white/50 hover:text-white">إلغاء</Button>
+                          <Button onClick={() => { setShowDreamDialog(false); insertDreamLabel(); }} className="h-9 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30">إضافة</Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
 
                   {messages.some(m => m.status === 'error' || m.status === 'pending') && (
@@ -6174,31 +6201,15 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                                         ))
 
-                                      )}
+)}
 
-                                    </div>
 
-                                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
 
-                                      <Input
 
-                                        value={newCapabilityText}
-
-                                        onChange={(e) => setNewCapabilityText(e.target.value)}
-
-                                        placeholder="إضافة إمكانية..."
-
-                                        className="flex-1 h-8 text-xs bg-white/5 border-white/10 text-white placeholder:text-white/30"
-
-                                        onKeyDown={(e) => {
-
-                                          if (e.key === 'Enter') {
-
-                                            e.preventDefault();
-
-                                            handleAddCapability();
-
-                                          }
+</>
+    </>
+  );
+}
 
                                         }}
 
@@ -6528,158 +6539,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
         </DialogContent>
 
-      </Dialog>
-
-
-
-      {/* Reality Notes Dialog */}
-
-      {showRealityDialog && (
-
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }}>
-
-          <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
-
-            <h3 className="text-lg font-semibold text-green-300">🌍 حدث في الواقع</h3>
-
-            <Input
-
-              type="date"
-
-              value={realityDate}
-
-              onChange={(e) => setRealityDate(e.target.value)}
-
-              className="bg-white/5 border-white/10 text-white"
-
-            />
-
-            <Textarea
-
-              value={realityNotes}
-
-              onChange={(e) => setRealityNotes(e.target.value)}
-
-              placeholder="اكتب ملاحظاتك عن الحدث..."
-
-              className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30"
-
-              autoFocus
-
-            />
-
-            <div className="flex gap-2 justify-end">
-
-              <Button
-
-                variant="ghost"
-
-                onClick={() => { setShowRealityDialog(false); setRealityNotes(''); setRealityDate(new Date().toISOString().split('T')[0]); }}
-
-                className="h-9 text-xs text-white/50 hover:text-white"
-
-              >
-
-                إلغاء
-
-              </Button>
-
-              <Button
-
-                onClick={() => { setShowRealityDialog(false); insertRealityLabel(); }}
-
-                className="h-9 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30"
-
-              >
-
-                إضافة
-
-              </Button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-
-      {/* Dream Notes Dialog */}
-
-      {showDreamDialog && (
-
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }}>
-
-          <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
-
-            <h3 className="text-lg font-semibold text-purple-300">🌙 حلم</h3>
-
-            <Input
-
-              type="date"
-
-              value={dreamDate}
-
-              onChange={(e) => setDreamDate(e.target.value)}
-
-              className="bg-white/5 border-white/10 text-white"
-
-            />
-
-            <Textarea
-
-              value={dreamNotes}
-
-              onChange={(e) => setDreamNotes(e.target.value)}
-
-              placeholder="اكتب ملاحظاتك عن الحلم..."
-
-              className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-white/30"
-
-              autoFocus
-
-            />
-
-            <div className="flex gap-2 justify-end">
-
-              <Button
-
-                variant="ghost"
-
-                onClick={() => { setShowDreamDialog(false); setDreamNotes(''); setDreamDate(new Date().toISOString().split('T')[0]); }}
-
-                className="h-9 text-xs text-white/50 hover:text-white"
-
-              >
-
-                إلغاء
-
-              </Button>
-
-              <Button
-
-                onClick={() => { setShowDreamDialog(false); insertDreamLabel(); }}
-
-                className="h-9 text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30"
-
-              >
-
-                إضافة
-
-              </Button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
+</Dialog>
     </>
-
   );
-
 }
