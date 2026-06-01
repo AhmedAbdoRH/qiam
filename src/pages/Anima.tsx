@@ -1173,6 +1173,43 @@ const Anima = () => {
             </SheetFooter>
           </SheetContent>
         </Sheet>
+
+        {/* Ahmed Card Sheets */}
+        <Sheet open={!!ahmedSelectedCard && !isEditingAhmedCard} onOpenChange={(open) => !open && setAhmedSelectedCard(null)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{ahmedSelectedCard?.emoji} {ahmedSelectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
+              setEditingAhmedCard({ ...ahmedSelectedCard! });
+              setIsEditingAhmedCard(true);
+            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
+            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{ahmedSelectedCard?.description}</div>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet open={isEditingAhmedCard} onOpenChange={(open) => !open && setIsEditingAhmedCard(false)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
+            <div className="px-6 py-6 space-y-4">
+              <Input value={editingAhmedCard?.title || ''} onChange={(e) => setEditingAhmedCard({ ...editingAhmedCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
+              <Textarea value={editingAhmedCard?.description || ''} onChange={(e) => setEditingAhmedCard({ ...editingAhmedCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
+            </div>
+            <SheetFooter className="px-6 pb-6 gap-3">
+              <Button variant="ghost" onClick={() => setIsEditingAhmedCard(false)} className="flex-1">إلغاء</Button>
+              <Button
+                onClick={() => {
+                  if (!editingAhmedCard) return;
+                  if (editingAhmedCard.id.startsWith('temp-')) {
+                    handleAddAhmedCard(editingAhmedCard);
+                  } else {
+                    handleUpdateAhmedCard(editingAhmedCard);
+                  }
+                }}
+                className="flex-1 bg-blue-500"
+              >
+                حفظ
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <style>{`
