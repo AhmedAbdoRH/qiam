@@ -172,6 +172,37 @@ const Anima = () => {
     enabled: !!user
   });
 
+  // Ahmed queries
+  const { data: ahmedCards = [] } = useQuery({
+    queryKey: ['ahmedPageCards', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('ahmed_page_cards' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return ((data || []) as any[]).map((c: any) => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
+
+  const { data: ahmedMessages = [] } = useQuery({
+    queryKey: ['ahmedMessages', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('ahmed_messages' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return ((data || []) as any[]).map((m: any) => ({ id: m.id, text: m.text, timestamp: new Date(m.created_at).getTime(), likes: m.likes }));
+    },
+    enabled: !!user
+  });
+
   // Sorted Tasks Logic (Lowest progress first)
   const sortedTasks = useMemo(() => {
     return [...localTasks].sort((a, b) => a.progress - b.progress);
