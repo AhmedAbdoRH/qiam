@@ -557,6 +557,62 @@ const Anima = () => {
   });
 
   const cardsToDisplay = localCards.length > 0 ? localCards : defaultCards;
+  const ahmedCardsToDisplay = ahmedCards.length > 0 ? ahmedCards : defaultCards;
+
+  // Ahmed handlers
+  const handleAddAhmedCard = async (card: AnimaCard) => {
+    if (!user) return;
+    const { error } = await supabase.from('ahmed_page_cards' as any).insert({
+      user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: ahmedCards.length
+    });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    setIsEditingAhmedCard(false);
+    setEditingAhmedCard(null);
+    toast.success('تمت إضافة البطاقة');
+  };
+
+  const handleUpdateAhmedCard = async (card: AnimaCard) => {
+    if (!user) return;
+    await supabase.from('ahmed_page_cards' as any).update({
+      title: card.title, description: card.description, emoji: card.emoji
+    }).eq('id', card.id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    setIsEditingAhmedCard(false);
+    setAhmedSelectedCard(null);
+    toast.success('تم تحديث البطاقة');
+  };
+
+  const handleDeleteAhmedCard = async (id: string) => {
+    if (!user) return;
+    await supabase.from('ahmed_page_cards' as any).delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    toast.success('تم حذف البطاقة');
+  };
+
+  const handleAddAhmedMessage = async () => {
+    if (!newAhmedMessage.trim() || !user) return;
+    const { error } = await supabase.from('ahmed_messages' as any).insert({ user_id: user.id, text: newAhmedMessage.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+    setNewAhmedMessage("");
+    toast.success('تمت إضافة الرسالة');
+  };
+
+  const handleToggleAhmedLike = async (id: string) => {
+    if (!user) return;
+    const msg = ahmedMessages.find((m: any) => m.id === id);
+    if (!msg) return;
+    await supabase.from('ahmed_messages' as any).update({ likes: msg.likes + 1 }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+  };
+
+  const handleDeleteAhmedMessage = async (id: string) => {
+    if (!user) return;
+    await supabase.from('ahmed_messages' as any).delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+    toast.success('تم حذف الرسالة');
+  };
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
