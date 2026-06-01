@@ -803,65 +803,7 @@ const Anima = () => {
 
           {/* Calendar Section moved to /behavioral page */}
 
-          {/* Treatment Section - التذكية - الشفاء */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">التذكية - الشفاء</h2>
-              </div>
-              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{task.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[task.progress]}
-                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {((task as any).tags || []).map((tag: string, idx: number) => (
-                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('task', task.id, idx)}>
-                        {tag}
-                      </span>
-                    ))}
-                    {tagTarget?.type === 'task' && tagTarget.id === task.id ? (
-                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('task', task.id, newTag); }} className="flex gap-1">
-                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
-                        <button type="submit" className="text-[10px] text-blue-300 hover:text-blue-200">+</button>
-                      </form>
-                    ) : (
-                      <button onClick={() => setTagTarget({ type: 'task', id: task.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
-                        + سمة
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {localTasks.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
-              )}
-            </div>
-          </div>
+          {/* Treatment Section removed */}
 
           {/* Wishes Section - أمنيات الانيما من احمد */}
           <div className="mb-8 w-full">
