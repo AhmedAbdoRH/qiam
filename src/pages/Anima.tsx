@@ -877,6 +877,112 @@ const Anima = () => {
             </div>
           )}
 
+          {/* ===== Separator between Anima (upper) and Ahmed (lower) ===== */}
+          <div className="my-10 w-full flex items-center gap-3" aria-hidden>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-blue-300/70">احمد</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+          </div>
+
+          {/* Ahmed Cards Section */}
+          <div className="relative mb-8">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <button onClick={() => {
+                setEditingAhmedCard({ id: `temp-${Date.now()}`, emoji: "🛡️", title: "بطاقة جديدة", description: "", order_index: ahmedCardsToDisplay.length });
+                setIsEditingAhmedCard(true);
+              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {ahmedCardsToDisplay.map((item) => (
+                <div key={item.id} className="group relative">
+                  <button
+                    onClick={() => {
+                      setAhmedSelectedCard(item);
+                      setEditingAhmedCard({ ...item });
+                      setIsEditingAhmedCard(true);
+                    }}
+                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-400/30 transition-all text-center anima-float-card"
+                  >
+                    <h3 className="text-[13px] font-medium text-blue-100/90">{item.title}</h3>
+                  </button>
+                  {ahmedCards.find((c: any) => c.id === item.id) && (
+                    <button
+                      onClick={() => handleDeleteAhmedCard(item.id)}
+                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ahmed Messages Section */}
+          <div className="mb-6 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-medium text-blue-200/80">رسائل من احمد</h3>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+              {ahmedMessages.length > 0 ? (
+                ahmedMessages.map((msg: any) => (
+                  <div key={msg.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-blue-400/30 transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleToggleAhmedLike(msg.id)}
+                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-blue-400 bg-blue-500/10" : "text-white/20 hover:text-blue-400"}`}
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
+                          <span className="text-[10px] font-medium">{msg.likes}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAhmedMessage(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-3 text-xs text-white/20">لا توجد رسائل حالياً</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <textarea
+                value={newAhmedMessage}
+                onChange={(e) => setNewAhmedMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddAhmedMessage();
+                  }
+                }}
+                placeholder="اكتب رسالة من احمد..."
+                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
+                rows={2}
+              />
+              <button
+                onClick={handleAddAhmedMessage}
+                disabled={!newAhmedMessage.trim()}
+                className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+
           {/* امنيات احمد من الانيما */}
           <div className="mb-8 w-full">
             <div className="flex items-center justify-between mb-4 px-1">
