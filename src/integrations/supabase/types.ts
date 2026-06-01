@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      ahmed_messages: {
+        Row: {
+          created_at: string
+          id: string
+          likes: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          likes?: number
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          likes?: number
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ahmed_page_cards: {
+        Row: {
+          created_at: string
+          description: string
+          emoji: string
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          emoji?: string
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          emoji?: string
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anima_calendar: {
         Row: {
           created_at: string

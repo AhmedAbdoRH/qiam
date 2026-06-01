@@ -61,6 +61,12 @@ const Anima = () => {
   const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
   const [newSexualWish, setNewSexualWish] = useState("");
 
+  // Ahmed state
+  const [ahmedSelectedCard, setAhmedSelectedCard] = useState<AnimaCard | null>(null);
+  const [isEditingAhmedCard, setIsEditingAhmedCard] = useState(false);
+  const [editingAhmedCard, setEditingAhmedCard] = useState<AnimaCard | null>(null);
+  const [newAhmedMessage, setNewAhmedMessage] = useState("");
+
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -162,6 +168,37 @@ const Anima = () => {
         .order('order_index', { ascending: true });
       if (error) throw error;
       return (data || []).map(c => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
+
+  // Ahmed queries
+  const { data: ahmedCards = [] } = useQuery({
+    queryKey: ['ahmedPageCards', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('ahmed_page_cards' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return ((data || []) as any[]).map((c: any) => ({ id: c.id, title: c.title, description: c.description, emoji: c.emoji, order_index: c.order_index }));
+    },
+    enabled: !!user
+  });
+
+  const { data: ahmedMessages = [] } = useQuery({
+    queryKey: ['ahmedMessages', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('ahmed_messages' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return ((data || []) as any[]).map((m: any) => ({ id: m.id, text: m.text, timestamp: new Date(m.created_at).getTime(), likes: m.likes }));
     },
     enabled: !!user
   });
@@ -520,6 +557,62 @@ const Anima = () => {
   });
 
   const cardsToDisplay = localCards.length > 0 ? localCards : defaultCards;
+  const ahmedCardsToDisplay = ahmedCards.length > 0 ? ahmedCards : defaultCards;
+
+  // Ahmed handlers
+  const handleAddAhmedCard = async (card: AnimaCard) => {
+    if (!user) return;
+    const { error } = await supabase.from('ahmed_page_cards' as any).insert({
+      user_id: user.id, title: card.title, description: card.description, emoji: card.emoji, order_index: ahmedCards.length
+    });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    setIsEditingAhmedCard(false);
+    setEditingAhmedCard(null);
+    toast.success('تمت إضافة البطاقة');
+  };
+
+  const handleUpdateAhmedCard = async (card: AnimaCard) => {
+    if (!user) return;
+    await supabase.from('ahmed_page_cards' as any).update({
+      title: card.title, description: card.description, emoji: card.emoji
+    }).eq('id', card.id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    setIsEditingAhmedCard(false);
+    setAhmedSelectedCard(null);
+    toast.success('تم تحديث البطاقة');
+  };
+
+  const handleDeleteAhmedCard = async (id: string) => {
+    if (!user) return;
+    await supabase.from('ahmed_page_cards' as any).delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedPageCards', user.id] });
+    toast.success('تم حذف البطاقة');
+  };
+
+  const handleAddAhmedMessage = async () => {
+    if (!newAhmedMessage.trim() || !user) return;
+    const { error } = await supabase.from('ahmed_messages' as any).insert({ user_id: user.id, text: newAhmedMessage.trim() });
+    if (error) { toast.error('خطأ'); return; }
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+    setNewAhmedMessage("");
+    toast.success('تمت إضافة الرسالة');
+  };
+
+  const handleToggleAhmedLike = async (id: string) => {
+    if (!user) return;
+    const msg = ahmedMessages.find((m: any) => m.id === id);
+    if (!msg) return;
+    await supabase.from('ahmed_messages' as any).update({ likes: msg.likes + 1 }).eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+  };
+
+  const handleDeleteAhmedMessage = async (id: string) => {
+    if (!user) return;
+    await supabase.from('ahmed_messages' as any).delete().eq('id', id).eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['ahmedMessages', user.id] });
+    toast.success('تم حذف الرسالة');
+  };
 
   useEffect(() => {
     if (ratingData && 'balance_rating' in ratingData) {
@@ -710,65 +803,7 @@ const Anima = () => {
 
           {/* Calendar Section moved to /behavioral page */}
 
-          {/* Treatment Section - التذكية - الشفاء */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-blue-100">التذكية - الشفاء</h2>
-              </div>
-              <button onClick={() => setIsAddingTask(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <div key={task.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${task.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{task.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{task.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteTask(task.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[task.progress]}
-                    onValueChange={(val) => handleUpdateTaskProgress(task.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {((task as any).tags || []).map((tag: string, idx: number) => (
-                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 transition-all" onClick={() => handleDeleteTag('task', task.id, idx)}>
-                        {tag}
-                      </span>
-                    ))}
-                    {tagTarget?.type === 'task' && tagTarget.id === task.id ? (
-                      <form onSubmit={(e) => { e.preventDefault(); handleAddTag('task', task.id, newTag); }} className="flex gap-1">
-                        <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none" autoFocus />
-                        <button type="submit" className="text-[10px] text-blue-300 hover:text-blue-200">+</button>
-                      </form>
-                    ) : (
-                      <button onClick={() => setTagTarget({ type: 'task', id: task.id })} className="text-[10px] px-2 py-0.5 rounded-md border border-dashed border-white/10 text-white/30 hover:text-white/50 hover:border-white/20 transition-all">
-                        + سمة
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {localTasks.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد مهام نشطة حالياً</p>
-              )}
-            </div>
-          </div>
+          {/* Treatment Section removed */}
 
           {/* Wishes Section - أمنيات الانيما من احمد */}
           <div className="mb-8 w-full">
@@ -841,6 +876,112 @@ const Anima = () => {
               </div>
             </div>
           )}
+
+          {/* ===== Separator between Anima (upper) and Ahmed (lower) ===== */}
+          <div className="my-10 w-full flex items-center gap-3" aria-hidden>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-blue-300/70">احمد</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+          </div>
+
+          {/* Ahmed Cards Section */}
+          <div className="relative mb-8">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <button onClick={() => {
+                setEditingAhmedCard({ id: `temp-${Date.now()}`, emoji: "🛡️", title: "بطاقة جديدة", description: "", order_index: ahmedCardsToDisplay.length });
+                setIsEditingAhmedCard(true);
+              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {ahmedCardsToDisplay.map((item) => (
+                <div key={item.id} className="group relative">
+                  <button
+                    onClick={() => {
+                      setAhmedSelectedCard(item);
+                      setEditingAhmedCard({ ...item });
+                      setIsEditingAhmedCard(true);
+                    }}
+                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-400/30 transition-all text-center anima-float-card"
+                  >
+                    <h3 className="text-[13px] font-medium text-blue-100/90">{item.title}</h3>
+                  </button>
+                  {ahmedCards.find((c: any) => c.id === item.id) && (
+                    <button
+                      onClick={() => handleDeleteAhmedCard(item.id)}
+                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ahmed Messages Section */}
+          <div className="mb-6 w-full">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-medium text-blue-200/80">رسائل من احمد</h3>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+              {ahmedMessages.length > 0 ? (
+                ahmedMessages.map((msg: any) => (
+                  <div key={msg.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-blue-400/30 transition-all">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleToggleAhmedLike(msg.id)}
+                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-blue-400 bg-blue-500/10" : "text-white/20 hover:text-blue-400"}`}
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
+                          <span className="text-[10px] font-medium">{msg.likes}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAhmedMessage(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-3 text-xs text-white/20">لا توجد رسائل حالياً</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <textarea
+                value={newAhmedMessage}
+                onChange={(e) => setNewAhmedMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddAhmedMessage();
+                  }
+                }}
+                placeholder="اكتب رسالة من احمد..."
+                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
+                rows={2}
+              />
+              <button
+                onClick={handleAddAhmedMessage}
+                disabled={!newAhmedMessage.trim()}
+                className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
 
           {/* امنيات احمد من الانيما */}
           <div className="mb-8 w-full">
@@ -1026,6 +1167,43 @@ const Anima = () => {
                   }
                 }}
                 className="flex-1 bg-pink-500"
+              >
+                حفظ
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        {/* Ahmed Card Sheets */}
+        <Sheet open={!!ahmedSelectedCard && !isEditingAhmedCard} onOpenChange={(open) => !open && setAhmedSelectedCard(null)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><div className="flex items-center justify-between"><SheetTitle>{ahmedSelectedCard?.emoji} {ahmedSelectedCard?.title}</SheetTitle><Button variant="ghost" size="icon" onClick={() => {
+              setEditingAhmedCard({ ...ahmedSelectedCard! });
+              setIsEditingAhmedCard(true);
+            }}><Edit2 className="w-5 h-5" /></Button></div></SheetHeader>
+            <div className="px-6 py-6 text-right text-white/80 text-sm leading-relaxed">{ahmedSelectedCard?.description}</div>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet open={isEditingAhmedCard} onOpenChange={(open) => !open && setIsEditingAhmedCard(false)}>
+          <SheetContent side="bottom" className="rounded-t-3xl bg-black/95 border-t border-white/10">
+            <SheetHeader className="text-right px-6 pt-6"><SheetTitle>تعديل البطاقة</SheetTitle></SheetHeader>
+            <div className="px-6 py-6 space-y-4">
+              <Input value={editingAhmedCard?.title || ''} onChange={(e) => setEditingAhmedCard({ ...editingAhmedCard!, title: e.target.value })} placeholder="العنوان" className="bg-white/10 text-right" dir="rtl" />
+              <Textarea value={editingAhmedCard?.description || ''} onChange={(e) => setEditingAhmedCard({ ...editingAhmedCard!, description: e.target.value })} placeholder="الوصف" className="bg-white/10 text-right resize-none" dir="rtl" />
+            </div>
+            <SheetFooter className="px-6 pb-6 gap-3">
+              <Button variant="ghost" onClick={() => setIsEditingAhmedCard(false)} className="flex-1">إلغاء</Button>
+              <Button
+                onClick={() => {
+                  if (!editingAhmedCard) return;
+                  if (editingAhmedCard.id.startsWith('temp-')) {
+                    handleAddAhmedCard(editingAhmedCard);
+                  } else {
+                    handleUpdateAhmedCard(editingAhmedCard);
+                  }
+                }}
+                className="flex-1 bg-blue-500"
               >
                 حفظ
               </Button>
