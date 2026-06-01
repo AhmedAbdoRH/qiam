@@ -61,6 +61,12 @@ const Anima = () => {
   const [isAddingSexualWish, setIsAddingSexualWish] = useState(false);
   const [newSexualWish, setNewSexualWish] = useState("");
 
+  // Ahmed state
+  const [ahmedSelectedCard, setAhmedSelectedCard] = useState<AnimaCard | null>(null);
+  const [isEditingAhmedCard, setIsEditingAhmedCard] = useState(false);
+  const [editingAhmedCard, setEditingAhmedCard] = useState<AnimaCard | null>(null);
+  const [newAhmedMessage, setNewAhmedMessage] = useState("");
+
   // Tasks State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
