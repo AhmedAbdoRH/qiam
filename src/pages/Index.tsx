@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
 import { downloadComprehensiveReport } from "@/utils/reportGenerator";
+import Anima from "./Anima";
+import { MASCULINE_VALUE_NAMES } from "./Behavioral";
+
+const HIDDEN_VALUE_NAMES = new Set(MASCULINE_VALUE_NAMES);
+
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
