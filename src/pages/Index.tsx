@@ -269,11 +269,13 @@ const Index = () => {
   );
 
   const sortedValues = useMemo(() => {
-    const allValues = VALUES.map((valueName, index) => ({
-      index,
-      valueName,
-      valueData: getValueData(index.toString()),
-    }));
+    const allValues = VALUES
+      .map((valueName, index) => ({
+        index,
+        valueName,
+        valueData: getValueData(index.toString()),
+      }))
+      .filter(({ valueName }) => !HIDDEN_VALUE_NAMES.has(valueName));
 
     const pinned = allValues.filter(v => pinnedValues.has(v.index.toString()));
     const unpinned = allValues.filter(v => !pinnedValues.has(v.index.toString()));
