@@ -1,200 +1,135 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ValueCard } from "@/components/ValueCard";
-import { TaskSheet } from "@/components/TaskSheet";
-import { CalendarTaskList } from "@/components/CalendarTaskList";
+import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
-import { ValueData } from "@/types/value";
-import { BEHAVIORAL_VALUES } from "@/types/behavioralValue";
+import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { LogOut, Download } from "lucide-react";
-import { downloadComprehensiveReport } from "@/utils/reportGenerator";
 
-interface SubTask {
-  id: string;
-  name: string;
-  progress: number;
-}
+// 20 masculine sovereign values displayed on this page (sourced from spiritual_values)
+export const MASCULINE_VALUE_NAMES = [
+  "القوة",
+  "الهيمنة",
+  "القهارية",
+  "العظمة",
+  "العزة",
+  "القدر",
+  "الولاية",
+  "الملك",
+  "الجبر",
+  "المتانة",
+  "الحكمة",
+  "الرزق",
+  "العلو",
+  "التعالي",
+  "الواحدية",
+  "الكبر",
+  "الصمدية",
+  "السمع",
+  "البصر",
+  "القداسة",
+];
 
-interface Behavior {
-  id: string;
-  name: string;
-  progress: number;
-  subTasks?: SubTask[];
-}
+const MASCULINE_VALUE_IDS = MASCULINE_VALUE_NAMES.map((name) =>
+  VALUES.findIndex((v) => v === name).toString()
+).filter((id) => id !== "-1");
 
 const Behavioral = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
-  const [selectedBehavioralValueForTasks, setSelectedBehavioralValueForTasks] = useState<string | null>(null);
-  const [behaviorsByValue, setBehaviorsByValue] = useState<Record<string, Behavior[]>>({});
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [monologueOpen, setMonologueOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!loading && !user) navigate("/auth");
+  }, [user, loading, navigate]);
+
   const getValueData = useCallback((valueId: string): ValueData => {
-    if (valuesData[valueId]) {
-      return valuesData[valueId];
-    }
-    
+    if (valuesData[valueId]) return valuesData[valueId];
     const valueIndex = parseInt(valueId);
-    const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < BEHAVIORAL_VALUES.length 
-      ? BEHAVIORAL_VALUES[valueIndex] 
-      : "Unknown Value";
-    
+    const valueName = VALUES[valueIndex] || "Unknown Value";
     return {
       id: valueId,
       name: valueName,
       selectedFeelings: [],
+      feelingNotes: {},
       positiveFeelings: [],
       positiveFeelingDates: {},
-      feelingNotes: {},
       notes: "",
-      balancePercentage: 50,
+      balancePercentage: DEFAULT_BALANCE_PERCENTAGES[valueName] || 50,
       isPinned: false,
     };
   }, [valuesData]);
-  
-  // Pinned values - loaded from database
+
   const pinnedValues = useMemo(() => {
     const pinned = new Set<string>();
-    Object.values(valuesData).forEach(value => {
-      if (value.isPinned) {
-        pinned.add(value.name);
-      }
+    Object.values(valuesData).forEach((v) => {
+      if (v.isPinned) pinned.add(v.id);
     });
     return pinned;
   }, [valuesData]);
-  
-  const togglePin = useCallback(async (valueName: string) => {
-    if (!user) return;
-    
-    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === valueName);
-    if (valueIndex === -1) return;
-    
-    const valueId = valueIndex.toString();
-    const currentValue = getValueData(valueId);
-    const newPinnedState = !currentValue.isPinned;
-    
-    // Update local state immediately
-    setValuesData(prev => ({
-      ...prev,
-      [valueId]: {
-        ...prev[valueId],
-        isPinned: newPinnedState,
-      },
-    }));
-    
-    // Update database
-    try {
-      await supabase
-        .from("behavioral_values")
-        .upsert({
-          user_id: user.id,
-          value_id: valueId,
-          value_name: valueName,
-          selected_feelings: currentValue.selectedFeelings,
-          positive_feelings: currentValue.positiveFeelings || [],
-          positive_feeling_dates: currentValue.positiveFeelingDates || {},
-          feeling_notes: currentValue.feelingNotes,
-          notes: currentValue.notes,
-          balance_percentage: currentValue.balancePercentage,
-          is_pinned: newPinnedState,
-        }, { onConflict: 'user_id,value_id' });
-    } catch (error) {
-      console.error("Error updating pin status:", error);
-      // Revert on error
-      setValuesData(prev => ({
-        ...prev,
-        [valueId]: {
-          ...prev[valueId],
-          isPinned: !newPinnedState,
-        },
-      }));
-    }
-  }, [user, getValueData]);
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
 
   const loadValuesData = useCallback(async () => {
     if (!user) return;
-    
     try {
       const { data, error } = await supabase
-        .from("behavioral_values")
+        .from("spiritual_values")
         .select("*")
-        .eq("user_id", user.id);
-
+        .eq("user_id", user.id)
+        .in("value_id", MASCULINE_VALUE_IDS);
       if (error) throw error;
-
       if (data) {
-        const formattedData: Record<string, ValueData> = {};
-        const formattedBehaviors: Record<string, Behavior[]> = {};
-        
+        const formatted: Record<string, ValueData> = {};
         data.forEach((item) => {
-          const selectedFeelings = Array.isArray(item.selected_feelings)
-            ? (item.selected_feelings as string[])
-            : [];
-          
-          const feelingNotes = 
-            item.feeling_notes && 
-            typeof item.feeling_notes === "object" && 
-            !Array.isArray(item.feeling_notes)
-              ? (item.feeling_notes as Record<string, string>)
-              : {};
-
-          const positiveFeelings = Array.isArray(item.positive_feelings)
-            ? (item.positive_feelings as string[])
-            : [];
-
-          const positiveFeelingDates = 
-            item.positive_feeling_dates && 
-            typeof item.positive_feeling_dates === "object" && 
-            !Array.isArray(item.positive_feeling_dates)
-              ? (item.positive_feeling_dates as Record<string, string>)
-              : {};
-
-          const behaviors = Array.isArray(item.behaviors)
-            ? (item.behaviors as unknown as Behavior[])
-            : [];
-
-          formattedData[item.value_id] = {
+          if (!item.value_id) return;
+          const idx = parseInt(item.value_id);
+          formatted[item.value_id] = {
             id: item.value_id,
-            name: BEHAVIORAL_VALUES[parseInt(item.value_id)],
-            selectedFeelings,
-            positiveFeelings,
-            positiveFeelingDates,
-            feelingNotes,
+            name: VALUES[idx] || "Unknown",
+            selectedFeelings: Array.isArray(item.selected_feelings) ? (item.selected_feelings as string[]) : [],
+            feelingNotes: (item.feeling_notes && typeof item.feeling_notes === "object" && !Array.isArray(item.feeling_notes)) ? item.feeling_notes as Record<string, string> : {},
+            positiveFeelings: Array.isArray(item.positive_feelings) ? (item.positive_feelings as string[]) : [],
+            positiveFeelingDates: (item.positive_feeling_dates && typeof item.positive_feeling_dates === "object" && !Array.isArray(item.positive_feeling_dates)) ? item.positive_feeling_dates as Record<string, string> : {},
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
-          
-          formattedBehaviors[item.value_id] = behaviors;
         });
-        setValuesData(formattedData);
-        setBehaviorsByValue(formattedBehaviors);
+        setValuesData(formatted);
       }
-    } catch (error) {
-      console.error("Error loading values:", error);
+    } catch (e) {
+      console.error("Error loading masculine values:", e);
     } finally {
       setDataLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-      loadValuesData();
-    }
+    if (user) loadValuesData();
   }, [user, loadValuesData]);
+
+  const togglePin = useCallback(async (valueId: string) => {
+    if (!user) return;
+    const current = getValueData(valueId);
+    const newPinned = !current.isPinned;
+    setValuesData((prev) => ({ ...prev, [valueId]: { ...current, isPinned: newPinned } }));
+    await supabase.from("spiritual_values").upsert({
+      user_id: user.id,
+      value_id: valueId,
+      value_name: current.name,
+      selected_feelings: current.selectedFeelings,
+      positive_feelings: current.positiveFeelings || [],
+      positive_feeling_dates: current.positiveFeelingDates || {},
+      feeling_notes: current.feelingNotes,
+      notes: current.notes,
+      balance_percentage: current.balancePercentage,
+      is_pinned: newPinned,
+    }, { onConflict: "user_id,value_id" });
+  }, [user, getValueData]);
 
   const handleValueUpdate = useCallback(async (
     valueId: string,
@@ -205,124 +140,41 @@ const Behavioral = () => {
     notes: string,
     balancePercentage: number
   ) => {
-    const currentValue = getValueData(valueId);
-    const newValueData = {
-      id: valueId,
-      name: BEHAVIORAL_VALUES[parseInt(valueId)],
-      selectedFeelings,
-      positiveFeelings,
-      positiveFeelingDates,
-      feelingNotes,
-      notes,
-      balancePercentage,
-      isPinned: currentValue.isPinned || false,
-    };
-
-    setValuesData(prev => ({
+    const idx = parseInt(valueId);
+    const valueName = VALUES[idx] || "Unknown";
+    const currentPinned = valuesData[valueId]?.isPinned || false;
+    setValuesData((prev) => ({
       ...prev,
-      [valueId]: newValueData,
+      [valueId]: { id: valueId, name: valueName, selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, isPinned: currentPinned },
     }));
-
     if (!user) return;
-    
-    try {
-      await supabase
-        .from("behavioral_values")
-        .upsert({
-          user_id: user.id,
-          value_id: valueId,
-          value_name: BEHAVIORAL_VALUES[parseInt(valueId)],
-          selected_feelings: selectedFeelings,
-          positive_feelings: positiveFeelings || [],
-          positive_feeling_dates: positiveFeelingDates || {},
-          feeling_notes: feelingNotes,
-          notes: notes,
-          balance_percentage: balancePercentage,
-          is_pinned: currentValue.isPinned || false,
-        }, { onConflict: 'user_id,value_id' });
-    } catch (error) {
-      console.error("Unexpected error during Supabase upsert:", error);
-    }
-  }, [user, getValueData]);
-
-  const handleUpdateBehaviors = useCallback(async (updatedBehaviors: Behavior[]) => {
-    if (!selectedBehavioralValueForTasks || !user) return;
-    
-    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
-    if (valueIndex === -1) return;
-    
-    const valueId = valueIndex.toString();
-    
-    setBehaviorsByValue(prev => ({
-      ...prev,
-      [valueId]: updatedBehaviors,
-    }));
-    
-    try {
-      await supabase
-        .from("behavioral_values")
-        .upsert(
-          {
-            user_id: user.id,
-            value_id: valueId,
-            value_name: BEHAVIORAL_VALUES[valueIndex],
-            behaviors: updatedBehaviors as any,
-          },
-          { onConflict: 'user_id,value_id' }
-        );
-    } catch (error) {
-      console.error("Unexpected error saving behaviors:", error);
-    }
-  }, [selectedBehavioralValueForTasks, user]);
-
-  const handleUpdateOverallBalancePercentage = useCallback((newPercentage: number) => {
-    if (selectedBehavioralValueForTasks) {
-      const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
-      if (valueIndex !== -1) {
-        const valueId = valueIndex.toString();
-        const currentData = getValueData(valueId);
-        handleValueUpdate(
-          valueId,
-          currentData.selectedFeelings,
-          currentData.positiveFeelings || [],
-          currentData.positiveFeelingDates || {},
-          currentData.feelingNotes,
-          currentData.notes,
-          newPercentage
-        );
-      }
-    }
-  }, [selectedBehavioralValueForTasks, getValueData, handleValueUpdate]);
-
-  const handleDownloadReport = useCallback(async () => {
-    if (user) {
-      await downloadComprehensiveReport(user.id, user.email || undefined);
-    }
-  }, [user]);
-
-  const currentOverallBalancePercentage = useMemo(() => {
-    if (!selectedBehavioralValueForTasks) return 100;
-    const valueIndex = BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks);
-    if (valueIndex === -1) return 100;
-    const valueId = valueIndex.toString();
-    return getValueData(valueId).balancePercentage;
-  }, [selectedBehavioralValueForTasks, getValueData]);
+    await supabase.from("spiritual_values").upsert({
+      user_id: user.id,
+      value_id: valueId,
+      value_name: valueName,
+      selected_feelings: selectedFeelings,
+      positive_feelings: positiveFeelings || [],
+      positive_feeling_dates: positiveFeelingDates || {},
+      feeling_notes: feelingNotes,
+      notes,
+      balance_percentage: balancePercentage,
+      is_pinned: currentPinned,
+    }, { onConflict: "user_id,value_id" });
+  }, [user, valuesData]);
 
   const sortedValues = useMemo(() => {
-    const allValues = BEHAVIORAL_VALUES.map((valueName, index) => ({
-      index,
-      valueName,
-      valueData: getValueData(index.toString()),
+    const all = MASCULINE_VALUE_IDS.map((id) => ({
+      id,
+      valueName: VALUES[parseInt(id)],
+      valueData: getValueData(id),
     }));
-    
-    const pinned = allValues.filter(v => pinnedValues.has(v.valueName));
-    const unpinned = allValues.filter(v => !pinnedValues.has(v.valueName));
-    
-    const sortByProgress = (arr: typeof allValues) => 
-      [...arr].sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage);
-    
-    return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
+    const pinned = all.filter((v) => pinnedValues.has(v.id));
+    const unpinned = all.filter((v) => !pinnedValues.has(v.id));
+    const byProgress = (arr: typeof all) => [...arr].sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage);
+    return [...byProgress(pinned), ...byProgress(unpinned)];
   }, [getValueData, pinnedValues]);
+
+  const selectedValueData = selectedValue ? getValueData(selectedValue) : null;
 
   if (loading || dataLoading) {
     return (
@@ -331,65 +183,48 @@ const Behavioral = () => {
       </div>
     );
   }
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        
-        <CalendarTaskList />
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
-          {sortedValues.map(({ index, valueName, valueData }) => (
+        <h1 className="text-center text-xl md:text-2xl font-bold text-foreground mb-6" dir="rtl">
+          الذات السيادية الذكورية
+        </h1>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
+          {sortedValues.map(({ id, valueName, valueData }) => (
             <ValueCard
-              key={index}
+              key={id}
               name={valueName}
               balancePercentage={valueData.balancePercentage}
-              onClick={() => setSelectedBehavioralValueForTasks(valueName)}
-              isPinned={pinnedValues.has(valueName)}
+              onClick={() => setSelectedValue(id)}
+              isPinned={pinnedValues.has(id)}
             />
           ))}
         </div>
       </div>
 
+      <div className="pb-32" />
 
+      {selectedValueData && (
+        <ValueSheet
+          isOpen={!!selectedValueData}
+          valueName={selectedValueData.name}
+          selectedFeelings={selectedValueData.selectedFeelings}
+          positiveFeelings={selectedValueData.positiveFeelings}
+          positiveFeelingDates={selectedValueData.positiveFeelingDates}
+          feelingNotes={selectedValueData.feelingNotes}
+          notes={selectedValueData.notes}
+          balancePercentage={selectedValueData.balancePercentage}
+          onClose={() => setSelectedValue(null)}
+          onUpdate={(sf, pf, pfd, fn, n, bp) => handleValueUpdate(selectedValueData.id, sf, pf, pfd, fn, n, bp)}
+          valueId={selectedValueData.id}
+          isPinned={pinnedValues.has(selectedValueData.id)}
+          onTogglePin={() => togglePin(selectedValueData.id)}
+        />
+      )}
 
-{/* Sign out button in footer */}
-      <div className="flex justify-center mt-8 pb-32">
-        <Button
-          onClick={handleDownloadReport}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" />
-          تحميل التقرير الشامل
-        </Button>
-      </div>
-
-      <TaskSheet
-        isOpen={!!selectedBehavioralValueForTasks}
-        onClose={() => setSelectedBehavioralValueForTasks(null)}
-        valueName={selectedBehavioralValueForTasks || ""}
-        behaviors={
-          selectedBehavioralValueForTasks
-            ? behaviorsByValue[BEHAVIORAL_VALUES.findIndex(v => v === selectedBehavioralValueForTasks).toString()] || []
-            : []
-        }
-        onUpdateBehaviors={handleUpdateBehaviors}
-        overallBalancePercentage={currentOverallBalancePercentage}
-        onUpdateOverallBalancePercentage={handleUpdateOverallBalancePercentage}
-        isPinned={selectedBehavioralValueForTasks ? pinnedValues.has(selectedBehavioralValueForTasks) : false}
-        onTogglePin={() => selectedBehavioralValueForTasks && togglePin(selectedBehavioralValueForTasks)}
-      />
-
-      {/* Self Dialogue Chat */}
       <SelfDialogueChat onLongPress={() => setMonologueOpen(true)} />
-
-      {/* مناجاة - triggered by long press */}
       <ChatWidget externalOpen={monologueOpen} onExternalClose={() => setMonologueOpen(false)} />
     </div>
   );
