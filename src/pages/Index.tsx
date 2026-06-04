@@ -314,7 +314,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-8 pb-32">
+      <div className="flex justify-center mt-8">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
@@ -325,6 +325,12 @@ const Index = () => {
           تحميل التقرير الشامل
         </Button>
       </div>
+
+      {/* محتوى الانيما مدمج تحت كروت الأنوثة */}
+      <div className="mt-12 border-t border-white/10 pt-8">
+        <Anima />
+      </div>
+
 
       {selectedValueData && (
         <ValueSheet
