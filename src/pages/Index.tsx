@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
 import { downloadComprehensiveReport } from "@/utils/reportGenerator";
+import Anima from "./Anima";
+import { MASCULINE_VALUE_NAMES } from "./Behavioral";
+
+const HIDDEN_VALUE_NAMES = new Set(MASCULINE_VALUE_NAMES);
+
 
 const Index = () => {
   const [valuesData, setValuesData] = useState<Record<string, ValueData>>({});
@@ -264,11 +269,13 @@ const Index = () => {
   );
 
   const sortedValues = useMemo(() => {
-    const allValues = VALUES.map((valueName, index) => ({
-      index,
-      valueName,
-      valueData: getValueData(index.toString()),
-    }));
+    const allValues = VALUES
+      .map((valueName, index) => ({
+        index,
+        valueName,
+        valueData: getValueData(index.toString()),
+      }))
+      .filter(({ valueName }) => !HIDDEN_VALUE_NAMES.has(valueName));
 
     const pinned = allValues.filter(v => pinnedValues.has(v.index.toString()));
     const unpinned = allValues.filter(v => !pinnedValues.has(v.index.toString()));
@@ -307,7 +314,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-8 pb-32">
+      <div className="flex justify-center mt-8">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
@@ -318,6 +325,12 @@ const Index = () => {
           تحميل التقرير الشامل
         </Button>
       </div>
+
+      {/* محتوى الانيما مدمج تحت كروت الأنوثة */}
+      <div className="mt-12 border-t border-white/10 pt-8">
+        <Anima />
+      </div>
+
 
       {selectedValueData && (
         <ValueSheet
