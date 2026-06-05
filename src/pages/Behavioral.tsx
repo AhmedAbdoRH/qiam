@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Sovereign from "./Sovereign";
 
-// 30 masculine sovereign values displayed on this page (sourced from spiritual_values)
+// 25 masculine sovereign values displayed on this page (sourced from spiritual_values)
 export const MASCULINE_VALUE_NAMES = [
   "القوة",
   "الهيمنة",
@@ -20,18 +20,13 @@ export const MASCULINE_VALUE_NAMES = [
   "القدر",
   "الولاية",
   "الملك",
-  "الجبر",
   "المتانة",
   "الحكمة",
   "الرزق",
-  "العلو",
   "التعالي",
   "الواحدية",
-  "الكبر",
   "الصمدية",
-  "السمع",
   "البصر",
-  "القداسة",
   "الظهور",
   "التكبر",
   "الخلق",
