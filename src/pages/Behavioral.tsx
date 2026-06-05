@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
@@ -50,6 +51,26 @@ const Behavioral = () => {
   const [monologueOpen, setMonologueOpen] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch calendar tasks data for progress bar
+  const { data: calendarItems = [] } = useQuery({
+    queryKey: ['animaCalendar', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('anima_calendar')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map((c: any) => ({ id: c.id, title: c.title, progress: Number(c.progress) }));
+    },
+    enabled: !!user
+  });
+
+  const calendarTasksProgress = useMemo(() => {
+    return calendarItems.map(item => Number(item.progress));
+  }, [calendarItems]);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -201,7 +222,7 @@ const Behavioral = () => {
 
         {/* شريط إجمالي التقدم */}
         <div className="mb-6 flex flex-col items-center justify-center">
-          <Sovereign embedded valuesData={valuesData} />
+          <Sovereign embedded calendarTasksProgress={calendarTasksProgress} />
         </div>
 
         {/* قائمة التذكيرية (Reminders List) */}

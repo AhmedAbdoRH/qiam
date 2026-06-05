@@ -7,6 +7,7 @@ import { VALUES } from "@/types/value";
 interface SovereignProps {
   embedded?: boolean;
   valuesData?: Record<string, { balancePercentage: number }>;
+  calendarTasksProgress?: number[];
 }
 
 // 25 masculine sovereign values
@@ -20,7 +21,7 @@ const MASCULINE_VALUE_IDS = MASCULINE_VALUE_NAMES.map((name) =>
   VALUES.findIndex((v) => v === name).toString()
 ).filter((id) => id !== "-1");
 
-const Sovereign = ({ embedded = false, valuesData }: SovereignProps) => {
+const Sovereign = ({ embedded = false, valuesData, calendarTasksProgress }: SovereignProps) => {
   const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [overallProgress, setOverallProgress] = useState(50);
@@ -29,8 +30,15 @@ const Sovereign = ({ embedded = false, valuesData }: SovereignProps) => {
     setMounted(true);
   }, []);
 
-  // Calculate overall progress from values data
+  // Calculate overall progress from calendar tasks or values data
   const progress = useMemo(() => {
+    // Priority: use calendar tasks progress if available
+    if (calendarTasksProgress && calendarTasksProgress.length > 0) {
+      const totalProgress = calendarTasksProgress.reduce((sum, p) => sum + p, 0);
+      return Math.round(totalProgress / calendarTasksProgress.length);
+    }
+    
+    // Fallback: use values data
     if (!valuesData || Object.keys(valuesData).length === 0) return 50;
     
     const values = Object.values(valuesData);
@@ -38,7 +46,7 @@ const Sovereign = ({ embedded = false, valuesData }: SovereignProps) => {
     
     const totalProgress = values.reduce((sum, v) => sum + (v.balancePercentage || 0), 0);
     return Math.round(totalProgress / values.length);
-  }, [valuesData]);
+  }, [valuesData, calendarTasksProgress]);
 
   useEffect(() => {
     setOverallProgress(progress);
