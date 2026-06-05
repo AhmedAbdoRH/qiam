@@ -34,7 +34,11 @@ const defaultCards: AnimaCard[] = [
   { id: "6", emoji: "", title: "رعاية حنون", description: "", order_index: 5 },
 ];
 
-const Anima = () => {
+interface AnimaProps {
+  embedded?: boolean;
+}
+
+const Anima = ({ embedded = false }: AnimaProps) => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
@@ -665,18 +669,18 @@ const Anima = () => {
   if (loading || !user) return null;
 
   return (
-    <div className="min-h-screen relative overflow-hidden" dir="rtl">
+    <div className={`${embedded ? 'min-h-0 overflow-visible' : 'min-h-screen overflow-hidden'} relative`} dir="rtl">
       <div className="fixed inset-0 anima-bg" />
       <div className="fixed top-1/4 right-1/4 w-64 h-64 rounded-full anima-orb anima-orb-pink" />
       <div className="fixed bottom-1/3 left-1/4 w-48 h-48 rounded-full anima-orb anima-orb-purple" />
       <div className="fixed top-1/2 left-1/2 w-32 h-32 rounded-full anima-orb anima-orb-rose" />
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
-        <div className={`max-w-sm w-full transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+      <div className={`relative z-10 flex flex-col items-center ${embedded ? 'justify-start min-h-0' : 'justify-center min-h-screen'} px-6 py-0`}>
+        <div className={`mx-auto max-w-sm w-full transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
 
           {/* Header */}
-          <div className="flex flex-col items-center mb-10">
-            <div className="relative mb-4">
+          <div className="flex flex-col items-center mb-0 -mt-6">
+            <div className="relative mb-0">
               <div className="absolute rounded-full" style={{
                 inset: `-${Math.round((qualityRating + pressDuration) * 4)}px`,
                 background: `radial-gradient(circle, rgba(236, 72, 153, ${0.08 + (qualityRating / 10) * 0.55 + pressDuration * 0.08}), transparent 70%)`,
@@ -685,15 +689,15 @@ const Anima = () => {
                 transition: 'all 0.1s ease',
               }} />
               <div
-                className="relative w-40 h-40 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
+                className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-400/30 to-purple-500/30 backdrop-blur-xl border border-pink-300/30 flex items-center justify-center anima-pulse cursor-pointer active:scale-95 transition-transform"
               >
-                <Heart className="h-20 w-20 text-pink-300 fill-pink-300/40 pointer-events-none" />
+                <Heart className="h-8 w-8 block text-pink-300 fill-pink-300/40 pointer-events-none" />
               </div>
             </div>
           </div>
 
           {/* Quality Slider */}
-          <div className="mb-6 pb-3 border-b border-white/10 w-full">
+          <div className="mt-4 mb-2 pb-3 border-b border-white/10 w-full">
             <Slider
               value={[qualityRating]}
               onValueChange={(val) => { setQualityRating(val[0]); updateQualityRatingMutation.mutate(val[0]); }}
@@ -703,9 +707,13 @@ const Anima = () => {
             />
           </div>
 
-          {/* Cards Section (صفات الانيما) */}
-          <div className="relative mb-8">
-            <div className="flex items-center justify-between mb-3 px-1">
+          {/* Cards Section (الشعور - صفات الانيما) */}
+          <div className="relative mb-4">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-pink-400 fill-pink-400/20" />
+                <h3 className="text-sm font-medium text-pink-200/80">الشعور</h3>
+              </div>
               <button onClick={() => {
                 setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
                 setIsEditingCard(true);
@@ -736,377 +744,6 @@ const Anima = () => {
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Messages Section */}
-          <div className="mb-6 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <h3 className="text-sm font-medium text-pink-200/80">رسائل من الانيما</h3>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-              {animaMessages.length > 0 ? (
-                animaMessages.map((msg) => (
-                  <div key={msg.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleLike(msg.id)}
-                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-pink-400 bg-pink-500/10" : "text-white/20 hover:text-pink-400"}`}
-                        >
-                          <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
-                          <span className="text-[10px] font-medium">{msg.likes}</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-3 text-xs text-white/20">لا توجد رسائل حالياً</p>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddMessage();
-                  }
-                }}
-                placeholder="اكتب رسالة من الأنيما..."
-                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                rows={2}
-              />
-              <button
-                onClick={handleAddMessage}
-                disabled={!newMessage.trim()}
-                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Calendar Section moved to /behavioral page */}
-
-          {/* Treatment Section removed */}
-
-          {/* Wishes Section - أمنيات الانيما من احمد */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-                <h2 className="text-lg font-bold text-pink-100">أمنيات الانيما من احمد</h2>
-              </div>
-              <button onClick={() => setIsAddingWish(true)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              {sortedWishes.map((wish) => (
-                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteLocalWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[wish.progress]}
-                    onValueChange={(val) => handleUpdateWishProgress(wish.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-pink-500 to-rose-400"
-                  />
-                </div>
-              ))}
-              {localWishes.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
-              )}
-            </div>
-          </div>
-
-          {/* Regular Wish Dialog */}
-          {isAddingWish && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingWish(false); }}>
-              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
-                <textarea
-                  value={newWish}
-                  onChange={(e) => setNewWish(e.target.value)}
-                  placeholder="اكتب الأمنية..."
-                  className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                  rows={3}
-                />
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => { handleAddLocalWish(newWish); setIsAddingWish(false); }}
-                    disabled={!newWish.trim()}
-                    className="flex-1 p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-                  >
-                    إضافة أمنية
-                  </button>
-                  <button
-                    onClick={() => setIsAddingWish(false)}
-                    className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Separator between Anima (upper) and Ahmed (lower) ===== */}
-          <div className="my-10 w-full flex items-center gap-3" aria-hidden>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-blue-300/70">احمد</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
-          </div>
-
-          {/* Ahmed Cards Section */}
-          <div className="relative mb-8">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <button onClick={() => {
-                setEditingAhmedCard({ id: `temp-${Date.now()}`, emoji: "🛡️", title: "بطاقة جديدة", description: "", order_index: ahmedCardsToDisplay.length });
-                setIsEditingAhmedCard(true);
-              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all">
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {ahmedCardsToDisplay.map((item) => (
-                <div key={item.id} className="group relative">
-                  <button
-                    onClick={() => {
-                      setAhmedSelectedCard(item);
-                      setEditingAhmedCard({ ...item });
-                      setIsEditingAhmedCard(true);
-                    }}
-                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-blue-400/30 transition-all text-center anima-float-card"
-                  >
-                    <h3 className="text-[13px] font-medium text-blue-100/90">{item.title}</h3>
-                  </button>
-                  {ahmedCards.find((c: any) => c.id === item.id) && (
-                    <button
-                      onClick={() => handleDeleteAhmedCard(item.id)}
-                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Ahmed Messages Section */}
-          <div className="mb-6 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-400" />
-                <h3 className="text-sm font-medium text-blue-200/80">رسائل من احمد</h3>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-              {ahmedMessages.length > 0 ? (
-                ahmedMessages.map((msg: any) => (
-                  <div key={msg.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-blue-400/30 transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{msg.text}</p>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleAhmedLike(msg.id)}
-                          className={`p-1 rounded transition-all flex items-center gap-0.5 ${msg.likes > 0 ? "text-blue-400 bg-blue-500/10" : "text-white/20 hover:text-blue-400"}`}
-                        >
-                          <Heart className={`w-3.5 h-3.5 ${msg.likes > 0 ? "fill-current" : ""}`} />
-                          <span className="text-[10px] font-medium">{msg.likes}</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAhmedMessage(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-3 text-xs text-white/20">لا توجد رسائل حالياً</p>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <textarea
-                value={newAhmedMessage}
-                onChange={(e) => setNewAhmedMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddAhmedMessage();
-                  }
-                }}
-                placeholder="اكتب رسالة من احمد..."
-                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
-                rows={2}
-              />
-              <button
-                onClick={handleAddAhmedMessage}
-                disabled={!newAhmedMessage.trim()}
-                className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-
-          {/* امنيات احمد من الانيما */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-blue-400 fill-blue-400/20" />
-                <h2 className="text-lg font-bold text-blue-100">امنيات احمد من الانيما</h2>
-              </div>
-              <button
-                onClick={() => setIsAddingSexualWish(true)}
-                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-blue-300 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {sortedSexualWishes.map((wish) => (
-                <div key={wish.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`w-4 h-4 ${wish.progress >= 9.5 ? "text-green-400" : "text-white/20"}`} />
-                      <span className="text-sm font-medium text-white/90">{wish.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">{wish.progress.toFixed(1)}</span>
-                      <button onClick={() => handleDeleteSexualWish(wish.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <Slider
-                    value={[wish.progress]}
-                    onValueChange={(val) => handleUpdateSexualWishProgress(wish.id, val[0])}
-                    max={10} min={0} step={0.1}
-                    className="w-full"
-                    rangeClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
-                  />
-                </div>
-              ))}
-              {localSexualWishes.length === 0 && (
-                <p className="text-center py-4 text-xs text-white/20 italic">لا توجد أمنيات حالياً</p>
-              )}
-            </div>
-          </div>
-
-          {/* Sexual Wish Dialog */}
-          {isAddingSexualWish && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setIsAddingSexualWish(false); }}>
-              <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-6 w-[90vw] max-w-[380px] flex flex-col gap-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h3 className="text-center text-sm font-semibold text-white/80 mb-4">إضافة أمنية جديدة</h3>
-                <textarea
-                  value={newSexualWish}
-                  onChange={(e) => setNewSexualWish(e.target.value)}
-                  placeholder="اكتب الأمنية..."
-                  className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-blue-400/30 text-right"
-                  rows={3}
-                />
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => { handleAddSexualWish(newSexualWish); setIsAddingSexualWish(false); }}
-                    disabled={!newSexualWish.trim()}
-                    className="flex-1 p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 hover:bg-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-blue-300"
-                  >
-                    إضافة أمنية
-                  </button>
-                  <button
-                    onClick={() => setIsAddingSexualWish(false)}
-                    className="p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 transition-all"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ملاحظات جميله بيننا */}
-          <div className="mb-8 w-full">
-            <div className="flex items-center gap-2 mb-4 px-1">
-              <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
-              <h2 className="text-lg font-bold text-pink-100">ملاحظات جميله بيننا</h2>
-            </div>
-
-            <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
-              {sweetNotesData.length > 0 ? (
-                sweetNotesData.map((note) => (
-                  <div key={note.id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-3 text-right hover:border-pink-400/30 transition-all">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-white/90 leading-relaxed flex-1">{note.content}</p>
-                      <button
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-all"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-3 text-xs text-white/20">لا توجد ملاحظات حالياً</p>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddNote();
-                  }
-                }}
-                placeholder="اكتب ملاحظة جميلة..."
-                className="flex-1 resize-none bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-3 text-white/90 placeholder:text-white/20 text-sm focus:outline-none focus:border-pink-400/30 text-right"
-                rows={2}
-              />
-              <button
-                onClick={handleAddNote}
-                disabled={!newNote.trim()}
-                className="p-3 rounded-lg bg-pink-500/20 border border-pink-400/30 hover:bg-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-pink-300"
-              >
-                <Send className="w-5 h-5" />
-              </button>
             </div>
           </div>
 

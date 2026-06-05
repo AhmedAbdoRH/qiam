@@ -299,8 +299,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-background pt-10 px-2 pb-2 md:pt-16 md:px-4 md:pb-4">
       <div className="max-w-7xl mx-auto">
+        {/* محتوى الانيما مدمج فوق كروت الأنوثة */}
+        <div className="mb-4 border-b border-white/10 pb-4 flex flex-col items-center justify-center">
+          <Anima embedded />
+        </div>
+
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ index, valueName, valueData }) => (
             <ValueCard
@@ -314,7 +319,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-4">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
@@ -324,11 +329,6 @@ const Index = () => {
           <Download className="w-4 h-4" />
           تحميل التقرير الشامل
         </Button>
-      </div>
-
-      {/* محتوى الانيما مدمج تحت كروت الأنوثة */}
-      <div className="mt-12 border-t border-white/10 pt-8">
-        <Anima />
       </div>
 
 

@@ -4,11 +4,13 @@ import { ValueCard } from "@/components/ValueCard";
 import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
+import { CalendarTaskList } from "@/components/CalendarTaskList";
 import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import Sovereign from "./Sovereign";
 
-// 20 masculine sovereign values displayed on this page (sourced from spiritual_values)
+// 30 masculine sovereign values displayed on this page (sourced from spiritual_values)
 export const MASCULINE_VALUE_NAMES = [
   "القوة",
   "الهيمنة",
@@ -30,6 +32,16 @@ export const MASCULINE_VALUE_NAMES = [
   "السمع",
   "البصر",
   "القداسة",
+  "الظهور",
+  "التكبر",
+  "الخلق",
+  "القيومية",
+  "الحق",
+  "الأولية",
+  "الكرامة",
+  "التبيين",
+  "البر",
+  "الفتح",
 ];
 
 const MASCULINE_VALUE_IDS = MASCULINE_VALUE_NAMES.map((name) =>
@@ -191,6 +203,17 @@ const Behavioral = () => {
         <h1 className="text-center text-xl md:text-2xl font-bold text-foreground mb-6" dir="rtl">
           الذات السيادية الذكورية
         </h1>
+
+        {/* شريط إجمالي التقدم */}
+        <div className="mb-6 flex flex-col items-center justify-center">
+          <Sovereign embedded valuesData={valuesData} />
+        </div>
+
+        {/* قائمة التذكيرية (Reminders List) */}
+        <section className="mb-6" dir="rtl">
+          <CalendarTaskList />
+        </section>
+
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ id, valueName, valueData }) => (
             <ValueCard
