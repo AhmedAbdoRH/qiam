@@ -6,10 +6,14 @@ import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { downloadComprehensiveReport } from "@/utils/reportGenerator";
 import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Sovereign from "./Sovereign";
+
 
 // 25 masculine sovereign values displayed on this page (sourced from spiritual_values)
 export const MASCULINE_VALUE_NAMES = [

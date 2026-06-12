@@ -44,6 +44,8 @@ import { toast } from 'sonner';
 import { MessageCircle, Send, History, Trash2, BookOpen, Edit2, ExternalLink } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
+import { DivineCommandsTaskList } from '@/components/DivineCommandsTaskList';
+
 
 
 
@@ -667,7 +669,12 @@ export default function Divinity() {
 
         </div>
 
+        <div className="mt-8 px-2" dir="rtl">
+          <DivineCommandsTaskList />
+        </div>
+
       </ScrollArea>
+
 
 
 
