@@ -368,6 +368,33 @@ export type Database = {
         }
         Relationships: []
       }
+      divine_commands_tasks: {
+        Row: {
+          created_at: string
+          id: string
+          progress: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          progress?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          progress?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       divine_name_monologues: {
         Row: {
           created_at: string

@@ -6,10 +6,14 @@ import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { downloadComprehensiveReport } from "@/utils/reportGenerator";
 import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Sovereign from "./Sovereign";
+
 
 // 25 masculine sovereign values displayed on this page (sourced from spiritual_values)
 export const MASCULINE_VALUE_NAMES = [
@@ -241,9 +245,22 @@ const Behavioral = () => {
             />
           ))}
         </div>
+
+        <div className="flex justify-center mt-8">
+          <Button
+            onClick={async () => { if (user) await downloadComprehensiveReport(user.id, user.email || undefined); }}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            تحميل التقرير الشامل
+          </Button>
+        </div>
       </div>
 
       <div className="pb-32" />
+
 
       {selectedValueData && (
         <ValueSheet
