@@ -707,45 +707,8 @@ const Anima = ({ embedded = false }: AnimaProps) => {
             />
           </div>
 
-          {/* Cards Section (الشعور - صفات الانيما) */}
-          <div className="relative mb-4">
-            <div className="flex items-center justify-between mb-2 px-1">
-              <div className="flex items-center gap-2">
-                <Heart className="w-4 h-4 text-pink-400 fill-pink-400/20" />
-                <h3 className="text-sm font-medium text-pink-200/80">الشعور</h3>
-              </div>
-              <button onClick={() => {
-                setEditingCard({ id: `temp-${Date.now()}`, emoji: "✨", title: "بطاقة جديدة", description: "", order_index: cardsToDisplay.length });
-                setIsEditingCard(true);
-              }} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-pink-300 transition-all">
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {cardsToDisplay.map((item, i) => (
-                <div key={item.id} className="group relative">
-                  <button
-                    onClick={() => {
-                      setSelectedCard(item);
-                      setEditingCard({ ...item });
-                      setIsEditingCard(true);
-                    }}
-                    className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-pink-400/30 transition-all text-center anima-float-card"
-                  >
-                    <h3 className="text-[13px] font-medium text-pink-100/90">{item.title}</h3>
-                  </button>
-                  {localCards.find(c => c.id === item.id) && (
-                    <button
-                      onClick={() => handleDeleteLocalCard(item.id)}
-                      className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full bg-red-500/80 hover:bg-red-600 text-white transition-all duration-200"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+
+
 
 
         </div>
