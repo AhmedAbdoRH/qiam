@@ -245,9 +245,22 @@ const Behavioral = () => {
             />
           ))}
         </div>
+
+        <div className="flex justify-center mt-8">
+          <Button
+            onClick={async () => { if (user) await downloadComprehensiveReport(user.id, user.email || undefined); }}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            تحميل التقرير الشامل
+          </Button>
+        </div>
       </div>
 
       <div className="pb-32" />
+
 
       {selectedValueData && (
         <ValueSheet
