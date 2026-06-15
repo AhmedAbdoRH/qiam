@@ -668,12 +668,11 @@ export default function Divinity() {
           ))}
 
         </div>
-
-        <div className="mt-8 px-2" dir="rtl">
-          <DivineCommandsTaskList />
-        </div>
-
       </ScrollArea>
+
+      <div className="mt-8 px-2" dir="rtl">
+        <DivineCommandsTaskList />
+      </div>
 
 
 
