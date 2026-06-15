@@ -575,7 +575,9 @@ export default function Divinity() {
 
       </div>
 
-
+      <div className="mb-6 px-2" dir="rtl">
+        <DivineCommandsTaskList />
+      </div>
 
       <ScrollArea className="h-[calc(100vh-180px)] w-full">
 
@@ -668,10 +670,6 @@ export default function Divinity() {
           ))}
         </div>
       </ScrollArea>
-
-      <div className="mb-6 px-2" dir="rtl">
-        <DivineCommandsTaskList />
-      </div>
 
       {/* Notes Sheet */}
 
