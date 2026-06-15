@@ -485,6 +485,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sovereign_shadows: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       spiritual_values: {
         Row: {
           balance_percentage: number | null
