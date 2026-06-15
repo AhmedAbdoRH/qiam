@@ -232,7 +232,6 @@ const Behavioral = () => {
 
         {/* قائمة التذكيرية (Reminders List) */}
         <section className="mb-6" dir="rtl">
-        <section className="mb-6" dir="rtl">
           <CalendarTaskList />
         </section>
 
