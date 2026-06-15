@@ -7,6 +7,7 @@ import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
 import { ShadowsList } from "@/components/ShadowsList";
+import { DivineCommandsTaskList } from "@/components/DivineCommandsTaskList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { downloadComprehensiveReport } from "@/utils/reportGenerator";
@@ -237,6 +238,9 @@ const Behavioral = () => {
 
         <ShadowsList />
 
+        <section className="mb-6" dir="rtl">
+          <DivineCommandsTaskList />
+        </section>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ id, valueName, valueData }) => (
