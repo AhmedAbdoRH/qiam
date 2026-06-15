@@ -667,12 +667,12 @@ export default function Divinity() {
 
           ))}
 
-        </div>
-      </ScrollArea>
-
-      <div className="mt-8 px-2" dir="rtl">
+      <div className="mb-6 px-2" dir="rtl">
         <DivineCommandsTaskList />
       </div>
+
+      <ScrollArea className="h-[calc(100vh-180px)] w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pb-6 justify-items-end" dir="rtl">
 
 
 
