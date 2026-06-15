@@ -7,6 +7,7 @@ import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
 import { ShadowsList } from "@/components/ShadowsList";
+import { DivineCommandsTaskList } from "@/components/DivineCommandsTaskList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { downloadComprehensiveReport } from "@/utils/reportGenerator";
