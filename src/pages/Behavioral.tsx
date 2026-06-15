@@ -6,6 +6,7 @@ import { ValueSheet } from "@/components/ValueSheet";
 import { SelfDialogueChat } from "@/components/SelfDialogueChat";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
+import { ShadowsList } from "@/components/ShadowsList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { downloadComprehensiveReport } from "@/utils/reportGenerator";
@@ -233,6 +234,9 @@ const Behavioral = () => {
         <section className="mb-6" dir="rtl">
           <CalendarTaskList />
         </section>
+
+        <ShadowsList />
+
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ id, valueName, valueData }) => (
