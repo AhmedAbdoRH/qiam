@@ -85,7 +85,7 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     ]);
 
     // Spiritual values
-    const spiritualValues: { name: string; balancePercentage: number; selectedFeelings: string[]; positiveFeelings: string[]; notes: string; isPinned: boolean }[] = [];
+    const spiritualValues: { name: string; balancePercentage: number; selectedFeelings: string[]; positiveFeelings: string[]; positiveFeelingDates: Record<string, string>; feelingNotes: Record<string, string>; notes: string; isPinned: boolean }[] = [];
     const valuesSeen = new Set<string>();
     (valuesRes.data || []).forEach((item: any) => {
       if (item.value_id === "0" || !item.value_id) return;
@@ -98,12 +98,14 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
         balancePercentage: item.balance_percentage || 50,
         selectedFeelings: Array.isArray(item.selected_feelings) ? item.selected_feelings as string[] : [],
         positiveFeelings: Array.isArray(item.positive_feelings) ? item.positive_feelings as string[] : [],
+        positiveFeelingDates: (item.positive_feeling_dates && typeof item.positive_feeling_dates === "object") ? item.positive_feeling_dates as Record<string, string> : {},
+        feelingNotes: (item.feeling_notes && typeof item.feeling_notes === "object") ? item.feeling_notes as Record<string, string> : {},
         notes: item.notes || "",
         isPinned: item.is_pinned || false,
       });
     });
     VALUES.forEach((name) => {
-      if (!valuesSeen.has(name)) spiritualValues.push({ name, balancePercentage: 50, selectedFeelings: [], positiveFeelings: [], notes: "", isPinned: false });
+      if (!valuesSeen.has(name)) spiritualValues.push({ name, balancePercentage: 50, selectedFeelings: [], positiveFeelings: [], positiveFeelingDates: {}, feelingNotes: {}, notes: "", isPinned: false });
     });
 
     // Self-dialogue messages and milestones (limit to last 100 messages, last 10 milestones)
