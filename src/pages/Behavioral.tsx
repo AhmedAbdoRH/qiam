@@ -10,7 +10,7 @@ import { ShadowsList } from "@/components/ShadowsList";
 import { DivineCommandsTaskList } from "@/components/DivineCommandsTaskList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { downloadComprehensiveReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport } from "@/utils/reportGenerator";
 import { VALUES, ValueData, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
