@@ -435,6 +435,36 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     }
     md += "\n";
 
+    md += "## تفاصيل شيت كل قيمة\n\n";
+    for (const name of MASCULINE_VALUE_NAMES_REPORT) {
+      const item = masculineValuesMap.get(name);
+      const balance = item?.balance_percentage ?? 50;
+      const selected: string[] = Array.isArray(item?.selected_feelings) ? item.selected_feelings : [];
+      const positive: string[] = Array.isArray(item?.positive_feelings) ? item.positive_feelings : [];
+      const dates: Record<string, string> = (item?.positive_feeling_dates && typeof item.positive_feeling_dates === "object") ? item.positive_feeling_dates : {};
+      const fNotes: Record<string, string> = (item?.feeling_notes && typeof item.feeling_notes === "object") ? item.feeling_notes : {};
+      const pinned = item?.is_pinned;
+      const notes = item?.notes || "";
+
+      md += `### ${name}${pinned ? " 📌" : ""}\n\n`;
+      md += `- نسبة الاتزان: **${balance}%**\n`;
+      md += `- المشاعر السلبية: ${selected.length ? selected.join("، ") : "-"}\n`;
+      md += `- المشاعر الإيجابية: ${positive.length ? positive.join("، ") : "-"}\n\n`;
+
+      md += `**الارتباطات حسب المشاعر:**\n\n`;
+      let any = false;
+      for (const f of FEELINGS) {
+        const note = (fNotes[f] || "").trim();
+        const state = selected.includes(f) ? "سلبي" : positive.includes(f) ? "إيجابي" : "محايد";
+        const date = dates[f] ? ` — ${new Date(dates[f]).toLocaleDateString("en-US")}` : "";
+        if (!note && state === "محايد") continue;
+        md += `- **${f}** (${state}${date}): ${note || "-"}\n`;
+        any = true;
+      }
+      if (!any) md += `- لا توجد ارتباطات\n`;
+      md += `\n**ملاحظات وتأملات:** ${notes ? "\n\n" + notes : "-"}\n\n---\n\n`;
+    }
+
     md += "---\n\n*تم إنشاء هذا التقرير تلقائياً*\n";
 
     const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
