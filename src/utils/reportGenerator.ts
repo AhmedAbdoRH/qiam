@@ -157,6 +157,31 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     }
     md += "\n## تظهير القيم شعوريا\n\n" + (feelingsLine || "لا توجد مشاعر مسجلة") + "\n\n";
 
+    // ===== Per-value detail sheets =====
+    md += "## تفاصيل شيت كل قيمة\n\n";
+    for (const v of spiritualValues) {
+      md += `### ${v.name}${v.isPinned ? " 📌" : ""}\n\n`;
+      md += `- نسبة الاتزان: **${v.balancePercentage}%**\n`;
+      md += `- المشاعر السلبية: ${v.selectedFeelings.length ? v.selectedFeelings.join("، ") : "-"}\n`;
+      md += `- المشاعر الإيجابية: ${v.positiveFeelings.length ? v.positiveFeelings.join("، ") : "-"}\n\n`;
+
+      md += `**الارتباطات حسب المشاعر:**\n\n`;
+      const hasAny = FEELINGS.some(f => (v.feelingNotes[f] && v.feelingNotes[f].trim()) || v.selectedFeelings.includes(f) || v.positiveFeelings.includes(f));
+      if (hasAny) {
+        for (const f of FEELINGS) {
+          const note = (v.feelingNotes[f] || "").trim();
+          const state = v.selectedFeelings.includes(f) ? "سلبي" : v.positiveFeelings.includes(f) ? "إيجابي" : "محايد";
+          const date = v.positiveFeelingDates[f] ? ` — ${new Date(v.positiveFeelingDates[f]).toLocaleDateString("en-US")}` : "";
+          if (!note && state === "محايد") continue;
+          md += `- **${f}** (${state}${date}): ${note || "-"}\n`;
+        }
+      } else {
+        md += `- لا توجد ارتباطات\n`;
+      }
+      md += `\n**ملاحظات وتأملات:** ${v.notes ? "\n\n" + v.notes : "-"}\n\n---\n\n`;
+    }
+
+
     // ===== Behavioral values =====
     md += "## القيم السلوكية\n\n";
     if (behavioralRes.data && behavioralRes.data.length) {
