@@ -320,3 +320,110 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     toast.error("حدث خطأ أثناء إنشاء التقرير");
   }
 }
+
+const MASCULINE_VALUE_NAMES_REPORT = [
+  "القوة",
+  "الهيمنة",
+  "القهارية",
+  "العظمة",
+  "العزة",
+  "القدر",
+  "الولاية",
+  "الملك",
+  "المتانة",
+  "الحكمة",
+  "الرزق",
+  "التعالي",
+  "الواحدية",
+  "الصمدية",
+  "البصر",
+  "الظهور",
+  "التكبر",
+  "الخلق",
+  "القيومية",
+  "الحق",
+  "الأولية",
+  "الكرامة",
+  "التبيين",
+  "البر",
+  "الفتح",
+];
+
+export async function downloadMasculineValuesReport(userId: string, userEmail: string | undefined): Promise<void> {
+  try {
+    const [valuesRes, shadowsRes, divineCommandsRes] = await Promise.all([
+      supabase.from("spiritual_values").select("*").eq("user_id", userId),
+      (supabase as any).from("sovereign_shadows").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+      (supabase as any).from("divine_commands_tasks").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
+    ]);
+
+    const masculineValuesMap = new Map<string, any>();
+    for (const item of (valuesRes.data || []) as any[]) {
+      if (!item.value_id) continue;
+      const idx = parseInt(item.value_id);
+      const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
+      if (MASCULINE_VALUE_NAMES_REPORT.includes(name)) {
+        masculineValuesMap.set(name, item);
+      }
+    }
+
+    let md = "";
+    md += "# تقرير القيم الذكورية\n\n";
+    md += `المستخدم: ${userEmail || "-"}  \n`;
+    md += `تاريخ التوليد: ${new Date().toLocaleString("en-US")}\n\n`;
+
+    md += "## القيم الذكورية\n\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableSep(6) + "\n";
+    for (const name of MASCULINE_VALUE_NAMES_REPORT) {
+      const item = masculineValuesMap.get(name);
+      const balancePercentage = item?.balance_percentage || 50;
+      const selectedFeelings = Array.isArray(item?.selected_feelings) ? (item.selected_feelings as string[]).join("، ") : "-";
+      const positiveFeelings = Array.isArray(item?.positive_feelings) ? (item.positive_feelings as string[]).join("، ") : "-";
+      const isPinned = item?.is_pinned ? "نعم" : "-";
+      const notes = item?.notes ? escapeMd(item.notes) : "-";
+      md += tableRow([escapeMd(name), balancePercentage + "%", selectedFeelings, positiveFeelings, isPinned, notes]) + "\n";
+    }
+    md += "\n";
+
+    md += "## الظلال\n\n";
+    if (shadowsRes.data && (shadowsRes.data as any[]).length) {
+      for (const s of shadowsRes.data as any[]) {
+        md += `- ${escapeMd(s.content || "-")} (${new Date(s.created_at).toLocaleString("en-US")})\n`;
+      }
+    } else {
+      md += "لا توجد ظلال مسجلة\n";
+    }
+    md += "\n";
+
+    md += "## تنفيذ الأوامر والنواهي الإلهية\n\n";
+    if (divineCommandsRes.data && (divineCommandsRes.data as any[]).length) {
+      md += tableRow(["المهمة", "التقدم"]) + "\n" + tableSep(2) + "\n";
+      for (const t of divineCommandsRes.data as any[]) {
+        const p = Number(t.progress) || 0;
+        md += tableRow([escapeMd(t.title), "█".repeat(Math.round(p)) + "░".repeat(10 - Math.round(p)) + ` ${p.toFixed(1)}/10`]) + "\n";
+      }
+    } else {
+      md += "لا توجد مهام\n";
+    }
+    md += "\n";
+
+    md += "---\n\n*تم إنشاء هذا التقرير تلقائياً*\n";
+
+    const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    a.download = `تقرير-القيم-الذكورية-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("تم تحميل تقرير القيم الذكورية");
+  } catch (error) {
+    console.error("Error generating masculine report:", error);
+    toast.error("حدث خطأ أثناء إنشاء التقرير");
+  }
+}
