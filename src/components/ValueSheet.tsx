@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, ArrowRight } from "lucide-react";
+import { Pin, PinOff } from "lucide-react";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import { TaskList } from "./TaskList";
+import { Plus } from "lucide-react";
 
 interface ValueSheetProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export const ValueSheet = ({
   const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
+  const [activeAddFeeling, setActiveAddFeeling] = useState<string | null>(null);
 
   // Ref to track latest state for callbacks
   const latestRef = useRef({
@@ -177,7 +179,7 @@ export const ValueSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto">
+      <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto px-3">
         <SheetHeader>
           <SheetTitle className="text-3xl font-bold text-primary text-center mb-4">
             {valueName}
@@ -202,7 +204,7 @@ export const ValueSheet = ({
             </Button>
           </div>
         )}
-        <div className="p-4 space-y-6">
+        <div className="space-y-6">
           {/* Balance percentage slider */}
           <Slider
             value={[localBalancePercentage]}
@@ -224,7 +226,7 @@ export const ValueSheet = ({
               {FEELINGS.map((feeling) => (
                 <div
                   key={feeling}
-                  className="flex flex-col gap-3 p-4 rounded-lg bg-secondary/50"
+                  className="flex flex-col gap-3 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <button
@@ -257,14 +259,16 @@ export const ValueSheet = ({
                         );
                       })()}
                     </button>
-                    <div className="flex flex-col flex-1">
-                      <Label
-                        htmlFor={feeling}
-                        className="text-lg font-semibold text-foreground cursor-pointer"
-                        onClick={() => handleFeelingToggle(feeling)}
-                      >
-                        {feeling}
-                      </Label>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor={feeling}
+                          className="text-lg font-semibold text-foreground cursor-pointer truncate"
+                          onClick={() => handleFeelingToggle(feeling)}
+                        >
+                          {feeling}
+                        </Label>
+                      </div>
                       {localPositiveFeelingDates[feeling] && (
                         <span className="text-xs text-muted-foreground mt-0.5">
                           {new Date(localPositiveFeelingDates[feeling]).toLocaleDateString('en-US', {
@@ -281,6 +285,8 @@ export const ValueSheet = ({
                       value={localFeelingNotes[feeling] || ""}
                       onChange={(value) => handleFeelingNoteChange(feeling, value)}
                       onPersist={(value) => persistFeelingNote(feeling, value)}
+                      showAddForm={activeAddFeeling === feeling}
+                      onAddTask={() => setActiveAddFeeling(null)}
                     />
                   </div>
                 </div>
@@ -301,13 +307,6 @@ export const ValueSheet = ({
             />
           </div>
         </div>
-        <Button
-          variant="ghost"
-          onClick={handleClose}
-          className="fixed bottom-0 left-0 right-0 text-white bg-white/10 backdrop-blur-xl border-t border-white/20 px-8 py-4 h-16 text-lg font-semibold shadow-2xl"
-        >
-     حفظ
-        </Button>
       </SheetContent>
     </Sheet>
   );

@@ -1,132 +1,315 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "./ui/input";
+import { toast } from "sonner";
+
+type Severity = 0 | 1 | 2 | 3;
 
 interface Task {
   id: string;
   text: string;
   completed: boolean;
+  severity: Severity;
 }
+
+const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
+  0: "bg-white/5 border-white/10",
+  1: "bg-red-500/10 border-red-500/15",
+  2: "bg-red-500/15 border-red-500/25",
+  3: "bg-red-500/25 border-red-500/35",
+};
 
 interface TaskListProps {
   value: string;
   onChange: (value: string) => void;
   onPersist?: (value: string) => void;
+  showAddForm?: boolean;
+  onAddTask?: (text: string) => void;
 }
 
-export const TaskList = ({ value, onChange, onPersist }: TaskListProps) => {
+const normalizeTask = (t: any): Task => ({
+  id: t.id || String(Date.now()),
+  text: t.text || "",
+  completed: t.completed === true,
+  severity: (t.severity !== undefined && t.severity !== null ? Number(t.severity) : 0) as Severity,
+});
+
+export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAddTask }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
-  const lastSerialized = useRef<string>("");
+  const tasksRef = useRef<Task[]>([]);
+  const serializedRef = useRef<string>("");
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
 
-  // Parse tasks from the value string when it changes externally
   useEffect(() => {
-    if (value === lastSerialized.current) return;
     if (!value) {
       setTasks([]);
-      lastSerialized.current = "";
+      tasksRef.current = [];
+      serializedRef.current = "";
       return;
     }
+    const trimmedVal = value.trim();
+    if (trimmedVal === serializedRef.current) return;
+    let parsed: Task[] = [];
     try {
-      const parsedTasks = JSON.parse(value);
-      if (Array.isArray(parsedTasks)) {
-        setTasks(parsedTasks);
-      } else if (value.trim() !== "") {
-        setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
-      }
+      const p = JSON.parse(value);
+      if (Array.isArray(p)) parsed = p.map(normalizeTask);
+      else if (p) parsed = [normalizeTask({ text: trimmedVal })];
     } catch {
-      if (value.trim() !== "") {
-        setTasks([{ id: Date.now().toString(), text: value, completed: false }]);
-      }
+      if (trimmedVal) parsed = [normalizeTask({ text: trimmedVal })];
     }
-    lastSerialized.current = value;
+    setTasks(parsed);
+    tasksRef.current = parsed;
   }, [value]);
 
-  const updateTasks = (next: Task[], persist = false) => {
+  useEffect(() => {
+    if (showAddForm && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showAddForm]);
+
+  const save = useCallback((next: Task[]) => {
+    tasksRef.current = next;
     setTasks(next);
     const serialized = JSON.stringify(next);
-    lastSerialized.current = serialized;
+    serializedRef.current = serialized;
     onChange(serialized);
-    if (persist) onPersist?.(serialized);
-  };
+    onPersist?.(serialized);
+  }, [onChange, onPersist]);
 
-  const addTask = (e: React.FormEvent) => {
+  const addTask = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (newTask.trim() === "") return;
-    updateTasks([...tasks, { id: Date.now().toString(), text: newTask, completed: false }], true);
+    const current = tasksRef.current;
+    const newTaskItem: Task = {
+      id: String(Date.now()),
+      text: newTask.trim(),
+      completed: false,
+      severity: 0,
+    };
+    save([...current, newTaskItem]);
     setNewTask("");
-  };
+    onAddTask?.("");
+  }, [newTask, save, onAddTask]);
 
-  const toggleTask = (taskId: string) => {
-    updateTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
+  const toggleTask = useCallback((taskId: string) => {
+    const current = tasksRef.current;
+    save(current.map((task) =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    ));
+  }, [save]);
 
-  const deleteTask = (taskId: string) => {
-    updateTasks(tasks.filter((task) => task.id !== taskId), true);
-  };
+  const cycleSeverity = useCallback((taskId: string) => {
+    const current = tasksRef.current;
+    const next = current.map((task) => {
+      if (task.id !== taskId) return task;
+      const nextSev = ((task.severity + 1) % 4) as Severity;
+      return { ...task, severity: nextSev };
+    });
+    save(next);
+  }, [save]);
 
+  const deleteTask = useCallback((taskId: string) => {
+    const current = tasksRef.current;
+    const taskToDelete = current.find(t => t.id === taskId);
+    if (!taskToDelete) return;
+    save(current.filter((task) => task.id !== taskId));
+    toast.success("تم الحذف");
+  }, [save]);
+
+  const showActionMenu = useCallback((taskId: string) => {
+    const current = tasksRef.current;
+    const task = current.find(t => t.id === taskId);
+    if (!task) return;
+
+    toast(`"${task.text}"`, {
+      description: "اختر إجراء",
+      duration: 5000,
+      action: {
+        label: "تعديل",
+        onClick: () => {
+          setEditingTaskId(taskId);
+          setEditingText(task.text);
+        }
+      },
+      cancel: {
+        label: "حذف",
+        onClick: () => {
+          deleteTask(taskId);
+        }
+      },
+    });
+  }, [deleteTask]);
+
+  const saveEdit = useCallback((taskId: string) => {
+    if (editingText.trim() === "") return;
+    const current = tasksRef.current;
+    save(current.map((task) =>
+      task.id === taskId ? { ...task, text: editingText.trim() } : task
+    ));
+    setEditingTaskId(null);
+    setEditingText("");
+    toast.success("تم التعديل");
+  }, [editingText, save]);
+
+  const startLongPress = useCallback((taskId: string) => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      showActionMenu(taskId);
+    }, 600);
+  }, [showActionMenu]);
+
+  const endLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handlePointerDown = useCallback((taskId: string) => {
+    startLongPress(taskId);
+  }, [startLongPress]);
+
+  const handlePointerUp = useCallback((taskId: string) => {
+    endLongPress();
+    if (!longPressTriggered.current) {
+      cycleSeverity(taskId);
+    }
+    longPressTriggered.current = false;
+  }, [endLongPress, cycleSeverity]);
+
+  const handlePointerLeave = useCallback(() => {
+    endLongPress();
+    longPressTriggered.current = false;
+  }, [endLongPress]);
 
   return (
-    <div className="space-y-2 mt-2">
-      <form onSubmit={addTask} className="flex gap-2">
-        <Input
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="أضف ارتباط..."
-          className="flex-1"
-        />
-        <Button type="submit" size="icon" variant="outline">
-          <span className="text-xs">إضافة</span>
-        </Button>
-      </form>
+    <div className="space-y-3">
+      {showAddForm && (
+        <form onSubmit={addTask} className="flex gap-2">
+          <Input
+            ref={inputRef}
+            type="text"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            placeholder="أضف ارتباط..."
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" variant="outline">
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="icon" variant="ghost" onClick={() => onAddTask?.("")}>
+            <span className="text-xs">إلغاء</span>
+          </Button>
+        </form>
+      )}
 
-      <div className="space-y-1 max-h-40 overflow-y-auto pr-2">
+      <div className="space-y-3">
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary/30 active:bg-secondary/50 group transition-colors duration-150 cursor-pointer"
-            onClick={() => toggleTask(task.id)}
+            onMouseDown={() => handlePointerDown(task.id)}
+            onMouseUp={() => handlePointerUp(task.id)}
+            onMouseLeave={handlePointerLeave}
+            onTouchStart={() => handlePointerDown(task.id)}
+            onTouchEnd={() => handlePointerUp(task.id)}
+            onTouchCancel={handlePointerLeave}
+            className={`flex flex-col gap-2 w-full rounded-2xl border backdrop-blur-xl p-1 shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] hover:shadow-xl select-none ${
+              task.completed 
+                ? 'bg-black/30 border-white/5' 
+                : SEVERITY_BACKGROUNDS[task.severity]
+            }`}
           >
-            <div className="flex items-center gap-2 flex-1">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
-                task.completed 
-                  ? 'bg-primary border-primary' 
-                  : 'border-muted-foreground/40 hover:border-muted-foreground/60'
-              }`}>
-                {task.completed && (
-                  <svg className="w-3 h-3 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {editingTaskId === task.id ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveEdit(task.id);
+                }}
+                className="flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Input
+                  type="text"
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  className="flex-1 text-lg font-extrabold"
+                  autoFocus
+                />
+                <Button type="submit" size="icon" variant="outline" className="h-7 w-7">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
-                )}
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setEditingTaskId(null)}
+                >
+                  <span className="text-xs">X</span>
+                </Button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-150 flex-shrink-0 mx-1 ${
+                    task.completed
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground/40 hover:border-muted-foreground/60'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleTask(task.id);
+                  }}
+                >
+                  {task.completed && (
+                    <svg className="w-3 h-3 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span
+                  className={`text-lg font-extrabold tracking-wide transition-all duration-150 flex-1 leading-relaxed ${
+                    task.completed ? "line-through text-foreground/40" : "text-foreground"
+                  }`}
+                >
+                  {task.text}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 hover:opacity-100 transition-opacity duration-150 active:scale-95 flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTask(task.id);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive transition-colors" />
+                </Button>
               </div>
-              <span
-                className={`text-sm transition-all duration-150 ${
-                  task.completed ? "line-through text-muted-foreground/60" : "text-foreground"
-                }`}
-              >
-                {task.text}
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:scale-95"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteTask(task.id);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive transition-colors" />
-            </Button>
+            )}
           </div>
         ))}
+
+        {!showAddForm && (
+          <button
+            type="button"
+            onClick={() => onAddTask?.("show")}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
+          >
+            <Plus className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">أضف ارتباط</span>
+          </button>
+        )}
       </div>
     </div>
   );
