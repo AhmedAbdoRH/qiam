@@ -8,9 +8,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 import { Pin, PinOff } from "lucide-react";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
@@ -298,15 +298,25 @@ export const ValueSheet = ({
             <Label htmlFor="notes" className="text-lg font-semibold text-foreground">
               ملاحظات وتأملات
             </Label>
-            <Textarea
-              id="notes"
-              value={localNotes}
-              onChange={(e) => handleNotesChange(e.target.value)}
-              placeholder="اكتب ملاحظاتك وتأملاتك هنا..."
-              className="min-h-[120px] text-base bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground resize-none"
-            />
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => handleNotesChange(e.currentTarget.textContent || "")}
+              className="text-base text-foreground leading-loose whitespace-pre-wrap outline-none"
+              style={{ direction: "rtl", lineHeight: "2" }}
+            >
+              {localNotes}
+            </div>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleClose}
+          className="fixed bottom-0 left-0 right-0 md:left-[calc(50%-250px)] lg:left-[calc(50%-350px)] md:max-w-[500px] lg:max-w-[700px] text-white bg-white/10 backdrop-blur-xl border-t border-white/20 px-8 py-4 h-16 text-lg font-semibold shadow-2xl flex items-center justify-center gap-2 transition-all duration-200 hover:bg-white/15 z-50"
+        >
+          <Save className="h-5 w-5" />
+          حفظ
+        </button>
       </SheetContent>
     </Sheet>
   );

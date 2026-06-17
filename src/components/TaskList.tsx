@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { Input } from "./ui/input";
-import { toast } from "sonner";
 
 type Severity = 0 | 1 | 2 | 3;
 
@@ -16,8 +15,8 @@ interface Task {
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
   0: "bg-white/5 border-white/10",
   1: "bg-red-500/10 border-red-500/15",
-  2: "bg-red-500/15 border-red-500/25",
-  3: "bg-red-500/25 border-red-500/35",
+  2: "bg-red-500/5 border-red-500/10",
+  3: "bg-red-500/8 border-red-500/12",
 };
 
 interface TaskListProps {
@@ -45,6 +44,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
   const inputRef = useRef<HTMLInputElement>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [actionMenuTaskId, setActionMenuTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!value) {
@@ -116,46 +116,32 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
 
   const deleteTask = useCallback((taskId: string) => {
     const current = tasksRef.current;
-    const taskToDelete = current.find(t => t.id === taskId);
-    if (!taskToDelete) return;
     save(current.filter((task) => task.id !== taskId));
-    toast.success("تم الحذف");
+    setActionMenuTaskId(null);
   }, [save]);
 
-  const showActionMenu = useCallback((taskId: string) => {
+  const startEdit = useCallback((taskId: string) => {
     const current = tasksRef.current;
     const task = current.find(t => t.id === taskId);
     if (!task) return;
+    setEditingTaskId(taskId);
+    setEditingText(task.text);
+    setActionMenuTaskId(null);
+  }, []);
 
-    toast(`"${task.text}"`, {
-      description: "اختر إجراء",
-      duration: 5000,
-      action: {
-        label: "تعديل",
-        onClick: () => {
-          setEditingTaskId(taskId);
-          setEditingText(task.text);
-        }
-      },
-      cancel: {
-        label: "حذف",
-        onClick: () => {
-          deleteTask(taskId);
-        }
-      },
-    });
-  }, [deleteTask]);
-
-  const saveEdit = useCallback((taskId: string) => {
-    if (editingText.trim() === "") return;
+  const saveEdit = useCallback(() => {
+    if (editingText.trim() === "" || !editingTaskId) return;
     const current = tasksRef.current;
     save(current.map((task) =>
-      task.id === taskId ? { ...task, text: editingText.trim() } : task
+      task.id === editingTaskId ? { ...task, text: editingText.trim() } : task
     ));
     setEditingTaskId(null);
     setEditingText("");
-    toast.success("تم التعديل");
-  }, [editingText, save]);
+  }, [editingText, editingTaskId, save]);
+
+  const showActionMenu = useCallback((taskId: string) => {
+    setActionMenuTaskId(taskId);
+  }, []);
 
   const startLongPress = useCallback((taskId: string) => {
     longPressTriggered.current = false;
@@ -190,7 +176,43 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
   }, [endLongPress]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
+      {/* Centered Action Menu Modal */}
+      {actionMenuTaskId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setActionMenuTaskId(null)} />
+          <div className="relative bg-background border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4 min-w-[280px]">
+            <p className="text-center text-lg font-semibold text-foreground mb-2">اختر إجراء</p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center gap-3 py-6 text-base"
+              onClick={() => startEdit(actionMenuTaskId)}
+            >
+              <Pencil className="h-5 w-5" />
+              تعديل النص
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full flex items-center gap-3 py-6 text-base"
+              onClick={() => deleteTask(actionMenuTaskId)}
+            >
+              <Trash2 className="h-5 w-5" />
+              حذف المعتقد
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={() => setActionMenuTaskId(null)}
+            >
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      )}
+
       {showAddForm && (
         <form onSubmit={addTask} className="flex gap-2">
           <Input
@@ -230,7 +252,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  saveEdit(task.id);
+                  saveEdit();
                 }}
                 className="flex items-center gap-2"
                 onClick={(e) => e.stopPropagation()}
@@ -239,13 +261,11 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                   type="text"
                   value={editingText}
                   onChange={(e) => setEditingText(e.target.value)}
-                  className="flex-1 text-lg font-extrabold"
+                  className="flex-1 text-[15px] font-bold"
                   autoFocus
                 />
                 <Button type="submit" size="icon" variant="outline" className="h-7 w-7">
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   type="button"
@@ -254,7 +274,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                   className="h-7 w-7"
                   onClick={() => setEditingTaskId(null)}
                 >
-                  <span className="text-xs">X</span>
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </form>
             ) : (
@@ -277,7 +297,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                   )}
                 </div>
                 <span
-                  className={`text-lg font-extrabold tracking-wide transition-all duration-150 flex-1 leading-relaxed ${
+                  className={`text-[15px] font-bold tracking-wide transition-all duration-150 flex-1 leading-relaxed ${
                     task.completed ? "line-through text-foreground/40" : "text-foreground"
                   }`}
                 >
