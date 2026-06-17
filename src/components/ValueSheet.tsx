@@ -306,7 +306,7 @@ export const ValueSheet = ({
           onClick={handleClose}
           className="fixed bottom-0 left-0 right-0 text-white bg-white/10 backdrop-blur-xl border-t border-white/20 px-8 py-4 h-16 text-lg font-semibold shadow-2xl"
         >
-      حفظ
+     حفظ
         </Button>
       </SheetContent>
     </Sheet>
