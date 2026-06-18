@@ -130,11 +130,13 @@ interface ValueCardProps {
 export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinned = false }: ValueCardProps) => {
   const accentColor = getBalanceColor(balancePercentage);
   const Icon = getValueIcon(name);
+  // Lower alpha for low-balance (red) cards so they read more subtle/transparent
+  const glowAlpha = balancePercentage <= 50 ? 0.14 : 0.22;
 
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-lg p-3 min-h-[80px] transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-row items-center justify-start gap-3"
+      className="group relative overflow-hidden rounded-lg p-3 min-h-[80px] transition-transform duration-300 flex flex-row items-center justify-start gap-3"
       style={{
         background: `var(--gradient-card)`,
         boxShadow: `0 6px 20px rgba(0, 0, 0, 0.15)`,
@@ -142,9 +144,9 @@ export const ValueCard = React.memo(({ name, balancePercentage, onClick, isPinne
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -bottom-8 -right-6 w-[180px] h-[120px] opacity-80 group-hover:opacity-95 transition-opacity duration-300"
+          className="absolute -bottom-8 -right-6 w-[180px] h-[120px]"
           style={{
-            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, 0.35)} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at center, ${withAlpha(accentColor, glowAlpha)} 0%, transparent 70%)`,
           }}
         />
       </div>
