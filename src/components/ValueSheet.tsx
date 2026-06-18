@@ -286,7 +286,13 @@ export const ValueSheet = ({
                       onChange={(value) => handleFeelingNoteChange(feeling, value)}
                       onPersist={(value) => persistFeelingNote(feeling, value)}
                       showAddForm={activeAddFeeling === feeling}
-                      onAddTask={() => setActiveAddFeeling(null)}
+                      onAddTask={(action) => {
+                        if (action === "show") {
+                          setActiveAddFeeling(feeling);
+                        } else {
+                          setActiveAddFeeling(null);
+                        }
+                      }}
                     />
                   </div>
                 </div>
