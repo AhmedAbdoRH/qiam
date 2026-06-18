@@ -14,9 +14,9 @@ interface Task {
 
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
   0: "bg-white/5 border-white/10",
-  1: "bg-red-500/15 border-red-500/20",
-  2: "bg-red-500/25 border-red-500/30",
-  3: "bg-red-500/35 border-red-500/40",
+  1: "bg-red-900/20 border-red-900/25",
+  2: "bg-red-900/30 border-red-900/35",
+  3: "bg-red-900/40 border-red-900/50",
 };
 
 interface TaskListProps {
@@ -179,9 +179,8 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     <div className="space-y-3 relative">
       {/* Centered Action Menu Modal */}
       {actionMenuTaskId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setActionMenuTaskId(null)} />
-          <div className="relative bg-background border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4 min-w-[280px]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setActionMenuTaskId(null)}>
+          <div className="relative bg-background border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4 min-w-[280px]" onClick={(e) => e.stopPropagation()}>
             <p className="text-center text-lg font-semibold text-foreground mb-2">اختر إجراء</p>
             <Button
               type="button"
