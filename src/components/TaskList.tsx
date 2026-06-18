@@ -14,9 +14,9 @@ interface Task {
 
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
   0: "bg-white/5 border-white/10",
-  1: "bg-red-500/10 border-red-500/15",
-  2: "bg-red-500/5 border-red-500/10",
-  3: "bg-red-500/8 border-red-500/12",
+  1: "bg-red-500/15 border-red-500/20",
+  2: "bg-red-500/25 border-red-500/30",
+  3: "bg-red-500/35 border-red-500/40",
 };
 
 interface TaskListProps {

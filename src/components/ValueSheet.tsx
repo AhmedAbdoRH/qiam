@@ -10,7 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, StickyNote, X } from "lucide-react";
 import { Pin, PinOff } from "lucide-react";
 import { FEELINGS } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
@@ -55,6 +55,7 @@ export const ValueSheet = ({
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
   const [activeAddFeeling, setActiveAddFeeling] = useState<string | null>(null);
+  const [showNotesForm, setShowNotesForm] = useState(false);
 
   // Ref to track latest state for callbacks
   const latestRef = useRef({
@@ -301,18 +302,48 @@ export const ValueSheet = ({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="notes" className="text-lg font-semibold text-foreground">
-              ملاحظات وتأملات
-            </Label>
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => handleNotesChange(e.currentTarget.textContent || "")}
-              className="text-base text-foreground leading-loose whitespace-pre-wrap outline-none"
-              style={{ direction: "rtl", lineHeight: "2" }}
-            >
-              {localNotes}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="notes" className="text-lg font-semibold text-foreground">
+                ملاحظات وتأملات
+              </Label>
+              {!localNotes && !showNotesForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowNotesForm(true)}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  <StickyNote className="h-3.5 w-3.5" />
+                  إضافة ملاحظة
+                </button>
+              )}
             </div>
+            {showNotesForm || localNotes ? (
+              <div>
+                {showNotesForm && !localNotes && (
+                  <div className="flex justify-end mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNotesForm(false);
+                        handleNotesChange("");
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                <div
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) => handleNotesChange(e.currentTarget.textContent || "")}
+                  className="text-base text-foreground leading-loose whitespace-pre-wrap outline-none"
+                  style={{ direction: "rtl", lineHeight: "2" }}
+                >
+                  {localNotes}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
         <button
