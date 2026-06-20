@@ -484,3 +484,86 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     toast.error("حدث خطأ أثناء إنشاء التقرير");
   }
 }
+
+const MASCULINE_VALUE_NAMES_ALL = [
+  "القوة", "الهيمنة", "القهارية", "العظمة", "العزة", "القدر", "الولاية", "الملك",
+  "المتانة", "الحكمة", "الرزق", "التعالي", "الواحدية", "الصمدية", "البصر", "الظهور",
+  "التكبر", "الخلق", "القيومية", "الحق", "الأولية", "الكرامة", "التبيين", "البر", "الفتح",
+];
+const MASCULINE_SET = new Set(MASCULINE_VALUE_NAMES_ALL);
+
+export async function downloadAllValuesReport(userId: string, userEmail: string | undefined): Promise<void> {
+  try {
+    const valuesRes = await supabase.from("spiritual_values").select("*").eq("user_id", userId);
+
+    // Build map of saved value data by name
+    const valuesMap = new Map<string, any>();
+    for (const item of (valuesRes.data || []) as any[]) {
+      if (!item.value_id) continue;
+      const idx = parseInt(item.value_id);
+      const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
+      valuesMap.set(name, item);
+    }
+
+    // Split VALUES into masculine and feminine (preserving VALUES order)
+    const masculineValues = VALUES.filter((name) => MASCULINE_SET.has(name));
+    const feminineValues = VALUES.filter((name) => !MASCULINE_SET.has(name));
+
+    let md = "";
+    md += "# تقرير كل القيم\n\n";
+    md += `المستخدم: ${userEmail || "-"}  \n`;
+    md += `تاريخ التوليد: ${new Date().toLocaleString("en-US")}\n\n`;
+
+    // ===== Masculine values section =====
+    md += "## القيم الذكورية\n\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableSep(6) + "\n";
+    for (const name of masculineValues) {
+      const item = valuesMap.get(name);
+      md += tableRow([
+        escapeMd(name),
+        (item?.balance_percentage || 50) + "%",
+        Array.isArray(item?.selected_feelings) && item.selected_feelings.length ? (item.selected_feelings as string[]).join("، ") : "-",
+        Array.isArray(item?.positive_feelings) && item.positive_feelings.length ? (item.positive_feelings as string[]).join("، ") : "-",
+        item?.is_pinned ? "نعم" : "-",
+        item?.notes ? escapeMd(item.notes) : "-",
+      ]) + "\n";
+    }
+    md += "\n";
+
+    // ===== Feminine values section =====
+    md += "## القيم الأنثوية\n\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableSep(6) + "\n";
+    for (const name of feminineValues) {
+      const item = valuesMap.get(name);
+      md += tableRow([
+        escapeMd(name),
+        (item?.balance_percentage || 50) + "%",
+        Array.isArray(item?.selected_feelings) && item.selected_feelings.length ? (item.selected_feelings as string[]).join("، ") : "-",
+        Array.isArray(item?.positive_feelings) && item.positive_feelings.length ? (item.positive_feelings as string[]).join("، ") : "-",
+        item?.is_pinned ? "نعم" : "-",
+        item?.notes ? escapeMd(item.notes) : "-",
+      ]) + "\n";
+    }
+    md += "\n";
+
+    md += "---\n\n*تم إنشاء هذا التقرير تلقائياً*\n";
+
+    const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    a.download = `تقرير-كل-القيم-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("تم تحميل تقرير كل القيم");
+  } catch (error) {
+    console.error("Error generating all-values report:", error);
+    toast.error("حدث خطأ أثناء إنشاء التقرير");
+  }
+}

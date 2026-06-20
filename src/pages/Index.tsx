@@ -8,11 +8,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
-import { downloadComprehensiveReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
 import Anima from "./Anima";
+import Animus from "./Animus";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
 
 const HIDDEN_VALUE_NAMES = new Set(MASCULINE_VALUE_NAMES);
+
+const MASCULINE_VALUE_IDS = MASCULINE_VALUE_NAMES.map((name) =>
+  VALUES.findIndex((v) => v === name).toString()
+).filter((id) => id !== "-1");
 
 
 const Index = () => {
@@ -286,6 +291,35 @@ const Index = () => {
     return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
   }, [getValueData, pinnedValues]);
 
+  // Masculine values list (sourced from MASCULINE_VALUE_IDS)
+  const sortedMasculineValues = useMemo(() => {
+    const allValues = MASCULINE_VALUE_IDS.map((id) => ({
+      id,
+      valueName: VALUES[parseInt(id)],
+      valueData: getValueData(id),
+    }));
+
+    const pinned = allValues.filter(v => pinnedValues.has(v.id));
+    const unpinned = allValues.filter(v => !pinnedValues.has(v.id));
+
+    const sortByProgress = (arr: typeof allValues) =>
+      [...arr].sort((a, b) => a.valueData.balancePercentage - b.valueData.balancePercentage);
+
+    return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
+  }, [getValueData, pinnedValues]);
+
+  const handleDownloadMasculineReport = useCallback(async () => {
+    if (user) {
+      await downloadMasculineValuesReport(user.id, user.email || undefined);
+    }
+  }, [user]);
+
+  const handleDownloadAllValuesReport = useCallback(async () => {
+    if (user) {
+      await downloadAllValuesReport(user.id, user.email || undefined);
+    }
+  }, [user]);
+
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -301,11 +335,38 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pt-10 px-2 pb-2 md:pt-16 md:px-4 md:pb-4">
       <div className="max-w-7xl mx-auto">
-        {/* محتوى الانيما مدمج فوق كروت الأنوثة */}
-        <div className="mb-4 border-b border-white/10 pb-4 flex flex-col items-center justify-center">
-          <Anima embedded />
+        {/* أيقونتا الأنوثة والذكورة جنباً إلى جنب بالأعلى */}
+        <div className="mb-2 border-b border-white/10 pb-2 flex flex-col items-center justify-center">
+          <div className="flex flex-row items-start justify-center gap-6 md:gap-12 w-full">
+            <Anima embedded />
+            <Animus embedded />
+          </div>
         </div>
 
+        {/* كروت القيم الذكورية بالأعلى */}
+        {sortedMasculineValues.length > 0 && (
+          <div className="mb-4">
+            <h2 className="text-center text-sm md:text-base font-semibold text-muted-foreground mb-3" dir="rtl">
+              القيم الذكورية
+            </h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
+              {sortedMasculineValues.map(({ id, valueName, valueData }) => (
+                <ValueCard
+                  key={id}
+                  name={valueName}
+                  balancePercentage={valueData.balancePercentage}
+                  onClick={() => setSelectedValue(id)}
+                  isPinned={pinnedValues.has(id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* كروت القيم الأنثوية */}
+        <h2 className="text-center text-sm md:text-base font-semibold text-muted-foreground mb-3" dir="rtl">
+          القيم الأنثوية
+        </h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
           {sortedValues.map(({ index, valueName, valueData }) => (
             <ValueCard
@@ -319,7 +380,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex justify-center mt-4">
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4">
         <Button
           onClick={handleDownloadReport}
           variant="outline"
@@ -328,6 +389,15 @@ const Index = () => {
         >
           <Download className="w-4 h-4" />
           تحميل التقرير الشامل
+        </Button>
+        <Button
+          onClick={handleDownloadMasculineReport}
+          variant="default"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          تحميل تقرير القيم الذكورية
         </Button>
       </div>
 
@@ -359,6 +429,15 @@ const Index = () => {
           onTogglePin={() => togglePin(selectedValueData.id)}
         />
       )}
+
+      {/* زر دائري ثابت بالأسفل لتحميل تقرير كل القيم */}
+      <button
+        onClick={handleDownloadAllValuesReport}
+        title="تحميل تقرير كل القيم"
+        className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-white/[0.02] backdrop-blur-xl border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-95"
+      >
+        <Download className="w-5 h-5" />
+      </button>
 
     </div>
   );
