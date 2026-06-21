@@ -44,12 +44,6 @@ const levelConfig: Record<RelationshipLevel, { label: string; gradient: string; 
   },
 };
 
-const getInitials = (name: string) => {
-  const parts = name.trim().split(" ");
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-};
-
 export const RelationshipCardComponent = ({
   card,
   onDelete,
@@ -107,23 +101,23 @@ export const RelationshipCardComponent = ({
   return (
     <div
       className={`
-        relative rounded-2xl border border-white/10 backdrop-blur-xl
+        relative rounded-xl border border-white/10 backdrop-blur-xl
         bg-gradient-to-br ${cfg.gradient}
         ${cfg.glow}
-        transition-all duration-500 ease-out
-        hover:border-white/20 hover:scale-[1.01]
+        transition-colors duration-300 ease-out
+        hover:border-white/20
         group overflow-hidden
       `}
     >
       {/* Background shimmer effect */}
-      <div className="absolute inset-0 bg-white/[0.02] rounded-2xl" />
-      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent rounded-2xl pointer-events-none" />
+      <div className="absolute inset-0 bg-white/[0.02] rounded-xl" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent rounded-xl pointer-events-none" />
 
       {/* Card content */}
-      <div className="relative p-2.5">
+      <div className="relative px-2 py-1.5">
 
         {/* Header row */}
-        <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
           {/* Name */}
           <div className="flex-1 min-w-0">
             {editMode ? (
@@ -163,19 +157,19 @@ export const RelationshipCardComponent = ({
                 </div>
               </div>
             ) : (
-              <p className="text-white font-semibold text-sm truncate">{card.name}</p>
+              <p className="text-white font-semibold text-sm leading-none truncate">{card.name}</p>
             )}
           </div>
 
 
           {/* Right actions */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {/* Level badge */}
             <div className="relative">
               <button
                 onClick={() => setEditingLevel(!editingLevel)}
                 className={`
-                  px-2.5 py-1 rounded-lg border text-xs font-black tracking-wide
+                  px-2 py-0.5 rounded-md border text-[11px] font-black tracking-wide
                   ${cfg.badge} transition-all hover:scale-105 active:scale-95
                 `}
               >
@@ -215,7 +209,7 @@ export const RelationshipCardComponent = ({
                   setEditMessenger(card.contact_messenger || "");
                   setEditMode(true);
                 }}
-                className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 transition-all"
+                className="p-1 rounded-md text-white/30 hover:text-white/70 hover:bg-white/10 transition-all"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -226,13 +220,13 @@ export const RelationshipCardComponent = ({
               <div className="flex gap-1">
                 <button
                   onClick={() => onDelete(card.id)}
-                  className="p-1.5 rounded-lg bg-red-500/30 border border-red-500/50 text-red-300 hover:bg-red-500/50 transition-all text-xs"
+                className="p-1 rounded-md bg-red-500/30 border border-red-500/50 text-red-300 hover:bg-red-500/50 transition-all text-xs"
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:bg-white/10 transition-all"
+                  className="p-1 rounded-md bg-white/5 text-white/40 hover:bg-white/10 transition-all"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -240,7 +234,7 @@ export const RelationshipCardComponent = ({
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                className="p-1 rounded-md text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -250,12 +244,12 @@ export const RelationshipCardComponent = ({
 
         {/* Contact Buttons */}
         {!editMode && (
-          <div className="flex gap-1.5 mb-2">
+          <div className="flex gap-1 mb-1.5">
             <button
               onClick={handlePhone}
               disabled={!card.contact_phone}
               className={`
-                flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg
+                flex-1 flex items-center justify-center gap-1 py-1 rounded-md
                 border text-[11px] font-medium transition-all duration-200
                 ${card.contact_phone
                   ? "bg-white/5 border-white/15 text-white/80 hover:bg-white/12 hover:border-white/25 active:scale-95"
@@ -271,7 +265,7 @@ export const RelationshipCardComponent = ({
               onClick={handleMessenger}
               disabled={!card.contact_messenger}
               className={`
-                flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg
+                flex-1 flex items-center justify-center gap-1 py-1 rounded-md
                 border text-[11px] font-medium transition-all duration-200
                 ${card.contact_messenger
                   ? "bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/20 hover:border-blue-500/40 active:scale-95"
@@ -287,7 +281,7 @@ export const RelationshipCardComponent = ({
               onClick={handleWhatsApp}
               disabled={!card.contact_phone}
               className={`
-                flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg
+                flex-1 flex items-center justify-center gap-1 py-1 rounded-md
                 border text-[11px] font-medium transition-all duration-200
                 ${card.contact_phone
                   ? "bg-green-500/10 border-green-500/25 text-green-300 hover:bg-green-500/20 hover:border-green-500/40 active:scale-95"
@@ -307,17 +301,17 @@ export const RelationshipCardComponent = ({
 
         {/* Ihsan Tasks Section */}
         {!editMode && (
-          <div className="border-t border-white/8 pt-3">
+          <div className="border-t border-white/8 pt-1.5">
             <button
               onClick={() => setTasksOpen(!tasksOpen)}
               className="w-full flex items-center justify-between group/tasks"
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-white/60 group-hover/tasks:text-white/80 transition-colors">
+                <span className="text-[11px] font-semibold text-white/60 group-hover/tasks:text-white/80 transition-colors">
                   مهام الإحسان
                 </span>
                 {totalTasks > 0 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${cfg.badge} font-medium`}>
+                  <span className={`text-[11px] px-1.5 py-0 rounded-full border ${cfg.badge} font-medium`}>
                     {completedCount}/{totalTasks}
                   </span>
                 )}
@@ -330,7 +324,7 @@ export const RelationshipCardComponent = ({
 
             {/* Progress bar */}
             {totalTasks > 0 && !tasksOpen && (
-              <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
+              <div className="mt-1 h-0.5 rounded-full bg-white/5 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${cfg.textColor.replace("text", "bg")}`}
                   style={{ width: `${(completedCount / totalTasks) * 100}%`, opacity: 0.6 }}

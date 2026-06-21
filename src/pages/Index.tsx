@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
-import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport, downloadAllValuesJsonReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
 import Anima from "./Anima";
 import Animus from "./Animus";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
@@ -316,7 +316,7 @@ const Index = () => {
 
   const handleDownloadAllValuesReport = useCallback(async () => {
     if (user) {
-      await downloadAllValuesJsonReport(user.id, user.email || undefined);
+      await downloadAllValuesReport(user.id, user.email || undefined);
     }
   }, [user]);
 
@@ -435,7 +435,7 @@ const Index = () => {
       <button
         onClick={handleDownloadAllValuesReport}
         title="تحميل تقرير كل القيم"
-        className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-white/[0.02] backdrop-blur-xl border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-95"
+        className="fixed bottom-24 left-4 z-[60] w-12 h-12 rounded-full bg-white/[0.02] backdrop-blur-xl border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-95"
       >
         <Download className="w-5 h-5" />
       </button>
