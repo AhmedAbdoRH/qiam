@@ -104,10 +104,10 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       spiritualValues.push({
         name,
         balancePercentage: item.balance_percentage || 50,
-        feelingsBeingHealed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed as string[] : [],
-        feelingsHealed: Array.isArray(item.feelings_healed) ? item.feelings_healed as string[] : [],
-        feelingsHealedDates: (item.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates as Record<string, string> : {},
-        beliefs: (item.beliefs && typeof item.beliefs === "object") ? item.beliefs as Record<string, string> : {},
+        feelingsBeingHealed: selectedFeelingsOf(item),
+        feelingsHealed: positiveFeelingsOf(item),
+        feelingsHealedDates: positiveDatesOf(item),
+        beliefs: feelingNotesOf(item),
         notes: item.notes || "",
         isPinned: item.is_pinned || false,
       });
@@ -413,8 +413,8 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balancePercentage = item?.balance_percentage || 50;
-      const selectedFeelings = Array.isArray(item?.feelings_being_healed) ? (item.feelings_being_healed as string[]).join("، ") : "-";
-      const positiveFeelings = Array.isArray(item?.feelings_healed) ? (item.feelings_healed as string[]).join("، ") : "-";
+      const selectedFeelings = selectedFeelingsOf(item).join("، ") || "-";
+      const positiveFeelings = positiveFeelingsOf(item).join("، ") || "-";
       const isPinned = item?.is_pinned ? "نعم" : "-";
       const notes = item?.notes ? escapeMd(item.notes) : "-";
       md += tableRow([escapeMd(name), balancePercentage + "%", selectedFeelings, positiveFeelings, isPinned, notes]) + "\n";
@@ -447,10 +447,10 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balance = item?.balance_percentage ?? 50;
-      const selected: string[] = Array.isArray(item?.feelings_being_healed) ? item.feelings_being_healed : [];
-      const positive: string[] = Array.isArray(item?.feelings_healed) ? item.feelings_healed : [];
-      const dates: Record<string, string> = (item?.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates : {};
-      const fNotes: Record<string, string> = (item?.beliefs && typeof item.beliefs === "object") ? item.beliefs : {};
+      const selected = selectedFeelingsOf(item);
+      const positive = positiveFeelingsOf(item);
+      const dates = positiveDatesOf(item);
+      const fNotes = feelingNotesOf(item);
       const pinned = item?.is_pinned;
       const notes = item?.notes || "";
 
