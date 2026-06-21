@@ -1,10 +1,10 @@
 export interface ValueData {
   id: string;
   name: string;
-  selectedFeelings: string[];
-  positiveFeelings?: string[]; // المشاعر الإيجابية (الأخضر)
-  positiveFeelingDates?: Record<string, string>; // تواريخ المشاعر الإيجابية
-  feelingNotes: Record<string, string>; // ملاحظات لكل شعور
+  feelingsBeingHealed: string[];
+  feelingsHealed?: string[]; // المشاعر التي تم علاجها (الأخضر)
+  feelingsHealedDates?: Record<string, string>; // تواريخ مشاعر تم علاجها
+  beliefs: Record<string, string>; // ملاحظات لكل شعور
   notes: string;
   balancePercentage: number;
   isPinned?: boolean; // حالة التثبيت

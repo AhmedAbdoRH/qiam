@@ -85,7 +85,7 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     ]);
 
     // Spiritual values
-    const spiritualValues: { name: string; balancePercentage: number; selectedFeelings: string[]; positiveFeelings: string[]; positiveFeelingDates: Record<string, string>; feelingNotes: Record<string, string>; notes: string; isPinned: boolean }[] = [];
+    const spiritualValues: { name: string; balancePercentage: number; feelingsBeingHealed: string[]; feelingsHealed: string[]; feelingsHealedDates: Record<string, string>; beliefs: Record<string, string>; notes: string; isPinned: boolean }[] = [];
     const valuesSeen = new Set<string>();
     (valuesRes.data || []).forEach((item: any) => {
       if (item.value_id === "0" || !item.value_id) return;
@@ -96,16 +96,16 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       spiritualValues.push({
         name,
         balancePercentage: item.balance_percentage || 50,
-        selectedFeelings: Array.isArray(item.selected_feelings) ? item.selected_feelings as string[] : [],
-        positiveFeelings: Array.isArray(item.positive_feelings) ? item.positive_feelings as string[] : [],
-        positiveFeelingDates: (item.positive_feeling_dates && typeof item.positive_feeling_dates === "object") ? item.positive_feeling_dates as Record<string, string> : {},
-        feelingNotes: (item.feeling_notes && typeof item.feeling_notes === "object") ? item.feeling_notes as Record<string, string> : {},
+        feelingsBeingHealed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed as string[] : [],
+        feelingsHealed: Array.isArray(item.feelings_healed) ? item.feelings_healed as string[] : [],
+        feelingsHealedDates: (item.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates as Record<string, string> : {},
+        beliefs: (item.beliefs && typeof item.beliefs === "object") ? item.beliefs as Record<string, string> : {},
         notes: item.notes || "",
         isPinned: item.is_pinned || false,
       });
     });
     VALUES.forEach((name) => {
-      if (!valuesSeen.has(name)) spiritualValues.push({ name, balancePercentage: 50, selectedFeelings: [], positiveFeelings: [], positiveFeelingDates: {}, feelingNotes: {}, notes: "", isPinned: false });
+      if (!valuesSeen.has(name)) spiritualValues.push({ name, balancePercentage: 50, feelingsBeingHealed: [], feelingsHealed: [], feelingsHealedDates: {}, beliefs: {}, notes: "", isPinned: false });
     });
 
     // Self-dialogue messages and milestones (limit to last 100 messages, last 10 milestones)
@@ -138,7 +138,7 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     }
 
     const feelingsTotal = FEELINGS.reduce((acc, f) => {
-      acc[f] = spiritualValues.filter(v => v.selectedFeelings.includes(f)).length;
+      acc[f] = spiritualValues.filter(v => v.feelingsBeingHealed.includes(f)).length;
       return acc;
     }, {} as Record<string, number>);
     const feelingsLine = Object.entries(feelingsTotal).filter(([_, c]) => c > 0).map(([f, c]) => `${f}: ${c}`).join(" — ");
@@ -150,10 +150,10 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
 
     // ===== Spiritual values =====
     md += "## القيم الروحانية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
     md += tableSep(6) + "\n";
     for (const v of spiritualValues) {
-      md += tableRow([escapeMd(v.name), v.balancePercentage + "%", v.selectedFeelings.length ? v.selectedFeelings.join("، ") : "-", v.positiveFeelings.length ? v.positiveFeelings.join("، ") : "-", v.isPinned ? "نعم" : "-", v.notes ? escapeMd(v.notes) : "-"]) + "\n";
+      md += tableRow([escapeMd(v.name), v.balancePercentage + "%", v.feelingsBeingHealed.length ? v.feelingsBeingHealed.join("، ") : "-", v.feelingsHealed.length ? v.feelingsHealed.join("، ") : "-", v.isPinned ? "نعم" : "-", v.notes ? escapeMd(v.notes) : "-"]) + "\n";
     }
     md += "\n## تظهير القيم شعوريا\n\n" + (feelingsLine || "لا توجد مشاعر مسجلة") + "\n\n";
 
@@ -162,16 +162,16 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
     for (const v of spiritualValues) {
       md += `### ${v.name}${v.isPinned ? " 📌" : ""}\n\n`;
       md += `- نسبة الاتزان: **${v.balancePercentage}%**\n`;
-      md += `- المشاعر السلبية: ${v.selectedFeelings.length ? v.selectedFeelings.join("، ") : "-"}\n`;
-      md += `- المشاعر الإيجابية: ${v.positiveFeelings.length ? v.positiveFeelings.join("، ") : "-"}\n\n`;
+      md += `- مشاعر جاري علاجها: ${v.feelingsBeingHealed.length ? v.feelingsBeingHealed.join("، ") : "-"}\n`;
+      md += `- مشاعر تم علاجها: ${v.feelingsHealed.length ? v.feelingsHealed.join("، ") : "-"}\n\n`;
 
       md += `**الارتباطات حسب المشاعر:**\n\n`;
-      const hasAny = FEELINGS.some(f => (v.feelingNotes[f] && v.feelingNotes[f].trim()) || v.selectedFeelings.includes(f) || v.positiveFeelings.includes(f));
+      const hasAny = FEELINGS.some(f => (v.beliefs[f] && v.beliefs[f].trim()) || v.feelingsBeingHealed.includes(f) || v.feelingsHealed.includes(f));
       if (hasAny) {
         for (const f of FEELINGS) {
-          const note = (v.feelingNotes[f] || "").trim();
-          const state = v.selectedFeelings.includes(f) ? "سلبي" : v.positiveFeelings.includes(f) ? "إيجابي" : "محايد";
-          const date = v.positiveFeelingDates[f] ? ` — ${new Date(v.positiveFeelingDates[f]).toLocaleDateString("en-US")}` : "";
+          const note = (v.beliefs[f] || "").trim();
+          const state = v.feelingsBeingHealed.includes(f) ? "جاري العلاج" : v.feelingsHealed.includes(f) ? "تم علاجه" : "محايد";
+          const date = v.feelingsHealedDates[f] ? ` — ${new Date(v.feelingsHealedDates[f]).toLocaleDateString("en-US")}` : "";
           if (!note && state === "محايد") continue;
           md += `- **${f}** (${state}${date}): ${note || "-"}\n`;
         }
@@ -400,13 +400,13 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     md += `تاريخ التوليد: ${new Date().toLocaleString("en-US")}\n\n`;
 
     md += "## القيم الذكورية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
     md += tableSep(6) + "\n";
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balancePercentage = item?.balance_percentage || 50;
-      const selectedFeelings = Array.isArray(item?.selected_feelings) ? (item.selected_feelings as string[]).join("، ") : "-";
-      const positiveFeelings = Array.isArray(item?.positive_feelings) ? (item.positive_feelings as string[]).join("، ") : "-";
+      const selectedFeelings = Array.isArray(item?.feelings_being_healed) ? (item.feelings_being_healed as string[]).join("، ") : "-";
+      const positiveFeelings = Array.isArray(item?.feelings_healed) ? (item.feelings_healed as string[]).join("، ") : "-";
       const isPinned = item?.is_pinned ? "نعم" : "-";
       const notes = item?.notes ? escapeMd(item.notes) : "-";
       md += tableRow([escapeMd(name), balancePercentage + "%", selectedFeelings, positiveFeelings, isPinned, notes]) + "\n";
@@ -439,17 +439,17 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balance = item?.balance_percentage ?? 50;
-      const selected: string[] = Array.isArray(item?.selected_feelings) ? item.selected_feelings : [];
-      const positive: string[] = Array.isArray(item?.positive_feelings) ? item.positive_feelings : [];
-      const dates: Record<string, string> = (item?.positive_feeling_dates && typeof item.positive_feeling_dates === "object") ? item.positive_feeling_dates : {};
-      const fNotes: Record<string, string> = (item?.feeling_notes && typeof item.feeling_notes === "object") ? item.feeling_notes : {};
+      const selected: string[] = Array.isArray(item?.feelings_being_healed) ? item.feelings_being_healed : [];
+      const positive: string[] = Array.isArray(item?.feelings_healed) ? item.feelings_healed : [];
+      const dates: Record<string, string> = (item?.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates : {};
+      const fNotes: Record<string, string> = (item?.beliefs && typeof item.beliefs === "object") ? item.beliefs : {};
       const pinned = item?.is_pinned;
       const notes = item?.notes || "";
 
       md += `### ${name}${pinned ? " 📌" : ""}\n\n`;
       md += `- نسبة الاتزان: **${balance}%**\n`;
-      md += `- المشاعر السلبية: ${selected.length ? selected.join("، ") : "-"}\n`;
-      md += `- المشاعر الإيجابية: ${positive.length ? positive.join("، ") : "-"}\n\n`;
+      md += `- مشاعر جاري علاجها: ${selected.length ? selected.join("، ") : "-"}\n`;
+      md += `- مشاعر تم علاجها: ${positive.length ? positive.join("، ") : "-"}\n\n`;
 
       md += `**الارتباطات حسب المشاعر:**\n\n`;
       let any = false;
@@ -516,15 +516,15 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
 
     // ===== Masculine values section =====
     md += "## القيم الذكورية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
     md += tableSep(6) + "\n";
     for (const name of masculineValues) {
       const item = valuesMap.get(name);
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.selected_feelings) && item.selected_feelings.length ? (item.selected_feelings as string[]).join("، ") : "-",
-        Array.isArray(item?.positive_feelings) && item.positive_feelings.length ? (item.positive_feelings as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -533,15 +533,15 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
 
     // ===== Feminine values section =====
     md += "## القيم الأنثوية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "المشاعر السلبية", "المشاعر الإيجابية", "مثبّتة", "ملاحظات"]) + "\n";
+    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
     md += tableSep(6) + "\n";
     for (const name of feminineValues) {
       const item = valuesMap.get(name);
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.selected_feelings) && item.selected_feelings.length ? (item.selected_feelings as string[]).join("، ") : "-",
-        Array.isArray(item?.positive_feelings) && item.positive_feelings.length ? (item.positive_feelings as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -564,6 +564,85 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
     toast.success("تم تحميل تقرير كل القيم");
   } catch (error) {
     console.error("Error generating all-values report:", error);
+    toast.error("حدث خطأ أثناء إنشاء التقرير");
+  }
+}
+
+// All-values JSON export — same shape as the per-value download in ValueSheet.tsx
+export async function downloadAllValuesJsonReport(userId: string, userEmail: string | undefined): Promise<void> {
+  try {
+    const valuesRes = await supabase.from("spiritual_values").select("*").eq("user_id", userId);
+    const rows = (valuesRes.data || []) as any[];
+
+    // Build map by name; same fallback logic as downloadAllValuesReport
+    const valuesMap = new Map<string, any>();
+    for (const item of rows) {
+      if (!item.value_id) continue;
+      const idx = parseInt(item.value_id);
+      const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
+      valuesMap.set(name, item);
+    }
+
+    const parseTasks = (raw: any): any[] => {
+      if (!raw) return [];
+      let arr: any = raw;
+      if (typeof raw === "string") {
+        try { arr = JSON.parse(raw); } catch { return []; }
+      }
+      return Array.isArray(arr) ? arr : [];
+    };
+
+    const buildBeliefs = (beliefs: any) => {
+      const notes: Record<string, string> =
+        beliefs && typeof beliefs === "object" && !Array.isArray(beliefs)
+          ? (beliefs as Record<string, string>)
+          : {};
+      return FEELINGS.map((feeling) => {
+        const tasks = parseTasks(notes[feeling]);
+        return {
+          feeling,
+          beliefs: tasks.map((t: any) => ({
+            text: t.text || "",
+            severity: t.severity ?? 0,
+            healed: t.healed === true || t.completed === true,
+          })),
+        };
+      });
+    };
+
+    const values = Array.from(valuesMap.entries()).map(([name, item]) => ({
+      value_id: item.value_id,
+      value_name: name,
+      balance_percentage: item.balance_percentage ?? 50,
+      is_pinned: !!item.is_pinned,
+      feelings_being_healed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed : [],
+      feelings_healed: Array.isArray(item.feelings_healed) ? item.feelings_healed : [],
+      notes: item.notes || "",
+      beliefs_by_feeling: buildBeliefs(item.beliefs),
+    }));
+
+    const payload = {
+      user_email: userEmail || null,
+      exported_at: new Date().toISOString(),
+      values_count: values.length,
+      values,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    a.download = `all_values_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("تم تحميل تقرير كل القيم");
+  } catch (error) {
+    console.error("Error generating all-values JSON report:", error);
     toast.error("حدث خطأ أثناء إنشاء التقرير");
   }
 }

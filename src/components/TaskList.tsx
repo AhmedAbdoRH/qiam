@@ -3,20 +3,31 @@ import { Button } from "./ui/button";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { Input } from "./ui/input";
 
-type Severity = 0 | 1 | 2 | 3;
+type Severity = 0 | 1 | 2 | 3 | 4;
 
 interface Task {
   id: string;
   text: string;
-  completed: boolean;
+  healed: boolean;
   severity: Severity;
 }
 
+// 5 light red shades (all intentionally light)
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
   0: "bg-white/5 border-white/10",
-  1: "bg-red-900/20 border-red-900/25",
-  2: "bg-red-900/30 border-red-900/35",
-  3: "bg-red-900/40 border-red-900/50",
+  1: "bg-red-950/15 border-red-900/20",
+  2: "bg-red-950/25 border-red-900/30",
+  3: "bg-red-950/35 border-red-900/40",
+  4: "bg-red-950/45 border-red-900/50",
+};
+
+// Display value out of 10 (each severity level = 2)
+const SEVERITY_DISPLAY: Record<Severity, number> = {
+  0: 2,
+  1: 4,
+  2: 6,
+  3: 8,
+  4: 10,
 };
 
 interface TaskListProps {
@@ -30,7 +41,8 @@ interface TaskListProps {
 const normalizeTask = (t: any): Task => ({
   id: t.id || String(Date.now()),
   text: t.text || "",
-  completed: t.completed === true,
+  // Backward-compat: old records may carry `completed: true` instead of `healed: true`
+  healed: t.healed === true || t.completed === true,
   severity: (t.severity !== undefined && t.severity !== null ? Number(t.severity) : 0) as Severity,
 });
 
@@ -89,7 +101,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     const newTaskItem: Task = {
       id: String(Date.now()),
       text: newTask.trim(),
-      completed: false,
+      healed: false,
       severity: 0,
     };
     save([...current, newTaskItem]);
@@ -100,7 +112,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
   const toggleTask = useCallback((taskId: string) => {
     const current = tasksRef.current;
     save(current.map((task) =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
+      task.id === taskId ? { ...task, healed: !task.healed } : task
     ));
   }, [save]);
 
@@ -108,7 +120,9 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     const current = tasksRef.current;
     const next = current.map((task) => {
       if (task.id !== taskId) return task;
-      const nextSev = ((task.severity + 1) % 4) as Severity;
+      // Each tap advances to the next severity level (+1), wrapping 4 -> 0.
+      // SEVERITY_DISPLAY then shows it as 2 -> 4 -> 6 -> 8 -> 10 -> 2.
+      const nextSev = ((task.severity + 1) % 5) as Severity;
       return { ...task, severity: nextSev };
     });
     save(next);
@@ -170,7 +184,32 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     longPressTriggered.current = false;
   }, [endLongPress, cycleSeverity]);
 
-  const handlePointerLeave = useCallback(() => {
+  // On touch devices the browser also fires synthetic mouse events after touch,
+  // which would cause cycleSeverity to run twice per tap. Track the last touch
+  // time and ignore mouse events that arrive shortly after.
+  const lastTouchRef = useRef(0);
+
+  const handleTouchStart = useCallback((taskId: string) => {
+    lastTouchRef.current = Date.now();
+    handlePointerDown(taskId);
+  }, [handlePointerDown]);
+
+  const handleTouchEnd = useCallback((taskId: string) => {
+    handlePointerUp(taskId);
+  }, [handlePointerUp]);
+
+  const handleMouseDown = useCallback((taskId: string) => {
+    if (Date.now() - lastTouchRef.current < 500) return; // synthetic mouse after touch
+    handlePointerDown(taskId);
+  }, [handlePointerDown]);
+
+  const handleMouseUp = useCallback((taskId: string) => {
+    if (Date.now() - lastTouchRef.current < 500) return; // synthetic mouse after touch
+    handlePointerUp(taskId);
+  }, [handlePointerUp]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (Date.now() - lastTouchRef.current < 500) return; // synthetic mouse after touch
     endLongPress();
     longPressTriggered.current = false;
   }, [endLongPress]);
@@ -235,15 +274,15 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
         {tasks.map((task) => (
           <div
             key={task.id}
-            onMouseDown={() => handlePointerDown(task.id)}
-            onMouseUp={() => handlePointerUp(task.id)}
-            onMouseLeave={handlePointerLeave}
-            onTouchStart={() => handlePointerDown(task.id)}
-            onTouchEnd={() => handlePointerUp(task.id)}
-            onTouchCancel={handlePointerLeave}
+            onMouseDown={() => handleMouseDown(task.id)}
+            onMouseUp={() => handleMouseUp(task.id)}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={() => handleTouchStart(task.id)}
+            onTouchEnd={() => handleTouchEnd(task.id)}
+            onTouchCancel={handleMouseLeave}
             className={`flex flex-col gap-2 w-full rounded-2xl border backdrop-blur-xl p-1 shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] hover:shadow-xl select-none ${
-              task.completed 
-                ? 'bg-black/30 border-white/5' 
+              task.healed
+                ? 'bg-black/30 border-white/5'
                 : SEVERITY_BACKGROUNDS[task.severity]
             }`}
           >
@@ -280,7 +319,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-150 flex-shrink-0 mx-1 ${
-                    task.completed
+                    task.healed
                       ? 'bg-primary border-primary'
                       : 'border-muted-foreground/40 hover:border-muted-foreground/60'
                   }`}
@@ -289,7 +328,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                     toggleTask(task.id);
                   }}
                 >
-                  {task.completed && (
+                  {task.healed && (
                     <svg className="w-3 h-3 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
@@ -297,7 +336,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                 </div>
                 <span
                   className={`text-[15px] font-bold tracking-wide transition-all duration-150 flex-1 leading-relaxed ${
-                    task.completed ? "line-through text-foreground/40" : "text-foreground"
+                    task.healed ? "line-through text-foreground/40" : "text-foreground"
                   }`}
                 >
                   {task.text}
@@ -314,6 +353,15 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                 >
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive transition-colors" />
                 </Button>
+                {/* Intensity indicator (top-left in RTL = end of row) — hidden when healed */}
+                {!task.healed && (
+                  <span
+                    className="self-start mt-1 h-5 w-5 rounded-full bg-red-900/30 border border-red-900/40 text-[10px] font-semibold text-red-300/90 flex items-center justify-center leading-none flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {SEVERITY_DISPLAY[task.severity]}
+                  </span>
+                )}
               </div>
             )}
           </div>

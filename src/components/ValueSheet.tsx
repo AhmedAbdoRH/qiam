@@ -10,9 +10,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Save, StickyNote, X } from "lucide-react";
+import { Save, StickyNote, X, Download } from "lucide-react";
 import { Pin, PinOff } from "lucide-react";
-import { FEELINGS } from "@/types/value";
+import { FEELINGS, ValueData } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
 import { TaskList } from "./TaskList";
 import { Plus } from "lucide-react";
@@ -21,37 +21,39 @@ interface ValueSheetProps {
   isOpen: boolean;
   onClose: () => void;
   valueName: string;
-  selectedFeelings: string[];
-  positiveFeelings?: string[];
-  positiveFeelingDates?: Record<string, string>;
-  feelingNotes: Record<string, string>;
+  feelingsBeingHealed: string[];
+  feelingsHealed?: string[];
+  feelingsHealedDates?: Record<string, string>;
+  beliefs: Record<string, string>;
   notes: string;
   balancePercentage: number;
-  onUpdate: (selectedFeelings: string[], positiveFeelings: string[], positiveFeelingDates: Record<string, string>, feelingNotes: Record<string, string>, notes: string, balancePercentage: number) => void;
+  onUpdate: (feelingsBeingHealed: string[], feelingsHealed: string[], feelingsHealedDates: Record<string, string>, beliefs: Record<string, string>, notes: string, balancePercentage: number) => void;
   valueId?: string;
   isPinned?: boolean;
   onTogglePin?: () => void;
+  valueData?: ValueData;
 }
 
 export const ValueSheet = ({
   isOpen,
   onClose,
   valueName,
-  selectedFeelings,
-  positiveFeelings = [],
-  positiveFeelingDates = {},
-  feelingNotes,
+  feelingsBeingHealed,
+  feelingsHealed = [],
+  feelingsHealedDates = {},
+  beliefs,
   notes,
   balancePercentage,
   onUpdate,
   valueId,
   isPinned = false,
   onTogglePin,
+  valueData,
 }: ValueSheetProps) => {
-  const [localSelectedFeelings, setLocalSelectedFeelings] = useState<string[]>(selectedFeelings);
-  const [localPositiveFeelings, setLocalPositiveFeelings] = useState<string[]>(positiveFeelings);
-  const [localPositiveFeelingDates, setLocalPositiveFeelingDates] = useState<Record<string, string>>(positiveFeelingDates);
-  const [localFeelingNotes, setLocalFeelingNotes] = useState<Record<string, string>>(feelingNotes);
+  const [localFeelingsBeingHealed, setLocalFeelingsBeingHealed] = useState<string[]>(feelingsBeingHealed);
+  const [localFeelingsHealed, setLocalFeelingsHealed] = useState<string[]>(feelingsHealed);
+  const [localFeelingsHealedDates, setLocalFeelingsHealedDates] = useState<Record<string, string>>(feelingsHealedDates);
+  const [localBeliefs, setLocalBeliefs] = useState<Record<string, string>>(beliefs);
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
   const [activeAddFeeling, setActiveAddFeeling] = useState<string | null>(null);
@@ -59,39 +61,39 @@ export const ValueSheet = ({
 
   // Ref to track latest state for callbacks
   const latestRef = useRef({
-    localSelectedFeelings,
-    localPositiveFeelings,
-    localPositiveFeelingDates,
-    localFeelingNotes,
+    localFeelingsBeingHealed,
+    localFeelingsHealed,
+    localFeelingsHealedDates,
+    localBeliefs,
     localNotes,
     localBalancePercentage,
   });
   latestRef.current = {
-    localSelectedFeelings,
-    localPositiveFeelings,
-    localPositiveFeelingDates,
-    localFeelingNotes,
+    localFeelingsBeingHealed,
+    localFeelingsHealed,
+    localFeelingsHealedDates,
+    localBeliefs,
     localNotes,
     localBalancePercentage,
   };
 
   useEffect(() => {
-    setLocalSelectedFeelings(selectedFeelings);
-    setLocalPositiveFeelings(positiveFeelings || []);
-    setLocalPositiveFeelingDates(positiveFeelingDates || {});
-    setLocalFeelingNotes(feelingNotes);
+    setLocalFeelingsBeingHealed(feelingsBeingHealed);
+    setLocalFeelingsHealed(feelingsHealed || []);
+    setLocalFeelingsHealedDates(feelingsHealedDates || {});
+    setLocalBeliefs(beliefs);
     setLocalNotes(notes);
     setLocalBalancePercentage(balancePercentage);
-  }, [isOpen, selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage, valueName]);
+  }, [isOpen, feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, balancePercentage, valueName]);
 
   // Save all data at once when closing the sheet (both button click + backdrop/cross click)
   const handleClose = useCallback(() => {
     const latest = latestRef.current;
     onUpdate(
-      latest.localSelectedFeelings,
-      latest.localPositiveFeelings,
-      latest.localPositiveFeelingDates,
-      latest.localFeelingNotes,
+      latest.localFeelingsBeingHealed,
+      latest.localFeelingsHealed,
+      latest.localFeelingsHealedDates,
+      latest.localBeliefs,
       latest.localNotes,
       latest.localBalancePercentage
     );
@@ -104,58 +106,58 @@ export const ValueSheet = ({
   // Get feeling state
   const getFeelingState = useCallback((feeling: string): 'negative' | 'positive' | null => {
     const latest = latestRef.current;
-    if (latest.localSelectedFeelings.includes(feeling)) return 'negative';
-    if (latest.localPositiveFeelings.includes(feeling)) return 'positive';
+    if (latest.localFeelingsBeingHealed.includes(feeling)) return 'negative';
+    if (latest.localFeelingsHealed.includes(feeling)) return 'positive';
     return null;
   }, []);
 
   const handleFeelingToggle = useCallback((feeling: string) => {
     const latest = latestRef.current;
-    let newSelected = [...latest.localSelectedFeelings];
-    let newPositive = [...latest.localPositiveFeelings];
-    let newDates = { ...latest.localPositiveFeelingDates };
+    let newBeingHealed = [...latest.localFeelingsBeingHealed];
+    let newHealed = [...latest.localFeelingsHealed];
+    let newDates = { ...latest.localFeelingsHealedDates };
 
-    const currentState = latest.localSelectedFeelings.includes(feeling) ? 'negative' : 
-                         latest.localPositiveFeelings.includes(feeling) ? 'positive' : null;
+    const currentState = latest.localFeelingsBeingHealed.includes(feeling) ? 'negative' : 
+                         latest.localFeelingsHealed.includes(feeling) ? 'positive' : null;
 
     if (currentState === null) {
-      newSelected = [...newSelected, feeling];
+      newBeingHealed = [...newBeingHealed, feeling];
     } else if (currentState === 'negative') {
-      newSelected = newSelected.filter((f) => f !== feeling);
-      newPositive = [...newPositive, feeling];
+      newBeingHealed = newBeingHealed.filter((f) => f !== feeling);
+      newHealed = [...newHealed, feeling];
       newDates[feeling] = new Date().toISOString();
     } else {
-      newPositive = newPositive.filter((f) => f !== feeling);
+      newHealed = newHealed.filter((f) => f !== feeling);
       delete newDates[feeling];
     }
 
-    const positiveCount = newPositive.length;
-    const negativeCount = newSelected.length;
+    const positiveCount = newHealed.length;
+    const negativeCount = newBeingHealed.length;
     const totalFeelings = 7;
     const balanceChangePerFeeling = 50 / totalFeelings;
     let newBalance = 50 + (positiveCount - negativeCount) * balanceChangePerFeeling;
     newBalance = Math.max(0, Math.min(100, Math.round(newBalance)));
 
-    setLocalSelectedFeelings(newSelected);
-    setLocalPositiveFeelings(newPositive);
-    setLocalPositiveFeelingDates(newDates);
+    setLocalFeelingsBeingHealed(newBeingHealed);
+    setLocalFeelingsHealed(newHealed);
+    setLocalFeelingsHealedDates(newDates);
     setLocalBalancePercentage(newBalance);
   }, []);
 
   // Update local state only — save to DB happens when sheet closes (handleClose)
   const handleFeelingNoteChange = useCallback((feeling: string, note: string) => {
-    setLocalFeelingNotes(prev => ({ ...prev, [feeling]: note }));
+    setLocalBeliefs(prev => ({ ...prev, [feeling]: note }));
   }, []);
 
   const persistFeelingNote = useCallback((feeling: string, note: string) => {
     const latest = latestRef.current;
-    const nextNotes = { ...latest.localFeelingNotes, [feeling]: note };
-    setLocalFeelingNotes(nextNotes);
+    const nextBeliefs = { ...latest.localBeliefs, [feeling]: note };
+    setLocalBeliefs(nextBeliefs);
     onUpdate(
-      latest.localSelectedFeelings,
-      latest.localPositiveFeelings,
-      latest.localPositiveFeelingDates,
-      nextNotes,
+      latest.localFeelingsBeingHealed,
+      latest.localFeelingsHealed,
+      latest.localFeelingsHealedDates,
+      nextBeliefs,
       latest.localNotes,
       latest.localBalancePercentage
     );
@@ -169,6 +171,82 @@ export const ValueSheet = ({
   const handleBalanceChange = useCallback((value: number[]) => {
     setLocalBalancePercentage(value[0]);
   }, []);
+
+  const handleDownloadValue = useCallback(() => {
+    const source = valueData ?? {
+      id: valueId ?? "",
+      name: valueName,
+      feelingsBeingHealed: localFeelingsBeingHealed,
+      feelingsHealed: localFeelingsHealed,
+      feelingsHealedDates: localFeelingsHealedDates,
+      beliefs: localBeliefs,
+      notes: localNotes,
+      balancePercentage: localBalancePercentage,
+      isPinned,
+    };
+
+    // Parse belief lists from beliefs (each value is a JSON-stringified Task[])
+    const parseTasks = (raw: string) => {
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const beliefsByFeeling = FEELINGS.map((feeling) => {
+      const tasks = parseTasks(source.beliefs[feeling] || "");
+      const state =
+        source.feelingsBeingHealed.includes(feeling)
+          ? "جاري العلاج"
+          : (source.feelingsHealed || []).includes(feeling)
+          ? "تم علاجه"
+          : "غير مُفعّل";
+      return {
+        feeling,
+        state,
+        positive_date: source.feelingsHealedDates?.[feeling] || null,
+        beliefs: tasks.map((t: any) => ({
+            text: t.text || "",
+            severity: t.severity ?? 0,
+            healed: t.healed === true || t.completed === true,
+          })),
+      };
+    });
+
+    const payload = {
+      value_id: source.id,
+      value_name: source.name,
+      balance_percentage: source.balancePercentage,
+      is_pinned: !!source.isPinned,
+      feelings_being_healed: source.feelingsBeingHealed,
+      feelings_healed: source.feelingsHealed || [],
+      notes: source.notes || "",
+      exported_at: new Date().toISOString(),
+      beliefs_by_feeling: beliefsByFeeling,
+    };
+
+    try {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safeName = source.name.replace(/\s+/g, "_");
+      a.href = url;
+      a.download = `value_${safeName}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("تم تحميل بيانات القيمة");
+    } catch (err) {
+      toast.error("تعذر تحميل الملف");
+      console.error(err);
+    }
+  }, [valueData, valueId, valueName, localFeelingsBeingHealed, localFeelingsHealed, localFeelingsHealedDates, localBeliefs, localNotes, localBalancePercentage, isPinned]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
@@ -205,6 +283,18 @@ export const ValueSheet = ({
             </Button>
           </div>
         )}
+        <div className="absolute top-4 right-4 z-50">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleDownloadValue}
+            title="تحميل كل ما يخص هذه القيمة"
+            className="rounded-full bg-background/60 backdrop-blur-lg hover:bg-background/80"
+          >
+            <Download className="h-5 w-5 text-primary" />
+          </Button>
+        </div>
         <div className="space-y-6">
           {/* Balance percentage slider */}
           <Slider
@@ -270,9 +360,9 @@ export const ValueSheet = ({
                           {feeling}
                         </Label>
                       </div>
-                      {localPositiveFeelingDates[feeling] && (
+                      {localFeelingsHealedDates[feeling] && (
                         <span className="text-xs text-muted-foreground mt-0.5">
-                          {new Date(localPositiveFeelingDates[feeling]).toLocaleDateString('en-US', {
+                          {new Date(localFeelingsHealedDates[feeling]).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'numeric',
                             day: 'numeric',
@@ -283,7 +373,7 @@ export const ValueSheet = ({
                   </div>
                   <div className="w-full pt-2 border-t border-border/30">
                     <TaskList
-                      value={localFeelingNotes[feeling] || ""}
+                      value={localBeliefs[feeling] || ""}
                       onChange={(value) => handleFeelingNoteChange(feeling, value)}
                       onPersist={(value) => persistFeelingNote(feeling, value)}
                       showAddForm={activeAddFeeling === feeling}

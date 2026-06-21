@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
-import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport, downloadAllValuesJsonReport } from "@/utils/reportGenerator";
 import Anima from "./Anima";
 import Animus from "./Animus";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
@@ -47,10 +47,10 @@ const Index = () => {
     return {
       id: valueId,
       name: valueName,
-      selectedFeelings: [],
-      feelingNotes: {},
-      positiveFeelings: [],
-      positiveFeelingDates: {},
+      feelingsBeingHealed: [],
+      beliefs: {},
+      feelingsHealed: [],
+      feelingsHealedDates: {},
       notes: "",
       balancePercentage: DEFAULT_BALANCE_PERCENTAGES[valueName] || 50,
       isPinned: false,
@@ -91,10 +91,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: currentValue.name,
-          selected_feelings: currentValue.selectedFeelings,
-          positive_feelings: currentValue.positiveFeelings || [],
-          positive_feeling_dates: currentValue.positiveFeelingDates || {},
-          feeling_notes: currentValue.feelingNotes,
+          feelings_being_healed: currentValue.feelingsBeingHealed,
+          feelings_healed: currentValue.feelingsHealed || [],
+          feelings_healed_dates: currentValue.feelingsHealedDates || {},
+          beliefs: currentValue.beliefs,
           notes: currentValue.notes,
           balance_percentage: currentValue.balancePercentage,
           is_pinned: newPinnedState,
@@ -137,26 +137,26 @@ const Index = () => {
             return;
           }
           
-          const selectedFeelings = Array.isArray(item.selected_feelings)
-            ? (item.selected_feelings as string[])
+          const feelingsBeingHealed = Array.isArray(item.feelings_being_healed)
+            ? (item.feelings_being_healed as string[])
             : [];
           
-          const feelingNotes = 
-            item.feeling_notes && 
-            typeof item.feeling_notes === "object" && 
-            !Array.isArray(item.feeling_notes)
-              ? (item.feeling_notes as Record<string, string>)
+          const beliefs = 
+            item.beliefs && 
+            typeof item.beliefs === "object" && 
+            !Array.isArray(item.beliefs)
+              ? (item.beliefs as Record<string, string>)
               : {};
 
-          const positiveFeelings = Array.isArray(item.positive_feelings)
-            ? (item.positive_feelings as string[])
+          const feelingsHealed = Array.isArray(item.feelings_healed)
+            ? (item.feelings_healed as string[])
             : [];
 
-          const positiveFeelingDates = 
-            item.positive_feeling_dates && 
-            typeof item.positive_feeling_dates === "object" && 
-            !Array.isArray(item.positive_feeling_dates)
-              ? (item.positive_feeling_dates as Record<string, string>)
+          const feelingsHealedDates = 
+            item.feelings_healed_dates && 
+            typeof item.feelings_healed_dates === "object" && 
+            !Array.isArray(item.feelings_healed_dates)
+              ? (item.feelings_healed_dates as Record<string, string>)
               : {};
 
           const valueIndex = parseInt(item.value_id);
@@ -167,10 +167,10 @@ const Index = () => {
           formattedData[item.value_id] = {
             id: item.value_id,
             name: valueName,
-            selectedFeelings,
-            feelingNotes,
-            positiveFeelings,
-            positiveFeelingDates,
+            feelingsBeingHealed,
+            beliefs,
+            feelingsHealed,
+            feelingsHealedDates,
             notes: item.notes || "",
             balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
@@ -193,10 +193,10 @@ const Index = () => {
 
   const handleValueUpdate = useCallback(async (
     valueId: string,
-    selectedFeelings: string[],
-    positiveFeelings: string[],
-    positiveFeelingDates: Record<string, string>,
-    feelingNotes: Record<string, string>,
+    feelingsBeingHealed: string[],
+    feelingsHealed: string[],
+    feelingsHealedDates: Record<string, string>,
+    beliefs: Record<string, string>,
     notes: string,
     balancePercentage: number
   ) => {
@@ -212,10 +212,10 @@ const Index = () => {
       [valueId]: {
         id: valueId,
         name: valueName,
-        selectedFeelings,
-        positiveFeelings,
-        positiveFeelingDates,
-        feelingNotes,
+        feelingsBeingHealed,
+        feelingsHealed,
+        feelingsHealedDates,
+        beliefs,
         notes,
         balancePercentage,
         isPinned: currentIsPinned,
@@ -236,10 +236,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: valueName,
-          selected_feelings: selectedFeelings,
-          positive_feelings: positiveFeelings || [],
-          positive_feeling_dates: positiveFeelingDates || {},
-          feeling_notes: feelingNotes,
+          feelings_being_healed: feelingsBeingHealed,
+          feelings_healed: feelingsHealed || [],
+          feelings_healed_dates: feelingsHealedDates || {},
+          beliefs: beliefs,
           notes: notes,
           balance_percentage: balancePercentage,
           is_pinned: currentIsPinned,
@@ -316,7 +316,7 @@ const Index = () => {
 
   const handleDownloadAllValuesReport = useCallback(async () => {
     if (user) {
-      await downloadAllValuesReport(user.id, user.email || undefined);
+      await downloadAllValuesJsonReport(user.id, user.email || undefined);
     }
   }, [user]);
 
@@ -406,20 +406,20 @@ const Index = () => {
         <ValueSheet
           isOpen={!!selectedValueData}
           valueName={selectedValueData.name}
-          selectedFeelings={selectedValueData.selectedFeelings}
-          positiveFeelings={selectedValueData.positiveFeelings}
-          positiveFeelingDates={selectedValueData.positiveFeelingDates}
-          feelingNotes={selectedValueData.feelingNotes}
+          feelingsBeingHealed={selectedValueData.feelingsBeingHealed}
+          feelingsHealed={selectedValueData.feelingsHealed}
+          feelingsHealedDates={selectedValueData.feelingsHealedDates}
+          beliefs={selectedValueData.beliefs}
           notes={selectedValueData.notes}
           balancePercentage={selectedValueData.balancePercentage}
           onClose={() => setSelectedValue(null)}
-          onUpdate={(selectedFeelings, positiveFeelings, positiveFeelingDates, feelingNotes, notes, balancePercentage) => {
+          onUpdate={(feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, balancePercentage) => {
             handleValueUpdate(
               selectedValueData.id,
-              selectedFeelings,
-              positiveFeelings,
-              positiveFeelingDates,
-              feelingNotes,
+              feelingsBeingHealed,
+              feelingsHealed,
+              feelingsHealedDates,
+              beliefs,
               notes,
               balancePercentage
             );
@@ -427,6 +427,7 @@ const Index = () => {
           valueId={selectedValueData.id}
           isPinned={pinnedValues.has(selectedValueData.id)}
           onTogglePin={() => togglePin(selectedValueData.id)}
+          valueData={selectedValueData}
         />
       )}
 
