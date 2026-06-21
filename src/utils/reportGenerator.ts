@@ -531,8 +531,8 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
-        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
+        selectedFeelingsOf(item).join("، ") || "-",
+        positiveFeelingsOf(item).join("، ") || "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -548,8 +548,8 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
-        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
+        selectedFeelingsOf(item).join("، ") || "-",
+        positiveFeelingsOf(item).join("، ") || "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -623,10 +623,10 @@ export async function downloadAllValuesJsonReport(userId: string, userEmail: str
       value_name: name,
       balance_percentage: item.balance_percentage ?? 50,
       is_pinned: !!item.is_pinned,
-      feelings_being_healed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed : [],
-      feelings_healed: Array.isArray(item.feelings_healed) ? item.feelings_healed : [],
+      feelings_being_healed: selectedFeelingsOf(item),
+      feelings_healed: positiveFeelingsOf(item),
       notes: item.notes || "",
-      beliefs_by_feeling: buildBeliefs(item.beliefs),
+      beliefs_by_feeling: buildBeliefs(item.feeling_notes ?? item.beliefs),
     }));
 
     const payload = {
