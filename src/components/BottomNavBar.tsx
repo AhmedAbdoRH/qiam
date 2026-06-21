@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Target, BrickWall, Sparkles, CheckSquare } from "lucide-react";
+import { Target, BrickWall, Sparkles, Heart } from "lucide-react";
 
 const BottomNavBar = () => {
   const location = useLocation();
@@ -17,9 +17,9 @@ const BottomNavBar = () => {
       icon: BrickWall,
     },
     {
-      name: "الطفل الداخلي",
+      name: "العلاقات",
       path: "/tasks",
-      icon: CheckSquare,
+      icon: Heart,
     },
     {
       name: "الايمان",
