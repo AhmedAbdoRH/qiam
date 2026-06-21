@@ -633,6 +633,7 @@ export async function downloadAllValuesJsonReport(userId: string, userEmail: str
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    a.href = url;
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     a.download = `all_values_${dateStr}.json`;
