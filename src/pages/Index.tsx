@@ -91,10 +91,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: currentValue.name,
-          feelings_being_healed: currentValue.feelingsBeingHealed,
-          feelings_healed: currentValue.feelingsHealed || [],
-          feelings_healed_dates: currentValue.feelingsHealedDates || {},
-          beliefs: currentValue.beliefs,
+          selected_feelings: currentValue.feelingsBeingHealed,
+          positive_feelings: currentValue.feelingsHealed || [],
+          positive_feeling_dates: currentValue.feelingsHealedDates || {},
+          feeling_notes: currentValue.beliefs,
           notes: currentValue.notes,
           balance_percentage: currentValue.balancePercentage,
           is_pinned: newPinnedState,
@@ -137,26 +137,26 @@ const Index = () => {
             return;
           }
           
-          const feelingsBeingHealed = Array.isArray(item.feelings_being_healed)
-            ? (item.feelings_being_healed as string[])
+          const feelingsBeingHealed = Array.isArray(item.selected_feelings)
+            ? (item.selected_feelings as string[])
             : [];
           
           const beliefs = 
-            item.beliefs && 
-            typeof item.beliefs === "object" && 
-            !Array.isArray(item.beliefs)
-              ? (item.beliefs as Record<string, string>)
+            item.feeling_notes && 
+            typeof item.feeling_notes === "object" && 
+            !Array.isArray(item.feeling_notes)
+              ? (item.feeling_notes as Record<string, string>)
               : {};
 
-          const feelingsHealed = Array.isArray(item.feelings_healed)
-            ? (item.feelings_healed as string[])
+          const feelingsHealed = Array.isArray(item.positive_feelings)
+            ? (item.positive_feelings as string[])
             : [];
 
           const feelingsHealedDates = 
-            item.feelings_healed_dates && 
-            typeof item.feelings_healed_dates === "object" && 
-            !Array.isArray(item.feelings_healed_dates)
-              ? (item.feelings_healed_dates as Record<string, string>)
+            item.positive_feeling_dates && 
+            typeof item.positive_feeling_dates === "object" && 
+            !Array.isArray(item.positive_feeling_dates)
+              ? (item.positive_feeling_dates as Record<string, string>)
               : {};
 
           const valueIndex = parseInt(item.value_id);
@@ -236,10 +236,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: valueName,
-          feelings_being_healed: feelingsBeingHealed,
-          feelings_healed: feelingsHealed || [],
-          feelings_healed_dates: feelingsHealedDates || {},
-          beliefs: beliefs,
+          selected_feelings: feelingsBeingHealed,
+          positive_feelings: feelingsHealed || [],
+          positive_feeling_dates: feelingsHealedDates || {},
+          feeling_notes: beliefs,
           notes: notes,
           balance_percentage: balancePercentage,
           is_pinned: currentIsPinned,

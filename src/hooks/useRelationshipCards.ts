@@ -61,7 +61,7 @@ export const useRelationshipCards = () => {
         contact_phone: row.contact_phone,
         contact_messenger: row.contact_messenger,
         level: row.level as RelationshipLevel,
-        tasks: Array.isArray(row.tasks) ? (row.tasks as IhsanTask[]) : [],
+        tasks: Array.isArray(row.tasks) ? (row.tasks as unknown as IhsanTask[]) : [],
         created_at: row.created_at,
         updated_at: row.updated_at,
       }));

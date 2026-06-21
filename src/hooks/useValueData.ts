@@ -19,8 +19,8 @@ export const useValueData = () => {
       const valueDataMap = data.reduce((acc, item) => {
         acc[item.value_id] = {
           balancePercentage: item.balance_percentage || 50,
-          feelingsBeingHealed: item.feelings_being_healed || [],
-          beliefs: item.beliefs || {},
+          feelingsBeingHealed: Array.isArray(item.selected_feelings) ? item.selected_feelings : [],
+          beliefs: item.feeling_notes || {},
           notes: item.notes || ''
         };
         return acc;
