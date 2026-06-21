@@ -449,6 +449,42 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_cards: {
+        Row: {
+          contact_messenger: string | null
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          level: string
+          name: string
+          tasks: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_messenger?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          level?: string
+          name: string
+          tasks?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_messenger?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          level?: string
+          name?: string
+          tasks?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       self_dialogue_messages: {
         Row: {
           archive_session_id: string | null
