@@ -58,6 +58,14 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
 const tableRow = (cells: string[]): string => "| " + cells.join(" | ") + " |";
 const tableSep = (n: number): string => "|" + " --- |".repeat(n);
 
+const asStringArray = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+const asStringRecord = (value: unknown): Record<string, string> =>
+  value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, string> : {};
+const selectedFeelingsOf = (item: any): string[] => asStringArray(item?.selected_feelings ?? item?.feelings_being_healed);
+const positiveFeelingsOf = (item: any): string[] => asStringArray(item?.positive_feelings ?? item?.feelings_healed);
+const positiveDatesOf = (item: any): Record<string, string> => asStringRecord(item?.positive_feeling_dates ?? item?.feelings_healed_dates);
+const feelingNotesOf = (item: any): Record<string, string> => asStringRecord(item?.feeling_notes ?? item?.beliefs);
+
 export async function downloadComprehensiveReport(userId: string, userEmail: string | undefined): Promise<void> {
   try {
     const [
