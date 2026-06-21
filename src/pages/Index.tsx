@@ -138,25 +138,25 @@ const Index = () => {
           }
           
           const feelingsBeingHealed = Array.isArray(item.selected_feelings)
-            ? (item.selected_feelings as string[])
+            ? (item.selected_feelings as unknown as string[])
             : [];
           
           const beliefs = 
             item.feeling_notes && 
             typeof item.feeling_notes === "object" && 
             !Array.isArray(item.feeling_notes)
-              ? (item.feeling_notes as Record<string, string>)
+              ? (item.feeling_notes as unknown as Record<string, string>)
               : {};
 
           const feelingsHealed = Array.isArray(item.positive_feelings)
-            ? (item.positive_feelings as string[])
+            ? (item.positive_feelings as unknown as string[])
             : [];
 
           const feelingsHealedDates = 
             item.positive_feeling_dates && 
             typeof item.positive_feeling_dates === "object" && 
             !Array.isArray(item.positive_feeling_dates)
-              ? (item.positive_feeling_dates as Record<string, string>)
+              ? (item.positive_feeling_dates as unknown as Record<string, string>)
               : {};
 
           const valueIndex = parseInt(item.value_id);
