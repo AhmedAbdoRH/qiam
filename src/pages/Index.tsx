@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
-import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport, downloadAllValuesJsonReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
 import Anima from "./Anima";
 import Animus from "./Animus";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
@@ -316,7 +316,8 @@ const Index = () => {
 
   const handleDownloadAllValuesReport = useCallback(async () => {
     if (user) {
-      await downloadAllValuesJsonReport(user.id, user.email || undefined);
+      // Markdown export (matches the styling of the other reports)
+      await downloadAllValuesReport(user.id, user.email || undefined);
     }
   }, [user]);
 

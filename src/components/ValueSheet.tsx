@@ -14,6 +14,7 @@ import { Save, StickyNote, X, Download } from "lucide-react";
 import { Pin, PinOff } from "lucide-react";
 import { FEELINGS, ValueData } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
+import { buildValueMarkdown } from "@/utils/reportGenerator";
 import { TaskList } from "./TaskList";
 import { Plus } from "lucide-react";
 
@@ -185,58 +186,26 @@ export const ValueSheet = ({
       isPinned,
     };
 
-    // Parse belief lists from beliefs (each value is a JSON-stringified Task[])
-    const parseTasks = (raw: string) => {
-      if (!raw) return [];
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    };
-
-    const beliefsByFeeling = FEELINGS.map((feeling) => {
-      const tasks = parseTasks(source.beliefs[feeling] || "");
-      const state =
-        source.feelingsBeingHealed.includes(feeling)
-          ? "جاري العلاج"
-          : (source.feelingsHealed || []).includes(feeling)
-          ? "تم علاجه"
-          : "غير مُفعّل";
-      return {
-        feeling,
-        state,
-        positive_date: source.feelingsHealedDates?.[feeling] || null,
-        beliefs: tasks.map((t: any) => ({
-            text: t.text || "",
-            severity: t.severity ?? 0,
-            healed: t.healed === true || t.completed === true,
-          })),
-      };
+    const md = buildValueMarkdown({
+      valueId: source.id ?? "",
+      valueName: source.name,
+      balancePercentage: source.balancePercentage ?? 50,
+      isPinned: !!source.isPinned,
+      feelingsBeingHealed: source.feelingsBeingHealed ?? [],
+      feelingsHealed: source.feelingsHealed ?? [],
+      feelingsHealedDates: source.feelingsHealedDates ?? {},
+      beliefs: source.beliefs ?? {},
+      notes: source.notes ?? "",
+      exportedAt: new Date().toISOString(),
     });
 
-    const payload = {
-      value_id: source.id,
-      value_name: source.name,
-      balance_percentage: source.balancePercentage,
-      is_pinned: !!source.isPinned,
-      feelings_being_healed: source.feelingsBeingHealed,
-      feelings_healed: source.feelingsHealed || [],
-      notes: source.notes || "",
-      exported_at: new Date().toISOString(),
-      beliefs_by_feeling: beliefsByFeeling,
-    };
-
     try {
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json;charset=utf-8",
-      });
+      const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const safeName = source.name.replace(/\s+/g, "_");
       a.href = url;
-      a.download = `value_${safeName}.json`;
+      a.download = `value_${safeName}.md`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

@@ -58,6 +58,129 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
 const tableRow = (cells: string[]): string => "| " + cells.join(" | ") + " |";
 const tableSep = (n: number): string => "|" + " --- |".repeat(n);
 
+/**
+ * Build a Markdown report for a single value.
+ * Exported so it can be reused (e.g. by ValueSheet's per-value download button).
+ */
+export function buildValueMarkdown(input: {
+  valueId: string;
+  valueName: string;
+  balancePercentage: number;
+  isPinned?: boolean;
+  feelingsBeingHealed?: string[];
+  feelingsHealed?: string[];
+  feelingsHealedDates?: Record<string, string>;
+  beliefs?: Record<string, string>;
+  notes?: string;
+  exportedAt?: string;
+}): string {
+  const {
+    valueId,
+    valueName,
+    balancePercentage,
+    isPinned = false,
+    feelingsBeingHealed = [],
+    feelingsHealed = [],
+    feelingsHealedDates = {},
+    beliefs = {},
+    notes = "",
+    exportedAt = new Date().toISOString(),
+  } = input;
+
+  const parseTasks = (raw: string) => {
+    if (!raw) return [] as Array<{ text: string; severity: number; healed: boolean; completed?: boolean }>;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((t: any) => ({
+          text: t.text || "",
+          severity: typeof t.severity === "number" ? t.severity : 0,
+          healed: t.healed === true || t.completed === true,
+        }));
+      }
+      return [{ text: String(parsed), severity: 0, healed: false }];
+    } catch {
+      return raw.trim() ? [{ text: raw.trim(), severity: 0, healed: false }] : [];
+    }
+  };
+
+  const stateLabel = (feeling: string): string =>
+    feelingsBeingHealed.includes(feeling)
+      ? "جاري العلاج"
+      : feelingsHealed.includes(feeling)
+      ? "تم علاجه"
+      : "غير مُفعّل";
+
+  const severityLabel = (sev: number): string => {
+    // Mirrors SEVERITY_DISPLAY in TaskList.tsx (1 -> 2 -> 3 -> ... -> 10 -> 1)
+    const display = (sev % 10) + 1;
+    return `${display}/10`;
+  };
+
+  const sanitize = (s: string): string =>
+    (s ?? "").toString().replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+
+  let md = "";
+  md += `# ${valueName}\n\n`;
+  md += `> تقرير تفصيلي للقيمة\n\n`;
+
+  md += `## نظرة عامة\n\n`;
+  md += `| الحقل | القيمة |\n`;
+  md += `| --- | --- |\n`;
+  md += `| المعرّف | \`${sanitize(valueId || "-")}\` |\n`;
+  md += `| نسبة الاتزان | **${balancePercentage}%** |\n`;
+  md += `| مثبّتة | ${isPinned ? "نعم" : "لا"} |\n`;
+  md += `| تاريخ التصدير | ${sanitize(exportedAt)} |\n`;
+  md += `\n`;
+
+  // Feelings summary
+  md += `## المشاعر\n\n`;
+  if (feelingsBeingHealed.length === 0 && feelingsHealed.length === 0) {
+    md += `_لا توجد مشاعر مُسجّلة لهذه القيمة._\n\n`;
+  } else {
+    if (feelingsBeingHealed.length > 0) {
+      md += `**جاري العلاج:** ${feelingsBeingHealed.map(sanitize).join("، ")}\n\n`;
+    }
+    if (feelingsHealed.length > 0) {
+      const healedWithDates = feelingsHealed.map((f) => {
+        const d = feelingsHealedDates?.[f];
+        return d ? `${sanitize(f)} _(بتاريخ ${sanitize(new Date(d).toLocaleDateString("en-US"))})_` : sanitize(f);
+      });
+      md += `**تم علاجها:** ${healedWithDates.join("، ")}\n\n`;
+    }
+  }
+
+  // Per-feeling beliefs (one section per feeling, each task as a table row)
+  md += `## المعتقدات حسب الشعور\n\n`;
+  FEELINGS.forEach((feeling) => {
+    const tasks = parseTasks(beliefs[feeling] || "");
+    const state = stateLabel(feeling);
+    const healedDate = feelingsHealedDates?.[feeling];
+    const headerSuffix =
+      state === "غير مُفعّل" ? "" : ` — _${state}${healedDate ? ` • ${sanitize(new Date(healedDate).toLocaleDateString("en-US"))}` : ""}_`;
+    md += `### ${sanitize(feeling)}${headerSuffix}\n\n`;
+    if (tasks.length === 0) {
+      md += `_لا توجد معتقدات مسجلة._\n\n`;
+    } else {
+      md += `| # | المعتقد | الشدة | تم علاجه |\n`;
+      md += `| --- | --- | --- | --- |\n`;
+      tasks.forEach((t, i) => {
+        md += `| ${i + 1} | ${sanitize(t.text) || "_(فارغ)_"} | ${severityLabel(t.severity)} | ${t.healed ? "✅" : "—"} |\n`;
+      });
+      md += `\n`;
+    }
+  });
+
+  // Notes
+  md += `## ملاحظات وتأملات\n\n`;
+  md += notes && notes.trim()
+    ? `${notes.trim()}\n\n`
+    : `_لا توجد ملاحظات._\n\n`;
+
+  md += `---\n\n*تم إنشاء هذا التقرير تلقائياً — ${new Date().toLocaleString("en-US")}*\n`;
+  return md;
+}
+
 export async function downloadComprehensiveReport(userId: string, userEmail: string | undefined): Promise<void> {
   try {
     const [
@@ -564,85 +687,6 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
     toast.success("تم تحميل تقرير كل القيم");
   } catch (error) {
     console.error("Error generating all-values report:", error);
-    toast.error("حدث خطأ أثناء إنشاء التقرير");
-  }
-}
-
-// All-values JSON export — same shape as the per-value download in ValueSheet.tsx
-export async function downloadAllValuesJsonReport(userId: string, userEmail: string | undefined): Promise<void> {
-  try {
-    const valuesRes = await supabase.from("spiritual_values").select("*").eq("user_id", userId);
-    const rows = (valuesRes.data || []) as any[];
-
-    // Build map by name; same fallback logic as downloadAllValuesReport
-    const valuesMap = new Map<string, any>();
-    for (const item of rows) {
-      if (!item.value_id) continue;
-      const idx = parseInt(item.value_id);
-      const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
-      valuesMap.set(name, item);
-    }
-
-    const parseTasks = (raw: any): any[] => {
-      if (!raw) return [];
-      let arr: any = raw;
-      if (typeof raw === "string") {
-        try { arr = JSON.parse(raw); } catch { return []; }
-      }
-      return Array.isArray(arr) ? arr : [];
-    };
-
-    const buildBeliefs = (beliefs: any) => {
-      const notes: Record<string, string> =
-        beliefs && typeof beliefs === "object" && !Array.isArray(beliefs)
-          ? (beliefs as Record<string, string>)
-          : {};
-      return FEELINGS.map((feeling) => {
-        const tasks = parseTasks(notes[feeling]);
-        return {
-          feeling,
-          beliefs: tasks.map((t: any) => ({
-            text: t.text || "",
-            severity: t.severity ?? 0,
-            healed: t.healed === true || t.completed === true,
-          })),
-        };
-      });
-    };
-
-    const values = Array.from(valuesMap.entries()).map(([name, item]) => ({
-      value_id: item.value_id,
-      value_name: name,
-      balance_percentage: item.balance_percentage ?? 50,
-      is_pinned: !!item.is_pinned,
-      feelings_being_healed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed : [],
-      feelings_healed: Array.isArray(item.feelings_healed) ? item.feelings_healed : [],
-      notes: item.notes || "",
-      beliefs_by_feeling: buildBeliefs(item.beliefs),
-    }));
-
-    const payload = {
-      user_email: userEmail || null,
-      exported_at: new Date().toISOString(),
-      values_count: values.length,
-      values,
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    a.download = `all_values_${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("تم تحميل تقرير كل القيم");
-  } catch (error) {
-    console.error("Error generating all-values JSON report:", error);
     toast.error("حدث خطأ أثناء إنشاء التقرير");
   }
 }

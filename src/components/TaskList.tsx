@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { Input } from "./ui/input";
 
-type Severity = 0 | 1 | 2 | 3 | 4;
+type Severity = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 interface Task {
   id: string;
@@ -12,22 +12,32 @@ interface Task {
   severity: Severity;
 }
 
-// 5 light red shades (all intentionally light)
+// 10 light red shades (all intentionally light), ramping up with severity
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
   0: "bg-white/5 border-white/10",
-  1: "bg-red-950/15 border-red-900/20",
-  2: "bg-red-950/25 border-red-900/30",
-  3: "bg-red-950/35 border-red-900/40",
-  4: "bg-red-950/45 border-red-900/50",
+  1: "bg-red-950/10 border-red-900/15",
+  2: "bg-red-950/15 border-red-900/20",
+  3: "bg-red-950/20 border-red-900/25",
+  4: "bg-red-950/25 border-red-900/30",
+  5: "bg-red-950/30 border-red-900/35",
+  6: "bg-red-950/35 border-red-900/40",
+  7: "bg-red-950/40 border-red-900/45",
+  8: "bg-red-950/45 border-red-900/50",
+  9: "bg-red-950/50 border-red-900/55",
 };
 
-// Display value out of 10 (each severity level = 2)
+// Display value out of 10 (each severity level = +1)
 const SEVERITY_DISPLAY: Record<Severity, number> = {
-  0: 2,
-  1: 4,
-  2: 6,
-  3: 8,
-  4: 10,
+  0: 1,
+  1: 2,
+  2: 3,
+  3: 4,
+  4: 5,
+  5: 6,
+  6: 7,
+  7: 8,
+  8: 9,
+  9: 10,
 };
 
 interface TaskListProps {
@@ -43,7 +53,8 @@ const normalizeTask = (t: any): Task => ({
   text: t.text || "",
   // Backward-compat: old records may carry `completed: true` instead of `healed: true`
   healed: t.healed === true || t.completed === true,
-  severity: (t.severity !== undefined && t.severity !== null ? Number(t.severity) : 0) as Severity,
+  // Clamp severity into the supported 0-9 range (old records may carry 0-4)
+  severity: (Math.max(0, Math.min(9, Number(t.severity ?? 0))) as Severity),
 });
 
 export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAddTask }: TaskListProps) => {
@@ -120,9 +131,9 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     const current = tasksRef.current;
     const next = current.map((task) => {
       if (task.id !== taskId) return task;
-      // Each tap advances to the next severity level (+1), wrapping 4 -> 0.
-      // SEVERITY_DISPLAY then shows it as 2 -> 4 -> 6 -> 8 -> 10 -> 2.
-      const nextSev = ((task.severity + 1) % 5) as Severity;
+      // Each tap advances to the next severity level (+1), wrapping 9 -> 0.
+      // SEVERITY_DISPLAY then shows it as 1 -> 2 -> 3 -> ... -> 10 -> 1.
+      const nextSev = ((task.severity + 1) % 10) as Severity;
       return { ...task, severity: nextSev };
     });
     save(next);
