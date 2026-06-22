@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
-import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
+import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport, downloadAllValuesJsonReport } from "@/utils/reportGenerator";
 import Anima from "./Anima";
 import Animus from "./Animus";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
@@ -91,10 +91,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: currentValue.name,
-          selected_feelings: currentValue.feelingsBeingHealed,
-          positive_feelings: currentValue.feelingsHealed || [],
-          positive_feeling_dates: currentValue.feelingsHealedDates || {},
-          feeling_notes: currentValue.beliefs,
+          feelings_being_healed: currentValue.feelingsBeingHealed,
+          feelings_healed: currentValue.feelingsHealed || [],
+          feelings_healed_dates: currentValue.feelingsHealedDates || {},
+          beliefs: currentValue.beliefs,
           notes: currentValue.notes,
           balance_percentage: currentValue.balancePercentage,
           is_pinned: newPinnedState,
@@ -137,26 +137,26 @@ const Index = () => {
             return;
           }
           
-          const feelingsBeingHealed = Array.isArray(item.selected_feelings)
-            ? (item.selected_feelings as unknown as string[])
+          const feelingsBeingHealed = Array.isArray(item.feelings_being_healed)
+            ? (item.feelings_being_healed as string[])
             : [];
           
           const beliefs = 
-            item.feeling_notes && 
-            typeof item.feeling_notes === "object" && 
-            !Array.isArray(item.feeling_notes)
-              ? (item.feeling_notes as unknown as Record<string, string>)
+            item.beliefs && 
+            typeof item.beliefs === "object" && 
+            !Array.isArray(item.beliefs)
+              ? (item.beliefs as Record<string, string>)
               : {};
 
-          const feelingsHealed = Array.isArray(item.positive_feelings)
-            ? (item.positive_feelings as unknown as string[])
+          const feelingsHealed = Array.isArray(item.feelings_healed)
+            ? (item.feelings_healed as string[])
             : [];
 
           const feelingsHealedDates = 
-            item.positive_feeling_dates && 
-            typeof item.positive_feeling_dates === "object" && 
-            !Array.isArray(item.positive_feeling_dates)
-              ? (item.positive_feeling_dates as unknown as Record<string, string>)
+            item.feelings_healed_dates && 
+            typeof item.feelings_healed_dates === "object" && 
+            !Array.isArray(item.feelings_healed_dates)
+              ? (item.feelings_healed_dates as Record<string, string>)
               : {};
 
           const valueIndex = parseInt(item.value_id);
@@ -236,10 +236,10 @@ const Index = () => {
           user_id: user.id,
           value_id: valueId,
           value_name: valueName,
-          selected_feelings: feelingsBeingHealed,
-          positive_feelings: feelingsHealed || [],
-          positive_feeling_dates: feelingsHealedDates || {},
-          feeling_notes: beliefs,
+          feelings_being_healed: feelingsBeingHealed,
+          feelings_healed: feelingsHealed || [],
+          feelings_healed_dates: feelingsHealedDates || {},
+          beliefs: beliefs,
           notes: notes,
           balance_percentage: balancePercentage,
           is_pinned: currentIsPinned,
@@ -316,7 +316,7 @@ const Index = () => {
 
   const handleDownloadAllValuesReport = useCallback(async () => {
     if (user) {
-      await downloadAllValuesReport(user.id, user.email || undefined);
+      await downloadAllValuesJsonReport(user.id, user.email || undefined);
     }
   }, [user]);
 
@@ -435,7 +435,7 @@ const Index = () => {
       <button
         onClick={handleDownloadAllValuesReport}
         title="تحميل تقرير كل القيم"
-        className="fixed bottom-24 left-4 z-[60] w-12 h-12 rounded-full bg-white/[0.02] backdrop-blur-xl border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-95"
+        className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-white/[0.02] backdrop-blur-xl border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-95"
       >
         <Download className="w-5 h-5" />
       </button>

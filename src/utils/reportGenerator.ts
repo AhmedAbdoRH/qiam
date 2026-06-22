@@ -58,14 +58,6 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
 const tableRow = (cells: string[]): string => "| " + cells.join(" | ") + " |";
 const tableSep = (n: number): string => "|" + " --- |".repeat(n);
 
-const asStringArray = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-const asStringRecord = (value: unknown): Record<string, string> =>
-  value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, string> : {};
-const selectedFeelingsOf = (item: any): string[] => asStringArray(item?.selected_feelings ?? item?.feelings_being_healed);
-const positiveFeelingsOf = (item: any): string[] => asStringArray(item?.positive_feelings ?? item?.feelings_healed);
-const positiveDatesOf = (item: any): Record<string, string> => asStringRecord(item?.positive_feeling_dates ?? item?.feelings_healed_dates);
-const feelingNotesOf = (item: any): Record<string, string> => asStringRecord(item?.feeling_notes ?? item?.beliefs);
-
 export async function downloadComprehensiveReport(userId: string, userEmail: string | undefined): Promise<void> {
   try {
     const [
@@ -104,10 +96,10 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       spiritualValues.push({
         name,
         balancePercentage: item.balance_percentage || 50,
-        feelingsBeingHealed: selectedFeelingsOf(item),
-        feelingsHealed: positiveFeelingsOf(item),
-        feelingsHealedDates: positiveDatesOf(item),
-        beliefs: feelingNotesOf(item),
+        feelingsBeingHealed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed as string[] : [],
+        feelingsHealed: Array.isArray(item.feelings_healed) ? item.feelings_healed as string[] : [],
+        feelingsHealedDates: (item.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates as Record<string, string> : {},
+        beliefs: (item.beliefs && typeof item.beliefs === "object") ? item.beliefs as Record<string, string> : {},
         notes: item.notes || "",
         isPinned: item.is_pinned || false,
       });
@@ -413,8 +405,8 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balancePercentage = item?.balance_percentage || 50;
-      const selectedFeelings = selectedFeelingsOf(item).join("، ") || "-";
-      const positiveFeelings = positiveFeelingsOf(item).join("، ") || "-";
+      const selectedFeelings = Array.isArray(item?.feelings_being_healed) ? (item.feelings_being_healed as string[]).join("، ") : "-";
+      const positiveFeelings = Array.isArray(item?.feelings_healed) ? (item.feelings_healed as string[]).join("، ") : "-";
       const isPinned = item?.is_pinned ? "نعم" : "-";
       const notes = item?.notes ? escapeMd(item.notes) : "-";
       md += tableRow([escapeMd(name), balancePercentage + "%", selectedFeelings, positiveFeelings, isPinned, notes]) + "\n";
@@ -447,10 +439,10 @@ export async function downloadMasculineValuesReport(userId: string, userEmail: s
     for (const name of MASCULINE_VALUE_NAMES_REPORT) {
       const item = masculineValuesMap.get(name);
       const balance = item?.balance_percentage ?? 50;
-      const selected = selectedFeelingsOf(item);
-      const positive = positiveFeelingsOf(item);
-      const dates = positiveDatesOf(item);
-      const fNotes = feelingNotesOf(item);
+      const selected: string[] = Array.isArray(item?.feelings_being_healed) ? item.feelings_being_healed : [];
+      const positive: string[] = Array.isArray(item?.feelings_healed) ? item.feelings_healed : [];
+      const dates: Record<string, string> = (item?.feelings_healed_dates && typeof item.feelings_healed_dates === "object") ? item.feelings_healed_dates : {};
+      const fNotes: Record<string, string> = (item?.beliefs && typeof item.beliefs === "object") ? item.beliefs : {};
       const pinned = item?.is_pinned;
       const notes = item?.notes || "";
 
@@ -531,8 +523,8 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        selectedFeelingsOf(item).join("، ") || "-",
-        positiveFeelingsOf(item).join("، ") || "-",
+        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -548,8 +540,8 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += tableRow([
         escapeMd(name),
         (item?.balance_percentage || 50) + "%",
-        selectedFeelingsOf(item).join("، ") || "-",
-        positiveFeelingsOf(item).join("، ") || "-",
+        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
+        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
         item?.is_pinned ? "نعم" : "-",
         item?.notes ? escapeMd(item.notes) : "-",
       ]) + "\n";
@@ -623,10 +615,10 @@ export async function downloadAllValuesJsonReport(userId: string, userEmail: str
       value_name: name,
       balance_percentage: item.balance_percentage ?? 50,
       is_pinned: !!item.is_pinned,
-      feelings_being_healed: selectedFeelingsOf(item),
-      feelings_healed: positiveFeelingsOf(item),
+      feelings_being_healed: Array.isArray(item.feelings_being_healed) ? item.feelings_being_healed : [],
+      feelings_healed: Array.isArray(item.feelings_healed) ? item.feelings_healed : [],
       notes: item.notes || "",
-      beliefs_by_feeling: buildBeliefs(item.feeling_notes ?? item.beliefs),
+      beliefs_by_feeling: buildBeliefs(item.beliefs),
     }));
 
     const payload = {
@@ -641,7 +633,6 @@ export async function downloadAllValuesJsonReport(userId: string, userEmail: str
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     a.download = `all_values_${dateStr}.json`;

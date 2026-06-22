@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_cards: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          contact_phone: string | null
+          contact_messenger: string | null
+          level: 'A+' | 'A' | 'B' | 'C'
+          tasks: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          contact_phone?: string | null
+          contact_messenger?: string | null
+          level?: 'A+' | 'A' | 'B' | 'C'
+          tasks?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          contact_phone?: string | null
+          contact_messenger?: string | null
+          level?: 'A+' | 'A' | 'B' | 'C'
+          tasks?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ahmed_page_cards: {
         Row: {
           created_at: string
@@ -444,42 +480,6 @@ export type Database = {
           id?: string
           notes?: string | null
           progress?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      relationship_cards: {
-        Row: {
-          contact_messenger: string | null
-          contact_phone: string | null
-          created_at: string | null
-          id: string
-          level: string
-          name: string
-          tasks: Json | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          contact_messenger?: string | null
-          contact_phone?: string | null
-          created_at?: string | null
-          id?: string
-          level?: string
-          name: string
-          tasks?: Json | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          contact_messenger?: string | null
-          contact_phone?: string | null
-          created_at?: string | null
-          id?: string
-          level?: string
-          name?: string
-          tasks?: Json | null
           updated_at?: string | null
           user_id?: string
         }
