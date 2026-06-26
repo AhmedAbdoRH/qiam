@@ -800,6 +800,8 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
   const toggleLongPressFiredRef = useRef(false);
   const unionLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eventsExportLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eventsExportLongPressFiredRef = useRef(false);
   const unionLongPressFiredRef = useRef(false);
 
   
@@ -4069,6 +4071,214 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
       console.error('Export conversation failed:', err);
       toast.dismiss(toastId);
       toast.error('فشل تصدير المحادثة');
+    }
+  };
+
+  // Combined events exporter: messages + milestones unified as a single chronological events stream.
+  // - mode "recent": last 100 events only (single DB query, fast)
+  // - mode "all": every event ever stored (pagination, slower)
+  const exportCombinedEventsCSV = async (mode: "recent" | "all") => {
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    const isAll = mode === "all";
+    const toastId = toast.loading(isAll ? 'جاري تحميل كل الأحداث من قاعدة البيانات...' : 'جاري تحميل آخر 100 حدث...');
+
+    try {
+      let allDbMessages: any[] = [];
+
+      if (isAll) {
+        // Paginate to fetch everything (1000 per page)
+        const PAGE_SIZE = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('self_dialogue_messages')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: true })
+            .range(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) { hasMore = false; break; }
+          allDbMessages.push(...data);
+          if (data.length < PAGE_SIZE) { hasMore = false; } else { from += PAGE_SIZE; }
+        }
+      } else {
+        // Just last 100 (most recent) — sort desc + limit
+        const { data, error } = await supabase
+          .from('self_dialogue_messages')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        // Sort ascending for chronological CSV output
+        allDbMessages = (data || []).slice().reverse();
+      }
+
+      // Merge with local pending messages (so even unsynced ones get exported)
+      let pendingMessages: any[] = [];
+      if (PENDING_MESSAGES_KEY) {
+        const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          pendingMessages = (parsed || []).filter((m: any) =>
+            ['self', 'anima', 'nurturing', 'nafs', 'sovereign'].includes(m.chat_mode || 'self')
+          );
+        }
+      }
+      const seenIds = new Set<string>();
+      const merged: any[] = [];
+      for (const m of allDbMessages) {
+        if (!seenIds.has(m.id)) { seenIds.add(m.id); merged.push(m); }
+      }
+      for (const m of pendingMessages) {
+        if (!seenIds.has(m.id)) { seenIds.add(m.id); merged.push(m); }
+      }
+      merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      // Keep only "events" (everything except plain dialogue text and spacers).
+      // i.e. regular messages + all special markers count as events, spacers don't.
+      const isEvent = (m: any) => {
+        const msg = m.message || '';
+        if (msg === '__SPACER__') return false;
+        return true; // every non-spacer is an "event" — dialogue, milestone, kiss, reality, etc.
+      };
+      const events = merged.filter(isEvent);
+
+      // Final limit when "recent"
+      const finalEvents = isAll ? events : events.slice(-100);
+
+      // Build CSV: a single chronological stream of events
+      const rows: string[][] = [['التاريخ', 'الوقت', 'المرسل', 'النوع', 'التفاصيل']];
+
+      // Format a special marker (milestone / kiss / touch / shower / reality / dream / fall / selfhug)
+      const formatSpecial = (m: any): { type: string; details: string } | null => {
+        const msg = m.message || '';
+        if (msg === '__KISS__') return { type: '💋 بوس حميمي', details: 'جلسة بوس حميمي' };
+        if (msg === '__TOUCH__') return { type: '🤲 لمس حنون', details: 'لمس حنون' };
+        if (msg === '__SHOWER__') return { type: '🛀 دش دافئ', details: 'دش دافئ حميمي' };
+        if (msg === '__SELFHUG__') return { type: '🦋 حضن ذاتي', details: 'حضن ذاتي' };
+        if (msg === '__REALITY__' || msg.startsWith('__REALITY__|')) {
+          const parts = msg.split('|');
+          const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+          const eventTime = parts.length >= 4 ? parts[2] : '';
+          const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+          const dt = [eventDate, eventTime].filter(Boolean).join(' ');
+          return { type: '🌍 حدث في الواقع', details: [dt, notes].filter(Boolean).join(' - ') || '-' };
+        }
+        if (msg === '__DREAM__' || msg.startsWith('__DREAM__|')) {
+          const parts = msg.split('|');
+          const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+          const eventTime = parts.length >= 4 ? parts[2] : '';
+          const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+          const dt = [eventDate, eventTime].filter(Boolean).join(' ');
+          return { type: '🌙 حلم', details: [dt, notes].filter(Boolean).join(' - ') || '-' };
+        }
+        if (msg.startsWith('__FALL__')) {
+          const stripped = msg.replace(/^__FALL__\|?/, '');
+          const parts = stripped.split('|');
+          const description = parts[parts.length - 1] || parts[0] || '';
+          return { type: '📉 سقوط', details: description };
+        }
+        if (msg.startsWith('__MILESTONE__')) {
+          const content = msg.replace('__MILESTONE__', '');
+          const parts = content.split('|');
+          const title = parts[0] || 'مايلستون';
+          const rating = parts[1] || '';
+          const isSacred = parts.length > 8;
+          const notes = isSacred ? '' : (parts[2] || '');
+          const intention = isSacred ? (parts[9] || '') : (parts[4] || '');
+          const duration = !isSacred && parts[5] ? (parts[5] === 'long' ? 'طويل' : parts[5] === 'medium' ? 'متوسط' : 'قصير') : '';
+          const output = !isSacred && parts[6] ? (parts[6] === 'full' ? 'كامل' : parts[6] === 'simple' ? 'بسيط' : 'محفوظ') : '';
+          let line = `${title} - تقييم ${rating}/10`;
+          if (intention) line += ` | نية: ${intention}`;
+          if (duration) line += ` | المدة: ${duration}`;
+          if (output) line += ` | القذف: ${output}`;
+          if (notes) line += ` | ملاحظات: ${notes}`;
+          return { type: '⭐ جماع (مايلستون)', details: line };
+        }
+        return null;
+      };
+
+      for (const m of finalEvents) {
+        const date = new Date(m.created_at);
+        const dateStr = date.toLocaleDateString('en-US');
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        const special = formatSpecial(m);
+        if (special) {
+          const sender = m.sender === 'me' ? 'أنا' : (m.chat_mode === 'nafs' ? 'النفس' : 'الأنيما');
+          rows.push([dateStr, timeStr, sender, special.type, special.details]);
+          continue;
+        }
+
+        // Regular dialogue message — still an event in this combined stream
+        const speakerLabel = (() => {
+          if (m.chat_mode === 'nafs') return 'النفس';
+          if (m.chat_mode === 'anima' || m.chat_mode === 'nurturing') return 'الأنيما';
+          if (m.chat_mode === 'sovereign' || m.sender === 'me') return 'الذات السيادية';
+          if (m.sender === 'me') return 'الذات السيادية';
+          if (m.sender === 'anima') return 'النفس';
+          return m.sender || 'الأنيما';
+        })();
+
+        rows.push([dateStr, timeStr, speakerLabel, '💬 رسالة', m.message || '']);
+      }
+
+      const escapeCsv = (v: string) => `"${(v ?? '').toString().replace(/"/g, '""')}"`;
+      const csv = rows.map(r => r.map(escapeCsv).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const suffix = isAll ? 'all' : 'last100';
+      a.download = `events-${suffix}-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.dismiss(toastId);
+      toast.success(isAll
+        ? `تم تصدير ${finalEvents.length} حدث من قاعدة البيانات`
+        : `تم تصدير آخر ${finalEvents.length} حدث`);
+    } catch (err) {
+      console.error('Export combined events failed:', err);
+      toast.dismiss(toastId);
+      toast.error('فشل تصدير الأحداث');
+    }
+  };
+
+  // Long-press handlers for the combined-events button.
+  // Mouse/touch start -> start a timer. If it fires -> long press = export ALL.
+  // If the user releases before the timer fires -> short tap = export last 100.
+  const handleEventsExportMouseDown = () => {
+    eventsExportLongPressFiredRef.current = false;
+    if (eventsExportLongPressRef.current) {
+      clearTimeout(eventsExportLongPressRef.current);
+    }
+    eventsExportLongPressRef.current = setTimeout(() => {
+      eventsExportLongPressFiredRef.current = true;
+      exportCombinedEventsCSV("all");
+    }, 600);
+  };
+
+  const handleEventsExportMouseUp = () => {
+    if (eventsExportLongPressRef.current) {
+      clearTimeout(eventsExportLongPressRef.current);
+      eventsExportLongPressRef.current = null;
+    }
+    if (!eventsExportLongPressFiredRef.current) {
+      exportCombinedEventsCSV("recent");
+    }
+  };
+
+  const handleEventsExportMouseLeave = () => {
+    if (eventsExportLongPressRef.current) {
+      clearTimeout(eventsExportLongPressRef.current);
+      eventsExportLongPressRef.current = null;
     }
   };
 
