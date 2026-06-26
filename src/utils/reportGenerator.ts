@@ -28,20 +28,34 @@ function parseMilestone(msg: { created_at: string; message: string }): Milestone
   if (msg.message === "__SHOWER__") return { date: msg.created_at, dateStr, timeStr, type: "دش دافئ حميمي", rating: "-", duration: "-", output: "-", notes: "-", intention: "-" };
   if (msg.message === "__SELFHUG__") return { date: msg.created_at, dateStr, timeStr, type: "حضن ذاتي", rating: "-", duration: "-", output: "-", notes: "-", intention: "-" };
   if (msg.message.startsWith("__REALITY__")) {
+    // Format: __REALITY__|<eventDate>|<eventTime>|<notes>
+    //   2 parts: __REALITY__|<notes>           (legacy)
+    //   3 parts: __REALITY__|<date>|<notes>
+    //   4 parts: __REALITY__|<date>|<time>|<notes>
     const parts = msg.message.split('|');
-    const eventDate = parts.length > 2 ? parts[1] : '';
-    const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
-    return { date: msg.created_at, dateStr, timeStr, type: "حدث في الواقع", rating: "-", duration: "-", output: "-", notes: eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-'), intention: "-" };
+    const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+    const eventTime = parts.length >= 4 ? parts[2] : '';
+    const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+    const dateTimeLabel = [eventDate, eventTime].filter(Boolean).join(' ');
+    const combined = [dateTimeLabel, notes].filter(Boolean).join(' - ');
+    return { date: msg.created_at, dateStr, timeStr, type: "حدث في الواقع", rating: "-", duration: "-", output: "-", notes: combined || '-', intention: "-" };
   }
   if (msg.message.startsWith("__DREAM__")) {
     const parts = msg.message.split('|');
-    const eventDate = parts.length > 2 ? parts[1] : '';
-    const notes = parts.length > 2 ? parts[2] : (parts.length > 1 ? parts[1] : '');
-    return { date: msg.created_at, dateStr, timeStr, type: "حلم", rating: "-", duration: "-", output: "-", notes: eventDate && notes ? `${eventDate} - ${notes}` : (eventDate || notes || '-'), intention: "-" };
+    const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+    const eventTime = parts.length >= 4 ? parts[2] : '';
+    const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+    const dateTimeLabel = [eventDate, eventTime].filter(Boolean).join(' ');
+    const combined = [dateTimeLabel, notes].filter(Boolean).join(' - ');
+    return { date: msg.created_at, dateStr, timeStr, type: "حلم", rating: "-", duration: "-", output: "-", notes: combined || '-', intention: "-" };
   }
   if (msg.message.startsWith("__FALL__")) {
-    const parts = msg.message.replace("__FALL__|", "").split("|");
-    return { date: msg.created_at, dateStr, timeStr, type: "سقوط", rating: "0", duration: "-", output: "-", notes: parts[1] || "", intention: "-" };
+    // Format: __FALL__|<id>|<description>  (where <id> is a uuid-ish placeholder)
+    // Strip the prefix safely, then take the LAST part as description to be robust to either ordering
+    const stripped = msg.message.replace(/^__FALL__\|?/, "");
+    const parts = stripped.split('|');
+    const description = parts[parts.length - 1] || parts[0] || "";
+    return { date: msg.created_at, dateStr, timeStr, type: "سقوط", rating: "0", duration: "-", output: "-", notes: description, intention: "-" };
   }
   if (msg.message.startsWith("__MILESTONE__")) {
     const parts = msg.message.replace("__MILESTONE__", "").split("|");
@@ -188,7 +202,8 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       animaTasksRes, animaWishesRes, sexualWishesRes,
       animaCardsRes, ahmedCardsRes, ahmedMessagesRes,
       animaNotesRes, animaCapabilitiesRes, animaQualityRes,
-      behavioralRes, divineCommandsRes
+      behavioralRes, divineCommandsRes,
+      relationshipCardsRes, sovereignShadowsRes
     ] = await Promise.all([
       supabase.from("spiritual_values").select("*").eq("user_id", userId),
       supabase.from("self_dialogue_messages").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(100),
@@ -205,6 +220,8 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       supabase.from("anima_quality_rating").select("*").eq("user_id", userId),
       supabase.from("behavioral_values").select("*").eq("user_id", userId),
       (supabase as any).from("divine_commands_tasks").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
+      supabase.from("relationship_cards").select("*").eq("user_id", userId).order("level", { ascending: true }).order("sort_order", { ascending: true }),
+      (supabase as any).from("sovereign_shadows").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     ]);
 
     // Spiritual values
@@ -240,10 +257,19 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
       if (parsed) {
         milestonesAll.push(parsed);
       } else if (!m.message?.startsWith("__SPACER__")) {
+        const speakerLabel = (() => {
+          if (m.chat_mode === "nafs") return "النفس";
+          if (m.chat_mode === "anima" || m.chat_mode === "nurturing") return "الأنيما";
+          if (m.chat_mode === "sovereign" || m.sender === "me") return "الذات السيادية";
+          // Legacy fallback
+          if (m.sender === "me") return "الذات السيادية";
+          if (m.sender === "anima") return "النفس";
+          return m.sender || "الأنيما";
+        })();
         selfDialogue.push({
           dateStr: new Date(m.created_at).toLocaleDateString("en-US"),
           timeStr: new Date(m.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-          sender: m.sender === "me" ? "أنا" : m.sender === "anima" ? "النفس" : m.sender || "غير معروف",
+          sender: speakerLabel,
           message: m.message || "",
         });
       }
@@ -449,6 +475,51 @@ export async function downloadComprehensiveReport(userId: string, userEmail: str
         md += tableRow([escapeMd(m.dateStr), escapeMd(m.timeStr), escapeMd(m.type), escapeMd(m.rating), escapeMd(m.duration), escapeMd(m.output), escapeMd(m.notes), escapeMd(m.intention)]) + "\n";
       }
     } else md += "لا توجد سجلات\n";
+    md += "\n";
+
+    // ===== Relationship cards =====
+    md += "## العلاقات\n\n";
+    const relationshipCards = (relationshipCardsRes.data || []) as any[];
+    if (relationshipCards.length) {
+      const LEVEL_LABEL: Record<string, string> = { "A+": "أقرب الناس", A: "علاقة وثيقة", B: "علاقة جيدة", C: "معرفة" };
+      md += tableRow(["الاسم", "المستوى", "الهاتف", "Messenger", "مهام الإحسان المكتملة", "إجمالي المهام"]) + "\n" + tableSep(6) + "\n";
+      for (const r of relationshipCards) {
+        const tasks: any[] = Array.isArray(r.tasks) ? r.tasks : [];
+        const completed = tasks.filter((t: any) => t?.completed).length;
+        md += tableRow([
+          escapeMd(r.name || "-"),
+          escapeMd(r.level || "-"),
+          r.contact_phone ? escapeMd(r.contact_phone) : "-",
+          r.contact_messenger ? escapeMd(r.contact_messenger) : "-",
+          String(completed),
+          String(tasks.length),
+        ]) + "\n";
+
+        // Per-card Ihsan tasks detail
+        if (tasks.length) {
+          md += `\n### مهام الإحسان لـ ${escapeMd(r.name || "")}\n\n`;
+          for (const t of tasks) {
+            const mark = t?.completed ? "✅" : "⬜";
+            md += `- ${mark} ${escapeMd(t?.title || t?.text || "-")}\n`;
+          }
+          md += "\n";
+        }
+      }
+    } else {
+      md += "لا توجد علاقات مسجلة\n\n";
+    }
+
+    // ===== Sovereign shadows =====
+    md += "## ظلال الذات السيادية\n\n";
+    const sovereignShadows = (sovereignShadowsRes.data || []) as any[];
+    if (sovereignShadows.length) {
+      for (const s of sovereignShadows) {
+        const stamp = s.created_at ? new Date(s.created_at).toLocaleString("en-US") : "";
+        md += `- ${escapeMd(s.content || s.shadow || s.text || "-")}${stamp ? `  \n  <sub>${stamp}</sub>` : ""}\n`;
+      }
+    } else {
+      md += "لا توجد ظلال مسجلة\n";
+    }
     md += "\n";
 
     md += "---\n\n*تم إنشاء هذا التقرير تلقائياً*\n";

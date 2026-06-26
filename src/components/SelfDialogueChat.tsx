@@ -3910,66 +3910,166 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
 
-  const exportConversationCSV = () => {
+  const exportConversationCSV = async () => {
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
 
-    const normalMessages = allMessages.filter(m => 
+    // Show loading state
+    const toastId = toast.loading('جاري تحميل المحادثة من قاعدة البيانات...');
 
-      !m.message.startsWith('__MILESTONE__') && 
+    try {
+      // Fetch ALL messages from DB with pagination (1000 per page) to bypass any row limits
+      const PAGE_SIZE = 1000;
+      const allDbMessages: any[] = [];
+      let from = 0;
+      let hasMore = true;
 
-      !m.message.startsWith('__SPACER__') && 
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('self_dialogue_messages')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
-      m.message !== '__KISS__' && 
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+        allDbMessages.push(...data);
+        if (data.length < PAGE_SIZE) {
+          hasMore = false;
+        } else {
+          from += PAGE_SIZE;
+        }
+      }
 
-      m.message !== '__TOUCH__' && 
+      // Merge with local pending messages (if any) — these are unsynced and live only in localStorage
+      let pendingMessages: any[] = [];
+      if (PENDING_MESSAGES_KEY) {
+        const stored = localStorage.getItem(PENDING_MESSAGES_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          pendingMessages = (parsed || []).filter((m: any) =>
+            ['self', 'anima', 'nurturing', 'nafs', 'sovereign'].includes(m.chat_mode || 'self')
+          );
+        }
+      }
 
-      m.message !== '__SHOWER__' && 
+      // Merge + dedupe by id, then sort chronologically
+      const seenIds = new Set<string>();
+      const merged: any[] = [];
+      for (const m of allDbMessages) {
+        if (!seenIds.has(m.id)) {
+          seenIds.add(m.id);
+          merged.push(m);
+        }
+      }
+      for (const m of pendingMessages) {
+        if (!seenIds.has(m.id)) {
+          seenIds.add(m.id);
+          merged.push(m);
+        }
+      }
+      merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-      m.message !== '__SELFHUG__' &&
+      // Build CSV with FULL coverage: regular messages, milestones, kisses, touches, showers, hugs, realities, dreams, falls
+      const rows: string[][] = [['التاريخ', 'الوقت', 'المرسل', 'النوع', 'المحتوى']];
 
-      !m.message.startsWith('__REALITY__') &&
+      const formatSpecial = (m: any): { type: string; content: string } | null => {
+        const msg = m.message || '';
+        if (msg === '__SPACER__') return null;
+        if (msg === '__KISS__') return { type: '💋 بوس حميمي', content: 'جلسة بوس حميمي' };
+        if (msg === '__TOUCH__') return { type: '🤲 لمس حنون', content: 'لمس حنون' };
+        if (msg === '__SHOWER__') return { type: '🛀 دش دافئ', content: 'دش دافئ حميمي' };
+        if (msg === '__SELFHUG__') return { type: '🦋 حضن ذاتي', content: 'حضن ذاتي' };
+        if (msg === '__REALITY__' || msg.startsWith('__REALITY__|')) {
+          const parts = msg.split('|');
+          const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+          const eventTime = parts.length >= 4 ? parts[2] : '';
+          const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+          const dt = [eventDate, eventTime].filter(Boolean).join(' ');
+          return { type: '🌍 حدث في الواقع', content: [dt, notes].filter(Boolean).join(' - ') || '-' };
+        }
+        if (msg === '__DREAM__' || msg.startsWith('__DREAM__|')) {
+          const parts = msg.split('|');
+          const eventDate = parts.length >= 4 ? parts[1] : (parts.length === 3 ? parts[1] : '');
+          const eventTime = parts.length >= 4 ? parts[2] : '';
+          const notes = parts.length >= 4 ? parts[3] : (parts.length === 3 ? parts[2] : (parts.length > 1 ? parts[1] : ''));
+          const dt = [eventDate, eventTime].filter(Boolean).join(' ');
+          return { type: '🌙 حلم', content: [dt, notes].filter(Boolean).join(' - ') || '-' };
+        }
+        if (msg.startsWith('__FALL__')) {
+          const stripped = msg.replace(/^__FALL__\|?/, '');
+          const parts = stripped.split('|');
+          const description = parts[parts.length - 1] || parts[0] || '';
+          return { type: '📉 سقوط', content: description };
+        }
+        if (msg.startsWith('__MILESTONE__')) {
+          const content = msg.replace('__MILESTONE__', '');
+          const parts = content.split('|');
+          const title = parts[0] || 'مايلستون';
+          const rating = parts[1] || '';
+          const isSacred = parts.length > 8;
+          const notes = isSacred ? '' : (parts[2] || '');
+          const intention = isSacred ? (parts[9] || '') : (parts[4] || '');
+          const duration = !isSacred && parts[5] ? (parts[5] === 'long' ? 'طويل' : parts[5] === 'medium' ? 'متوسط' : 'قصير') : '';
+          const output = !isSacred && parts[6] ? (parts[6] === 'full' ? 'كامل' : parts[6] === 'simple' ? 'بسيط' : 'محفوظ') : '';
+          let line = `${title} - تقييم ${rating}/10`;
+          if (intention) line += ` | نية: ${intention}`;
+          if (duration) line += ` | المدة: ${duration}`;
+          if (output) line += ` | القذف: ${output}`;
+          if (notes) line += ` | ملاحظات: ${notes}`;
+          return { type: '⭐ مايلستون', content: line };
+        }
+        return null;
+      };
 
-      !m.message.startsWith('__DREAM__') &&
+      for (const m of merged) {
+        const date = new Date(m.created_at);
+        const dateStr = date.toLocaleDateString('en-US');
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      !m.message.startsWith('__FALL__')
+        const special = formatSpecial(m);
+        if (special) {
+          const sender = m.sender === 'me' ? 'أنا' : (m.chat_mode === 'nafs' ? 'النفس' : 'الأنيما');
+          rows.push([dateStr, timeStr, sender, special.type, special.content]);
+          continue;
+        }
 
-    );
+        const speakerLabel = (() => {
+          if (m.chat_mode === 'nafs') return 'النفس';
+          if (m.chat_mode === 'anima' || m.chat_mode === 'nurturing') return 'الأنيما';
+          if (m.chat_mode === 'sovereign' || m.sender === 'me') return 'الذات السيادية';
+          if (m.sender === 'me') return 'الذات السيادية';
+          if (m.sender === 'anima') return 'النفس';
+          return m.sender || 'الأنيما';
+        })();
 
-    const rows = [['التاريخ', 'الوقت', 'المرسل', 'الرسالة']];
+        rows.push([dateStr, timeStr, speakerLabel, 'رسالة', m.message || '']);
+      }
 
-    normalMessages.forEach(m => {
+      // Build CSV safely (quote every cell, escape internal quotes) + UTF-8 BOM for Arabic
+      const escapeCsv = (v: string) => `"${(v ?? '').toString().replace(/"/g, '""')}"`;
+      const csv = rows.map(r => r.map(escapeCsv).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `conversation-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
 
-      const date = new Date(m.created_at);
-
-      const dateStr = date.toLocaleDateString('en-US');
-
-      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-      const sender = SPEAKER_META[getSpeaker(m)].name;
-
-      const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
-
-      rows.push([dateStr, timeStr, sender, text]);
-
-    });
-
-    const csv = rows.map(r => r.join(',')).join('\n');
-
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-
-    a.href = url;
-
-    a.download = 'conversation.csv';
-
-    a.click();
-
-    URL.revokeObjectURL(url);
-
-    toast.success('تم تصدير المحادثة');
-
+      toast.dismiss(toastId);
+      toast.success(`تم تصدير ${merged.length} رسالة من قاعدة البيانات`);
+    } catch (err) {
+      console.error('Export conversation failed:', err);
+      toast.dismiss(toastId);
+      toast.error('فشل تصدير المحادثة');
+    }
   };
 
 
