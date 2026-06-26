@@ -369,7 +369,7 @@ const MessageBubble = React.memo(function MessageBubble({
 
           <span className={`text-[7px] ${msg.sender === 'me' ? 'text-[#626FC4]/40' : 'text-pink-400/15'}`}>
 
-            {msg.sender === 'me' ? 'أنا' : 'الأنيما'} • {formatTime(msg.created_at)}
+            {SPEAKER_META[getSpeaker(msg)].name} • {formatTime(msg.created_at)}
 
           </span>
 
@@ -1069,7 +1069,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       
 
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
+      const senderName = SPEAKER_META[getSpeaker(msg)].name;
 
       return `[${time}] ${senderName}: ${msg.message}`;
 
@@ -1155,7 +1155,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       const time = formatTime(msg.created_at);
 
-      const senderName = msg.sender === 'me' ? 'أنا' : 'الأنيما';
+      const senderName = SPEAKER_META[getSpeaker(msg)].name;
 
       return `[${time}] ${senderName}: ${msg.message}`;
 
@@ -3944,7 +3944,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
       const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      const sender = m.sender === 'me' ? 'أنا' : 'الأنيما';
+      const sender = SPEAKER_META[getSpeaker(m)].name;
 
       const text = m.message.replace(/,/g, '،').replace(/\n/g, ' ');
 
