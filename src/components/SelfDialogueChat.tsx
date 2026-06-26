@@ -5175,6 +5175,34 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                            </Button>
 
+                           <Button
+
+                             variant="ghost"
+
+                             size="sm"
+
+                             onMouseDown={handleEventsExportMouseDown}
+
+                             onMouseUp={handleEventsExportMouseUp}
+
+                             onMouseLeave={handleEventsExportMouseLeave}
+
+                             onTouchStart={handleEventsExportMouseDown}
+
+                             onTouchEnd={handleEventsExportMouseUp}
+
+                             title="اضغط لتحميل آخر 100 حدث — اضغط مطولاً لتحميل كل الأحداث"
+
+                             className="h-7 px-2 text-[10px] text-rose-300 hover:bg-rose-500/10 gap-1 select-none"
+
+                           >
+
+                             <Download className="h-3 w-3" />
+
+                             الأحداث
+
+                           </Button>
+
                          </div>
 
                         </div>
