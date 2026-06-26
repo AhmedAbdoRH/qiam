@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# Supabase CLI temp + sensitive local files
+supabase/.temp/
+test-pooler.cjs
+nul

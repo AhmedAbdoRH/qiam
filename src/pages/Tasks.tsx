@@ -17,7 +17,7 @@ const levelConfig: Record<RelationshipLevel, { label: string; desc: string; colo
 const Relationships = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { cards, loading: cardsLoading, addCard, updateCard, deleteCard, addTask, toggleTask, deleteTask } =
+  const { cards, loading: cardsLoading, addCard, updateCard, deleteCard, addTask, toggleTask, deleteTask, moveCard, uploadAvatar, removeAvatar } =
     useRelationshipCards();
 
   const [fabOpen, setFabOpen] = useState(false);
@@ -60,10 +60,14 @@ const Relationships = () => {
   if (!user) return null;
 
   const cardsByLevel: Record<RelationshipLevel, typeof cards> = {
-    "A+": cards.filter((c) => c.level === "A+"),
-    "A":  cards.filter((c) => c.level === "A"),
-    "B":  cards.filter((c) => c.level === "B"),
-    "C":  cards.filter((c) => c.level === "C"),
+    "A+": cards.filter((c) => c.level === "A+")
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    "A":  cards.filter((c) => c.level === "A")
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    "B":  cards.filter((c) => c.level === "B")
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    "C":  cards.filter((c) => c.level === "C")
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
   };
 
   return (
@@ -151,15 +155,20 @@ const Relationships = () => {
 
               {/* Cards grid */}
               <div className="space-y-3">
-                {group.map((card) => (
+                {group.map((card, idx) => (
                   <RelationshipCardComponent
                     key={card.id}
                     card={card}
+                    canMoveUp={idx > 0}
+                    canMoveDown={idx < group.length - 1}
                     onDelete={deleteCard}
                     onUpdateCard={updateCard}
                     onAddTask={addTask}
                     onToggleTask={toggleTask}
                     onDeleteTask={deleteTask}
+                    onMove={moveCard}
+                    onUploadAvatar={uploadAvatar}
+                    onRemoveAvatar={removeAvatar}
                   />
                 ))}
               </div>
