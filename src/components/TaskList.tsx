@@ -282,10 +282,10 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
           <div
             key={task.id}
             onMouseDown={() => handleMouseDown(task.id)}
-            onMouseUp={() => handleMouseUp(task.id)}
+            onMouseUp={() => handleMouseUp()}
             onMouseLeave={handleMouseLeave}
             onTouchStart={() => handleTouchStart(task.id)}
-            onTouchEnd={() => handleTouchEnd(task.id)}
+            onTouchEnd={() => handleTouchEnd()}
             onTouchCancel={handleMouseLeave}
             className={`flex flex-col gap-2 w-full rounded-2xl border backdrop-blur-xl p-1 shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] hover:shadow-xl select-none ${
               task.healed
