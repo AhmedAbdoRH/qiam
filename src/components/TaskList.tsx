@@ -187,17 +187,13 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     startLongPress(taskId);
   }, [startLongPress]);
 
-  const handlePointerUp = useCallback((taskId: string) => {
+  const handlePointerUp = useCallback(() => {
     endLongPress();
-    if (!longPressTriggered.current) {
-      cycleSeverity(taskId);
-    }
     longPressTriggered.current = false;
-  }, [endLongPress, cycleSeverity]);
+  }, [endLongPress]);
 
-  // On touch devices the browser also fires synthetic mouse events after touch,
-  // which would cause cycleSeverity to run twice per tap. Track the last touch
-  // time and ignore mouse events that arrive shortly after.
+  // On touch devices the browser also fires synthetic mouse events after touch.
+  // The intensity circle handles its own tap; the card itself only uses long-press.
   const lastTouchRef = useRef(0);
 
   const handleTouchStart = useCallback((taskId: string) => {
