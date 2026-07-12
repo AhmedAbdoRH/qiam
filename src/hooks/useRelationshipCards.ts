@@ -316,7 +316,7 @@ export const useRelationshipCards = () => {
 
       const { error: dbErr } = await supabase
         .from("relationship_cards")
-        .update({ avatar_url: null })
+        .update({ avatar_url: null } as any)
         .eq("id", cardId)
         .eq("user_id", user.id);
 
