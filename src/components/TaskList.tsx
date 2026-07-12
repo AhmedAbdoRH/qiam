@@ -201,8 +201,8 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     handlePointerDown(taskId);
   }, [handlePointerDown]);
 
-  const handleTouchEnd = useCallback((taskId: string) => {
-    handlePointerUp(taskId);
+  const handleTouchEnd = useCallback(() => {
+    handlePointerUp();
   }, [handlePointerUp]);
 
   const handleMouseDown = useCallback((taskId: string) => {
@@ -210,9 +210,9 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     handlePointerDown(taskId);
   }, [handlePointerDown]);
 
-  const handleMouseUp = useCallback((taskId: string) => {
+  const handleMouseUp = useCallback(() => {
     if (Date.now() - lastTouchRef.current < 500) return; // synthetic mouse after touch
-    handlePointerUp(taskId);
+    handlePointerUp();
   }, [handlePointerUp]);
 
   const handleMouseLeave = useCallback(() => {
