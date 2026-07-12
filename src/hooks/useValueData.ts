@@ -16,7 +16,7 @@ export const useValueData = () => {
 
       if (error) throw error;
 
-      const valueDataMap = data.reduce((acc, item) => {
+      const valueDataMap = data.reduce((acc, item: any) => {
         acc[item.value_id] = {
           balancePercentage: item.balance_percentage || 50,
           feelingsBeingHealed: item.feelings_being_healed || [],
