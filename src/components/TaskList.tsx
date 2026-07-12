@@ -187,17 +187,13 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     startLongPress(taskId);
   }, [startLongPress]);
 
-  const handlePointerUp = useCallback((taskId: string) => {
+  const handlePointerUp = useCallback(() => {
     endLongPress();
-    if (!longPressTriggered.current) {
-      cycleSeverity(taskId);
-    }
     longPressTriggered.current = false;
-  }, [endLongPress, cycleSeverity]);
+  }, [endLongPress]);
 
-  // On touch devices the browser also fires synthetic mouse events after touch,
-  // which would cause cycleSeverity to run twice per tap. Track the last touch
-  // time and ignore mouse events that arrive shortly after.
+  // On touch devices the browser also fires synthetic mouse events after touch.
+  // The intensity circle handles its own tap; the card itself only uses long-press.
   const lastTouchRef = useRef(0);
 
   const handleTouchStart = useCallback((taskId: string) => {
@@ -205,8 +201,8 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     handlePointerDown(taskId);
   }, [handlePointerDown]);
 
-  const handleTouchEnd = useCallback((taskId: string) => {
-    handlePointerUp(taskId);
+  const handleTouchEnd = useCallback(() => {
+    handlePointerUp();
   }, [handlePointerUp]);
 
   const handleMouseDown = useCallback((taskId: string) => {
@@ -214,9 +210,9 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     handlePointerDown(taskId);
   }, [handlePointerDown]);
 
-  const handleMouseUp = useCallback((taskId: string) => {
+  const handleMouseUp = useCallback(() => {
     if (Date.now() - lastTouchRef.current < 500) return; // synthetic mouse after touch
-    handlePointerUp(taskId);
+    handlePointerUp();
   }, [handlePointerUp]);
 
   const handleMouseLeave = useCallback(() => {
@@ -286,10 +282,10 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
           <div
             key={task.id}
             onMouseDown={() => handleMouseDown(task.id)}
-            onMouseUp={() => handleMouseUp(task.id)}
+            onMouseUp={() => handleMouseUp()}
             onMouseLeave={handleMouseLeave}
             onTouchStart={() => handleTouchStart(task.id)}
-            onTouchEnd={() => handleTouchEnd(task.id)}
+            onTouchEnd={() => handleTouchEnd()}
             onTouchCancel={handleMouseLeave}
             className={`flex flex-col gap-2 w-full rounded-2xl border backdrop-blur-xl p-1 shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] hover:shadow-xl select-none ${
               task.healed
@@ -366,12 +362,30 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                 </Button>
                 {/* Intensity indicator (top-left in RTL = end of row) — hidden when healed */}
                 {!task.healed && (
-                  <span
-                    className="self-start mt-1 h-5 w-5 rounded-full bg-red-900/30 border border-red-900/40 text-[10px] font-semibold text-red-300/90 flex items-center justify-center leading-none flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
+                  <div
+                    className="relative -m-3 p-3 rounded-full cursor-pointer touch-manipulation flex items-center justify-center"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      if (Date.now() - lastTouchRef.current < 500) return;
+                      cycleSeverity(task.id);
+                    }}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      lastTouchRef.current = Date.now();
+                      cycleSeverity(task.id);
+                    }}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onTouchCancel={(e) => e.stopPropagation()}
+                    aria-label="زيادة شدة المعتقد"
                   >
-                    {SEVERITY_DISPLAY[task.severity]}
-                  </span>
+                    <span
+                      className="h-8 w-8 rounded-full bg-red-900/30 border border-red-900/40 text-sm font-semibold text-red-300/90 flex items-center justify-center leading-none flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {SEVERITY_DISPLAY[task.severity]}
+                    </span>
+                  </div>
                 )}
               </div>
             )}

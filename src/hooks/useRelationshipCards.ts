@@ -64,7 +64,7 @@ export const useRelationshipCards = () => {
 
       if (error) throw error;
 
-      const mapped: RelationshipCard[] = (data || []).map((row) => ({
+      const mapped: RelationshipCard[] = (data || []).map((row: any) => ({
         id: row.id,
         user_id: row.user_id,
         name: row.name,
@@ -131,8 +131,8 @@ export const useRelationshipCards = () => {
         contact_messenger: inserted.contact_messenger,
         level: inserted.level as RelationshipLevel,
         tasks: [],
-        sort_order: inserted.sort_order ?? nextOrder,
-        avatar_url: inserted.avatar_url ?? null,
+        sort_order: (inserted as any).sort_order ?? nextOrder,
+        avatar_url: (inserted as any).avatar_url ?? null,
         created_at: inserted.created_at,
         updated_at: inserted.updated_at,
       };
@@ -284,7 +284,7 @@ export const useRelationshipCards = () => {
 
       const { error: dbErr } = await supabase
         .from("relationship_cards")
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: publicUrl } as any)
         .eq("id", cardId)
         .eq("user_id", user.id);
 
@@ -316,7 +316,7 @@ export const useRelationshipCards = () => {
 
       const { error: dbErr } = await supabase
         .from("relationship_cards")
-        .update({ avatar_url: null })
+        .update({ avatar_url: null } as any)
         .eq("id", cardId)
         .eq("user_id", user.id);
 
@@ -355,12 +355,12 @@ export const useRelationshipCards = () => {
       const updates = [
         supabase
           .from("relationship_cards")
-          .update({ sort_order: b })
+          .update({ sort_order: b } as any)
           .eq("id", card.id)
           .eq("user_id", user.id),
         supabase
           .from("relationship_cards")
-          .update({ sort_order: a })
+          .update({ sort_order: a } as any)
           .eq("id", swapWith.id)
           .eq("user_id", user.id),
       ];
