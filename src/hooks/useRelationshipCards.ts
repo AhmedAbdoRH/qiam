@@ -64,7 +64,7 @@ export const useRelationshipCards = () => {
 
       if (error) throw error;
 
-      const mapped: RelationshipCard[] = (data || []).map((row) => ({
+      const mapped: RelationshipCard[] = (data || []).map((row: any) => ({
         id: row.id,
         user_id: row.user_id,
         name: row.name,
