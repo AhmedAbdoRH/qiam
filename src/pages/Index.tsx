@@ -132,7 +132,7 @@ const Index = () => {
       if (data) {
         const formattedData: Record<string, ValueData> = {};
         
-        data.forEach((item) => {
+        data.forEach((item: any) => {
           if (!item.value_id || typeof item.value_id !== 'string' || item.value_id.trim() === '') {
             return;
           }
