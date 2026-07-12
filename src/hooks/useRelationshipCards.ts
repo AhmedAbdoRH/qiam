@@ -355,12 +355,12 @@ export const useRelationshipCards = () => {
       const updates = [
         supabase
           .from("relationship_cards")
-          .update({ sort_order: b })
+          .update({ sort_order: b } as any)
           .eq("id", card.id)
           .eq("user_id", user.id),
         supabase
           .from("relationship_cards")
-          .update({ sort_order: a })
+          .update({ sort_order: a } as any)
           .eq("id", swapWith.id)
           .eq("user_id", user.id),
       ];
