@@ -131,8 +131,8 @@ export const useRelationshipCards = () => {
         contact_messenger: inserted.contact_messenger,
         level: inserted.level as RelationshipLevel,
         tasks: [],
-        sort_order: inserted.sort_order ?? nextOrder,
-        avatar_url: inserted.avatar_url ?? null,
+        sort_order: (inserted as any).sort_order ?? nextOrder,
+        avatar_url: (inserted as any).avatar_url ?? null,
         created_at: inserted.created_at,
         updated_at: inserted.updated_at,
       };
