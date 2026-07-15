@@ -34,14 +34,17 @@ interface TaskListProps {
   onAddTask?: (text: string) => void;
 }
 
-const normalizeTask = (t: any): Task => ({
-  id: t.id || String(Date.now()),
-  text: t.text || "",
-  // Backward-compat: old records may carry `completed: true` instead of `healed: true`
-  healed: t.healed === true || t.completed === true,
-  // Clamp severity into the supported 0-9 range (old records may carry 0-4)
-  severity: (Math.max(0, Math.min(9, Number(t.severity ?? 0))) as Severity),
-});
+const normalizeTask = (t: any): Task => {
+  const rawSev = Number(t.severity);
+  const sev = Number.isFinite(rawSev) ? Math.max(1, Math.min(10, Math.round(rawSev))) : 1;
+  return {
+    id: t.id || String(Date.now()),
+    text: t.text || "",
+    // Backward-compat: old records may carry `completed: true` instead of `healed: true`
+    healed: t.healed === true || t.completed === true,
+    severity: sev as Severity,
+  };
+};
 
 export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAddTask }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
