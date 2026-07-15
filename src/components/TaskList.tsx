@@ -372,7 +372,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
                       className="h-8 w-8 rounded-full bg-red-900/30 border border-red-900/40 text-sm font-semibold text-red-300/90 flex items-center justify-center leading-none flex-shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {SEVERITY_DISPLAY[task.severity]}
+                      {task.severity}
                     </span>
                   </div>
                 )}
