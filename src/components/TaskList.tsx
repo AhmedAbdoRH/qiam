@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { Input } from "./ui/input";
 
-type Severity = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type Severity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 interface Task {
   id: string;
@@ -12,32 +12,18 @@ interface Task {
   severity: Severity;
 }
 
-// 10 light red shades (all intentionally light), ramping up with severity
+// 10 light red shades (all intentionally light), ramping up with severity (1-10)
 const SEVERITY_BACKGROUNDS: Record<Severity, string> = {
-  0: "bg-white/5 border-white/10",
-  1: "bg-red-950/10 border-red-900/15",
-  2: "bg-red-950/15 border-red-900/20",
-  3: "bg-red-950/20 border-red-900/25",
-  4: "bg-red-950/25 border-red-900/30",
-  5: "bg-red-950/30 border-red-900/35",
-  6: "bg-red-950/35 border-red-900/40",
-  7: "bg-red-950/40 border-red-900/45",
-  8: "bg-red-950/45 border-red-900/50",
-  9: "bg-red-950/50 border-red-900/55",
-};
-
-// Display value out of 10 (each severity level = +1)
-const SEVERITY_DISPLAY: Record<Severity, number> = {
-  0: 1,
-  1: 2,
-  2: 3,
-  3: 4,
-  4: 5,
-  5: 6,
-  6: 7,
-  7: 8,
-  8: 9,
-  9: 10,
+  1: "bg-white/5 border-white/10",
+  2: "bg-red-950/10 border-red-900/15",
+  3: "bg-red-950/15 border-red-900/20",
+  4: "bg-red-950/20 border-red-900/25",
+  5: "bg-red-950/25 border-red-900/30",
+  6: "bg-red-950/30 border-red-900/35",
+  7: "bg-red-950/35 border-red-900/40",
+  8: "bg-red-950/40 border-red-900/45",
+  9: "bg-red-950/45 border-red-900/50",
+  10: "bg-red-950/50 border-red-900/55",
 };
 
 interface TaskListProps {
