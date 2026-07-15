@@ -102,7 +102,7 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
       id: String(Date.now()),
       text: newTask.trim(),
       healed: false,
-      severity: 0,
+      severity: 1,
     };
     save([...current, newTaskItem]);
     setNewTask("");
