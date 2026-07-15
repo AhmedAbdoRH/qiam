@@ -120,9 +120,8 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     const current = tasksRef.current;
     const next = current.map((task) => {
       if (task.id !== taskId) return task;
-      // Each tap advances to the next severity level (+1), wrapping 9 -> 0.
-      // SEVERITY_DISPLAY then shows it as 1 -> 2 -> 3 -> ... -> 10 -> 1.
-      const nextSev = ((task.severity + 1) % 10) as Severity;
+      // Each tap advances the displayed rating 1 -> 2 -> ... -> 10 -> 1.
+      const nextSev = ((task.severity % 10) + 1) as Severity;
       return { ...task, severity: nextSev };
     });
     save(next);
