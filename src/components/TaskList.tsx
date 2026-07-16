@@ -75,8 +75,12 @@ export const TaskList = ({ value, onChange, onPersist, showAddForm = false, onAd
     } catch {
       if (trimmedVal) parsed = [normalizeTask({ text: trimmedVal })];
     }
+    // Sort by severity descending on load (highest severity first).
+    // Sorting happens only when the value changes externally (reopen), not on every interaction.
+    parsed = [...parsed].sort((a, b) => b.severity - a.severity);
     setTasks(parsed);
     tasksRef.current = parsed;
+    serializedRef.current = JSON.stringify(parsed);
   }, [value]);
 
   useEffect(() => {
