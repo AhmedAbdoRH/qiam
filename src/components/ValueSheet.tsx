@@ -376,28 +376,31 @@ export const ValueSheet = ({
                 </button>
               )}
             </div>
-            <div>
-              {!localNotes && (
-                <div className="flex justify-end mb-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowNotesForm(false)}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+            {(localNotes || showNotesForm) && (
+              <div>
+                {!localNotes && (
+                  <div className="flex justify-end mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowNotesForm(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                <div
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) => handleNotesChange(e.currentTarget.textContent || "")}
+                  data-placeholder="اكتب ملاحظاتك هنا..."
+                  className="text-base text-foreground leading-loose whitespace-pre-wrap outline-none min-h-[3rem] rounded-md border border-white/10 bg-white/5 px-3 py-2 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60"
+                  style={{ direction: "rtl", lineHeight: "2" }}
+                >
+                  {localNotes}
                 </div>
-              )}
-              <div
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={(e) => handleNotesChange(e.currentTarget.textContent || "")}
-                className="text-base text-foreground leading-loose whitespace-pre-wrap outline-none"
-                style={{ direction: "rtl", lineHeight: "2" }}
-              >
-                {localNotes}
               </div>
-            </div>
+            )}
           </div>
         </div>
         <button
