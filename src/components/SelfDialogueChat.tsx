@@ -589,11 +589,11 @@ export const SPEAKER_META: Record<Speaker, {
 
     name: 'الأنيما',
 
-    bubbleClass: 'bg-pink-500/20 backdrop-blur-md text-pink-50 border border-pink-400/30 shadow-[inset_0_1px_12px_rgba(236,72,153,0.2)]',
+    bubbleClass: 'bg-[#8B6F2E]/25 backdrop-blur-md text-[#F5E6C8] border border-[#A67B3D]/40 shadow-[inset_0_1px_12px_rgba(139,111,46,0.25)]',
 
-    labelClass: 'text-pink-400/40',
+    labelClass: 'text-[#C9A15A]/50',
 
-    iconClass: 'text-pink-400/60',
+    iconClass: 'text-[#D4B36A]/70',
 
     Icon: Heart,
 
@@ -631,7 +631,7 @@ export const SPEAKER_META: Record<Speaker, {
 
 
 
-const SPEAKER_ORDER: Speaker[] = ['anima', 'nafs', 'sovereign'];
+const SPEAKER_ORDER: Speaker[] = ['anima', 'sovereign'];
 
 
 
