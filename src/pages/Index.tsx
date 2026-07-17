@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Download } from "lucide-react";
 import { toast } from "sonner";
 import { downloadComprehensiveReport, downloadMasculineValuesReport, downloadAllValuesReport } from "@/utils/reportGenerator";
-import Anima from "./Anima";
-import Animus from "./Animus";
+import { Heart } from "lucide-react";
 import { MASCULINE_VALUE_NAMES } from "./Behavioral";
 
 const HIDDEN_VALUE_NAMES = new Set(MASCULINE_VALUE_NAMES);
