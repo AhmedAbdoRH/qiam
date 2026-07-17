@@ -613,9 +613,14 @@ export const SPEAKER_META: Record<Speaker, {
 
   },
 
-  sovereign: {
-
+    sovereign: {
     name: 'الذات السيادية',
+    bubbleClass: 'bg-[#4E0D27]/25 backdrop-blur-md text-[#F0DCE5] border border-[#7A2246]/40 shadow-[inset_0_1px_12px_rgba(78,13,39,0.25)]',
+    labelClass: 'text-[#8C3A62]/60',
+    iconClass: 'text-[#BA628C]/70',
+    Icon: User,
+  },
+
 
     bubbleClass: 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]',
 
