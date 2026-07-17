@@ -4,7 +4,6 @@ import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster as Sonner } from './components/ui/sonner';
 import Auth from "./pages/Auth";
-import Anima from "./pages/Anima";
 import Nurturing from "./pages/Nurturing";
 import Behavioral from "./pages/Behavioral";
 import Divinity from "./pages/Divinity";
@@ -19,7 +18,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
-  const showBottomNavBar = location.pathname !== "/auth" && location.pathname !== "/anima" && location.pathname !== "/nurturing";
+  const showBottomNavBar = location.pathname !== "/auth" && location.pathname !== "/nurturing";
 
   return (
     <AuthProvider>
@@ -29,7 +28,6 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/feelings" element={<Index />} />
           <Route path="/tasks" element={<Tasks />} />
-          <Route path="/anima" element={<Anima />} />
           <Route path="/nurturing" element={<Nurturing />} />
           <Route path="/behavioral" element={<Behavioral />} />
           <Route path="/divinity" element={<Divinity />} />

@@ -619,20 +619,9 @@ export const SPEAKER_META: Record<Speaker, {
     labelClass: 'text-[#8C3A62]/60',
     iconClass: 'text-[#BA628C]/70',
     Icon: User,
-  },
-
-
-    bubbleClass: 'bg-[#626FC4]/20 backdrop-blur-md text-[#C8CCEC] border border-[#626FC4]/30 shadow-[inset_0_1px_12px_rgba(98,111,196,0.2)]',
-
-    labelClass: 'text-[#626FC4]/50',
-
-    iconClass: 'text-[#8A95D8]/70',
-
-    Icon: User,
-
-  },
-
+  }
 };
+
 
 
 
@@ -810,14 +799,6 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
   const unionLongPressFiredRef = useRef(false);
 
   
-
-  // Transition properties for Anima navigation
-
-  const [isTransitioningToAnima, setIsTransitioningToAnima] = useState(false);
-
-  const animaNavLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const animaNavFiredRef = useRef(false);
 
   
 
@@ -5095,26 +5076,14 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUnionSelector(false)}>
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-5 w-[85vw] max-w-[320px] flex flex-col gap-4" onClick={e => e.stopPropagation()}>
                         <h3 className="text-center text-sm font-semibold text-white/80">اختر نوع الجماع</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('sacred'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all">
+                        <div className="grid grid-cols-3 gap-3">
+                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('sacred'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 transition-all">
                             <Flame className="h-5 w-5 text-red-400" />
                             <span className="text-[11px] text-red-300 font-medium">مقدس</span>
-                          </button>
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('heart'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 hover:bg-pink-500/20 transition-all">
-                            <HeartHandshake className="h-5 w-5 text-pink-400" />
-                            <span className="text-[11px] text-pink-300 font-medium">قلبي</span>
-                          </button>
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('imaginary'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 transition-all">
-                            <Brain className="h-5 w-5 text-purple-400" />
-                            <span className="text-[11px] text-purple-300 font-medium">خيالي</span>
                           </button>
                           <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('normal'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 transition-all">
                             <Zap className="h-5 w-5 text-blue-400" />
                             <span className="text-[11px] text-blue-300 font-medium">عادي</span>
-                          </button>
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('nursing'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-all">
-                            <Droplets className="h-5 w-5 text-amber-400" />
-                            <span className="text-[11px] text-amber-300 font-medium">أمومي</span>
                           </button>
                           <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('fall'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-600/10 border border-red-600/30 hover:bg-red-600/20 transition-all">
                             <span className="text-xl">📉</span>
@@ -5991,67 +5960,67 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                         <>
 
-                          {/* Show only notes for fall type */}
+                          {/* Intention Notes - hide for fall */}
+
+                          {milestoneType !== 'fall' && (
+
+                            <div className="flex flex-col gap-1.5">
+
+                              <span className="text-xs text-white/60">نية الجماع</span>
+
+                              <Input
+
+                                value={milestoneIntention}
+
+                                onChange={(e) => setMilestoneIntention(e.target.value)}
+
+                                placeholder="اكتب نيتك..."
+
+                                className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
+
+                                dir="rtl"
+
+                              />
+
+                            </div>
+
+                          )}
+
+                          {/* Simple Rating Slider - show for all types */}
+
+                          <div className="flex flex-col gap-2">
+
+                            <div className="flex justify-between items-center">
+
+                              <span className="text-xs text-white/60">{milestoneType === 'fall' ? 'شدة السقوط (من ٠ إلى ١٠)' : 'التقييم (من ٠ إلى ١٠)'}</span>
+
+                              <span className="xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
+
+                            </div>
+
+                            <Slider
+
+                              value={[milestoneIntentionAchievement]}
+
+                              onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
+
+                              min={0}
+
+                              max={10}
+
+                              step={0.1}
+
+                              className="w-full"
+
+                              rangeClassName={milestoneType === 'fall' ? 'bg-red-500' : 'bg-white'}
+
+                            />
+
+                          </div>
 
                           {milestoneType !== 'fall' && (
 
                             <>
-
-                              {/* Intention Notes */}
-
-                              <div className="flex flex-col gap-1.5">
-
-                                <span className="text-xs text-white/60">نية الجماع</span>
-
-                                <Input
-
-                                  value={milestoneIntention}
-
-                                  onChange={(e) => setMilestoneIntention(e.target.value)}
-
-                                  placeholder="اكتب نيتك..."
-
-                                  className="h-8 text-xs bg-white/5 border-white/15 text-white placeholder:text-white/25"
-
-                                  dir="rtl"
-
-                                />
-
-                              </div>
-
-
-
-                              {/* Simple Rating Slider */}
-
-                              <div className="flex flex-col gap-2">
-
-                                <div className="flex justify-between items-center">
-
-                                  <span className="text-xs text-white/60">التقييم (من ٠ إلى ١٠)</span>
-
-                                  <span className="xs font-semibold text-white">{milestoneIntentionAchievement.toFixed(1)}</span>
-
-                                </div>
-
-                                <Slider
-
-                                  value={[milestoneIntentionAchievement]}
-
-                                  onValueChange={([v]) => setMilestoneIntentionAchievement(v)}
-
-                                  min={0}
-
-                                  max={10}
-
-                                  step={0.1}
-
-                                  className="w-full"
-
-                                  rangeClassName="bg-white"
-
-                                />
-
-                              </div>
 
                               {/* Duration Radio */}
 
@@ -6348,93 +6317,6 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
 
 
-                    <div className="flex items-center justify-center gap-2 mb-2">
-
-
-
-                      {/* زر التبديل التلقائي - زجاجي + ضغط مطول يفتح صفحة الأنيما */}
-
-                      <button
-
-                        onClick={(e) => {
-
-                          e.preventDefault();
-
-                          if (toggleLongPressFiredRef.current) {
-
-                            toggleLongPressFiredRef.current = false;
-
-                            return;
-
-                          }
-
-                          setIsAutoSwitch(!isAutoSwitch);
-
-                        }}
-
-                        onMouseDown={(e) => {
-
-                          e.preventDefault();
-
-                          toggleLongPressFiredRef.current = false;
-
-                          toggleLongPressRef.current = setTimeout(() => {
-
-                            toggleLongPressFiredRef.current = true;
-
-                            navigate('/anima');
-
-                          }, 1500);
-
-                        }}
-
-                        onMouseUp={() => {
-
-                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
-
-                        }}
-
-                        onMouseLeave={() => {
-
-                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
-
-                        }}
-
-                        onTouchStart={() => {
-
-                          toggleLongPressFiredRef.current = false;
-
-                          toggleLongPressRef.current = setTimeout(() => {
-
-                            toggleLongPressFiredRef.current = true;
-
-                            navigate('/anima');
-
-                          }, 1500);
-
-                        }}
-
-                        onTouchEnd={() => {
-
-                          if (toggleLongPressRef.current) clearTimeout(toggleLongPressRef.current);
-
-                        }}
-
-                        className={`group relative flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-md transition-all duration-500 ${isAutoSwitch
-
-                          ? 'text-green-300/60 bg-green-900/20 border border-green-800/30 shadow-[inset_0_1px_8px_rgba(34,197,94,0.1)]'
-
-                          : 'text-white/20 bg-white/5 border border-white/10 hover:text-white/40'
-
-                          }`}
-
-                        title={isAutoSwitch ? "إيقاف التبديل التلقائي" : "تفعيل التبديل التلقائي"}
-
-                      >
-
-                        <Repeat className={`h-3 w-3 transition-transform duration-700 ${isAutoSwitch ? 'rotate-180' : ''}`} />
-
-                      </button>
 
 
 
@@ -6615,87 +6497,6 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                         })}
 
                       </div>
-
-
-
-                      {/* زر الوصول المباشر لصفحة الأنيما بالضغط المطول */}
-
-                      <button
-
-                        onClick={(e) => {
-
-                          e.preventDefault();
-
-                          if (animaNavFiredRef.current) {
-
-                            animaNavFiredRef.current = false;
-
-                            return;
-
-                          }
-
-                          toast('طوّل الضغطة للانتقال لصفحة الأنيما 💖');
-
-                        }}
-
-                        onMouseDown={(e) => {
-
-                          e.preventDefault();
-
-                          animaNavFiredRef.current = false;
-
-                          animaNavLongPressRef.current = setTimeout(() => {
-
-                            animaNavFiredRef.current = true;
-
-                            setIsTransitioningToAnima(true);
-
-                            setTimeout(() => {
-
-                              navigate('/anima');
-
-                            }, 1100);
-
-                          }, 600);
-
-                        }}
-
-                        onMouseUp={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-
-                        onMouseLeave={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-
-                        onTouchStart={() => {
-
-                          animaNavFiredRef.current = false;
-
-                          animaNavLongPressRef.current = setTimeout(() => {
-
-                            animaNavFiredRef.current = true;
-
-                            setIsTransitioningToAnima(true);
-
-                            setTimeout(() => {
-
-                              navigate('/anima');
-
-                            }, 1100);
-
-                          }, 600);
-
-                        }}
-
-                        onTouchEnd={() => { if (animaNavLongPressRef.current) clearTimeout(animaNavLongPressRef.current); }}
-
-                        className="group relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 text-pink-300/40 hover:text-pink-300 bg-transparent active:scale-95"
-
-                        title="طوّل الضغطة للانتقال لصفحة الأنيما"
-
-                      >
-
-                        <Heart className="h-3.5 w-3.5 fill-pink-300/20" />
-
-                      </button>
-
                     </div>
 
 
@@ -6852,29 +6653,12 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                   </div>
 
-              </div>
-
             </>
 
           )}
 
 
 
-          {/* Anima Page Navigation Transition Overlay */}
-
-          {isTransitioningToAnima && (
-
-            <div className="fixed inset-0 z-[99999] pointer-events-none flex items-center justify-center overflow-hidden">
-
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-500" />
-
-              <div className="relative flex items-center justify-center w-[120px] h-[120px] anima-transition-circle" />
-
-              <Heart className="absolute z-10 w-24 h-24 text-pink-200 fill-pink-400/60 animate-pulse drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]" />
-
-            </div>
-
-          )}
 
         </DialogContent>
 
