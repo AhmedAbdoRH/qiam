@@ -344,26 +344,57 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pt-10 px-2 pb-2 md:pt-16 md:px-4 md:pb-4">
       <div className="max-w-7xl mx-auto">
-        {/* قلب واحد بلون الأنيما - محصلة التقييم الشامل لكل القيم */}
+        {/* دائرة القلب - محصلة التقييم الشامل لكل القيم (بلون الأنيما) */}
         <div className="mb-4 border-b border-white/10 pb-4 flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center">
-            <Heart
-              className="w-24 h-24 md:w-28 md:h-28"
-              style={{
-                color: "#8B6F2E",
-                fill: "#8B6F2E",
-                filter: "drop-shadow(0 4px 20px rgba(139,111,46,0.45))",
-              }}
-              strokeWidth={1.2}
-            />
-            <div
-              className="absolute inset-0 flex items-center justify-center font-bold text-lg md:text-xl"
-              style={{ color: "#F5E6C8" }}
-            >
-              {overallBalancePercentage}%
-            </div>
-          </div>
+          {(() => {
+            const rating = (overallBalancePercentage / 100) * 10; // 0..10
+            return (
+              <div className="mx-auto w-full max-w-sm flex flex-col items-center">
+                <div className="relative mb-0 mt-1">
+                  <div
+                    className="absolute rounded-full"
+                    style={{
+                      inset: `-${Math.round(rating * 4)}px`,
+                      background: `radial-gradient(circle, rgba(166, 123, 61, ${0.08 + (rating / 10) * 0.55}), transparent 70%)`,
+                      filter: `blur(${12 + rating * 2}px)`,
+                      opacity: Math.max(0.08, rating / 10),
+                      transition: "all 0.3s ease",
+                    }}
+                  />
+                  <div
+                    className="relative w-16 h-16 rounded-full backdrop-blur-xl flex items-center justify-center anima-pulse"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom right, rgba(139,111,46,0.30), rgba(102,72,20,0.30))",
+                      border: "1px solid rgba(166,123,61,0.40)",
+                    }}
+                  >
+                    <Heart
+                      className="h-8 w-8 block pointer-events-none"
+                      style={{ color: "#F5E6C8", fill: "rgba(245,230,200,0.40)" }}
+                    />
+                  </div>
+                </div>
+
+                {/* شريط التقدم السفلي */}
+                <div className="mt-4 mb-1 w-full">
+                  <div className="relative h-2 rounded-full overflow-hidden bg-white/10">
+                    <div
+                      className="absolute inset-y-0 right-0 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${overallBalancePercentage}%`,
+                        background:
+                          "linear-gradient(to left, #A67B3D, #8B6F2E)",
+                        boxShadow: "0 0 12px rgba(166,123,61,0.55)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
+
 
 
         {/* كروت القيم الذكورية بالأعلى */}
