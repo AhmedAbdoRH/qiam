@@ -335,13 +335,27 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pt-10 px-2 pb-2 md:pt-16 md:px-4 md:pb-4">
       <div className="max-w-7xl mx-auto">
-        {/* أيقونتا الأنوثة والذكورة جنباً إلى جنب بالأعلى */}
-        <div className="mb-2 border-b border-white/10 pb-2 flex flex-col items-center justify-center">
-          <div className="flex flex-row items-start justify-center gap-6 md:gap-12 w-full">
-            <Anima embedded />
-            <Animus embedded />
+        {/* قلب واحد بلون الأنيما - محصلة التقييم الشامل لكل القيم */}
+        <div className="mb-4 border-b border-white/10 pb-4 flex flex-col items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <Heart
+              className="w-24 h-24 md:w-28 md:h-28"
+              style={{
+                color: "#8B6F2E",
+                fill: "#8B6F2E",
+                filter: "drop-shadow(0 4px 20px rgba(139,111,46,0.45))",
+              }}
+              strokeWidth={1.2}
+            />
+            <div
+              className="absolute inset-0 flex items-center justify-center font-bold text-lg md:text-xl"
+              style={{ color: "#F5E6C8" }}
+            >
+              {overallBalancePercentage}%
+            </div>
           </div>
         </div>
+
 
         {/* كروت القيم الذكورية بالأعلى */}
         {sortedMasculineValues.length > 0 && (
