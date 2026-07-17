@@ -290,6 +290,15 @@ const Index = () => {
     return [...sortByProgress(pinned), ...sortByProgress(unpinned)];
   }, [getValueData, pinnedValues]);
 
+  // محصلة التقييم الشامل لكل القيم (نسبة مئوية)
+  const overallBalancePercentage = useMemo(() => {
+    const all = VALUES.map((_, idx) => getValueData(idx.toString()).balancePercentage);
+    if (all.length === 0) return 0;
+    const avg = all.reduce((s, v) => s + v, 0) / all.length;
+    return Math.round(avg);
+  }, [getValueData]);
+
+
   // Masculine values list (sourced from MASCULINE_VALUE_IDS)
   const sortedMasculineValues = useMemo(() => {
     const allValues = MASCULINE_VALUE_IDS.map((id) => ({
