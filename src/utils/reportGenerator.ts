@@ -710,39 +710,125 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
 
     // ===== Masculine values section =====
     md += "## القيم الذكورية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
-    md += tableSep(6) + "\n";
     for (const name of masculineValues) {
       const item = valuesMap.get(name);
-      md += tableRow([
-        escapeMd(name),
-        (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
-        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
-        item?.is_pinned ? "نعم" : "-",
-        item?.notes ? escapeMd(item.notes) : "-",
-      ]) + "\n";
+      
+      // Basic info table
+      md += `### ${escapeMd(name)}${item?.is_pinned ? " 📌" : ""}\n\n`;
+      md += `| الحقل | القيمة |\n`;
+      md += `| --- | --- |\n`;
+      md += `| نسبة الاتزان | **${(item?.balance_percentage || 50) + "%"} |\n`;
+      md += `| مشاعر جاري علاجها | ${Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-"} |\n`;
+      md += `| مشاعر تم علاجها | ${Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-"} |\n`;
+      md += `| مثبّتة | ${item?.is_pinned ? "نعم" : "-"} |\n`;
+      md += `| ملاحظات | ${item?.notes ? escapeMd(item.notes) : "-"} |\n\n`;
+
+      // Beliefs section
+      const hasBeliefs = FEELINGS.some(f => (item?.beliefs && item.beliefs[f] && item.beliefs[f].trim()));
+      if (hasBeliefs) {
+        md += `**المعتقدات حسب الشعور:**\n\n`;
+        for (const f of FEELINGS) {
+          const belief = (item?.beliefs && item.beliefs[f]) || "";
+          if (belief.trim()) {
+            md += `- **${f}**: ${escapeMd(belief)}\n`;
+          }
+        }
+        md += "\n";
+      }
+
+      // Tasks section (feeling_tasks)
+      const hasTasks = item?.feeling_tasks && Array.isArray(item.feeling_tasks) && item.feeling_tasks.length > 0;
+      if (hasTasks) {
+        md += `**المهام حسب الشعور:**\n\n`;
+        // feeling_tasks is array of objects with text, intensity, tags
+        // We need to map by feeling? The structure in cleansingRecord is array of tasks, each with text, intensity, tags.
+        // It doesn't specify which feeling. In the comprehensive report, they treat cleansingRecord as general feeling tasks not tied to a specific feeling.
+        // For simplicity, we'll list all tasks under a general heading.
+        for (const t of item.feeling_tasks as any[]) {
+          const text = t.text || "";
+          const intensity = typeof t.intensity === "number" ? t.intensity : 0;
+          const tags = Array.isArray(t.tags) ? t.tags : [];
+          md += `- ${escapeMd(text)} (الشدة: ${intensity}/10${tags.length ? `, العلامات: ${tags.map(escapeMd).join(", ")}` : ""})\n`;
+        }
+        md += "\n";
+      }
+
+      // Feelings status section
+      const feelingsBeingHealed = Array.isArray(item?.feelings_being_healed) ? item.feelings_being_healed : [];
+      const feelingsHealed = Array.isArray(item?.feelings_healed) ? item.feelings_healed : [];
+      if (feelingsBeingHealed.length > 0 || feelingsHealed.length > 0) {
+        md += `**الحالة العاطفية:**\n\n`;
+        if (feelingsBeingHealed.length > 0) {
+          md += `- **جاري العلاج:** ${feelingsBeingHealed.map(escapeMd).join("، ")}\n`;
+        }
+        if (feelingsHealed.length > 0) {
+          md += `- **تم علاجها:** ${feelingsHealed.map(escapeMd).join("، ")}\n`;
+        }
+        md += "\n";
+      }
+
+      md += "---\n\n";
     }
-    md += "\n";
 
     // ===== Feminine values section =====
     md += "## القيم الأنثوية\n\n";
-    md += tableRow(["القيمة", "نسبة الاتزان", "مشاعر جاري علاجها", "مشاعر تم علاجها", "مثبّتة", "ملاحظات"]) + "\n";
-    md += tableSep(6) + "\n";
     for (const name of feminineValues) {
       const item = valuesMap.get(name);
-      md += tableRow([
-        escapeMd(name),
-        (item?.balance_percentage || 50) + "%",
-        Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-",
-        Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-",
-        item?.is_pinned ? "نعم" : "-",
-        item?.notes ? escapeMd(item.notes) : "-",
-      ]) + "\n";
-    }
-    md += "\n";
+      
+      // Basic info table
+      md += `### ${escapeMd(name)}${item?.is_pinned ? " 📌" : ""}\n\n`;
+      md += `| الحقل | القيمة |\n`;
+      md += `| --- | --- |\n`;
+      md += `| نسبة الاتزان | **${(item?.balance_percentage || 50) + "%"} |\n`;
+      md += `| مشاعر جاري علاجها | ${Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-"} |\n`;
+      md += `| مشاعر تم علاجها | ${Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-"} |\n`;
+      md += `| مثبّتة | ${item?.is_pinned ? "نعم" : "-"} |\n`;
+      md += `| ملاحظات | ${item?.notes ? escapeMd(item.notes) : "-"} |\n\n`;
 
-    md += "---\n\n*تم إنشاء هذا التقرير تلقائياً*\n";
+      // Beliefs section
+      const hasBeliefs = FEELINGS.some(f => (item?.beliefs && item.beliefs[f] && item.beliefs[f].trim()));
+      if (hasBeliefs) {
+        md += `**المعتقدات حسب الشعور:**\n\n`;
+        for (const f of FEELINGS) {
+          const belief = (item?.beliefs && item.beliefs[f]) || "";
+          if (belief.trim()) {
+            md += `- **${f}**: ${escapeMd(belief)}\n`;
+          }
+        }
+        md += "\n";
+      }
+
+      // Tasks section (feeling_tasks)
+      const hasTasks = item?.feeling_tasks && Array.isArray(item.feeling_tasks) && item.feeling_tasks.length > 0;
+      if (hasTasks) {
+        md += `**المهام حسب الشعور:**\n\n`;
+        for (const t of item.feeling_tasks as any[]) {
+          const text = t.text || "";
+          const intensity = typeof t.intensity === "number" ? t.intensity : 0;
+          const tags = Array.isArray(t.tags) ? t.tags : [];
+          md += `- ${escapeMd(text)} (الشدة: ${intensity}/10${tags.length ? `, العلامات: ${tags.map(escapeMd).join(", ")}` : ""})\n`;
+        }
+        md += "\n";
+      }
+
+      // Feelings status section
+      const feelingsBeingHealed = Array.isArray(item?.feelings_being_healed) ? item.feelings_being_healed : [];
+      const feelingsHealed = Array.isArray(item?.feelings_healed) ? item.feelings_healed : [];
+      if (feelingsBeingHealed.length > 0 || feelingsHealed.length > 0) {
+        md += `**الحالة العاطفية:**\n\n`;
+        if (feelingsBeingHealed.length > 0) {
+          md += `- **جاري العلاج:** ${feelingsBeingHealed.map(escapeMd).join("، ")}\n`;
+        }
+        if (feelingsHealed.length > 0) {
+          md += `- **تم علاجها:** ${feelingsHealed.map(escapeMd).join("، ")}\n`;
+        }
+        md += "\n";
+      }
+
+      md += "---\n\n";
+    }
+
+    md += "*تم إنشاء هذا التقرير تلقائياً*\n";
 
     const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
