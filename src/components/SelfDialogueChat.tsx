@@ -10,7 +10,7 @@ import { Textarea } from './ui/textarea';
 
 import { ScrollArea } from './ui/scroll-area';
 
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets, Baby } from 'lucide-react';
 
 import { Input } from './ui/input';
 
@@ -5077,18 +5077,22 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
                       <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-5 w-[85vw] max-w-[320px] flex flex-col gap-4" onClick={e => e.stopPropagation()}>
                         <h3 className="text-center text-sm font-semibold text-white/80">اختر نوع الجماع</h3>
                         <div className="grid grid-cols-3 gap-3">
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('sacred'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 transition-all">
-                            <Flame className="h-5 w-5 text-red-400" />
-                            <span className="text-[11px] text-red-300 font-medium">مقدس</span>
-                          </button>
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('normal'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 transition-all">
-                            <Zap className="h-5 w-5 text-blue-400" />
-                            <span className="text-[11px] text-blue-300 font-medium">عادي</span>
-                          </button>
-                          <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('fall'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-600/10 border border-red-600/30 hover:bg-red-600/20 transition-all">
-                            <span className="text-xl">📉</span>
-                            <span className="text-[11px] text-red-400 font-medium">سقوط</span>
-                          </button>
+                        <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('sacred'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 transition-all">
+                          <Flame className="w-6 h-6 text-purple-400" />
+                          <span className="text-xs text-purple-300">مقدس</span>
+                        </button>
+                        <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('normal'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 transition-all">
+                          <Bolt className="w-6 h-6 text-blue-400" />
+                          <span className="text-xs text-blue-300">عادي</span>
+                        </button>
+                        <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('nursing'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-500/10 border border-green-500/30 hover:bg-green-500/20 transition-all">
+                          <Baby className="w-6 h-6 text-green-400" />
+                          <span className="text-xs text-green-300">الارضاعي</span>
+                        </button>
+                        <button onClick={() => { setShowUnionSelector(false); openMilestoneDialog('fall'); }} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-red-600/10 border border-red-600/30 hover:bg-red-600/20 transition-all">
+                          <ArrowDownSquare className="w-6 h-6 text-red-400" />
+                          <span className="text-xs text-red-300">سقوط</span>
+                        </button>
                         </div>
                         <Button variant="ghost" onClick={() => setShowUnionSelector(false)} className="h-8 text-xs text-white/50 hover:text-white mt-2">إلغاء</Button>
                       </div>
