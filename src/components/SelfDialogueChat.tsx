@@ -10,7 +10,7 @@ import { Textarea } from './ui/textarea';
 
 import { ScrollArea } from './ui/scroll-area';
 
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets, Baby } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets, Baby, Bolt, ArrowDownSquare } from 'lucide-react';
 
 import { Input } from './ui/input';
 
@@ -601,7 +601,7 @@ export const SPEAKER_META: Record<Speaker, {
 
   nafs: {
 
-    name: 'النفس',
+    name: 'الأنيما (أمومية)',
 
     bubbleClass: 'bg-[#9569C0]/20 backdrop-blur-md text-[#E8D8F0] border border-[#9569C0]/30 shadow-[inset_0_1px_12px_rgba(149,105,192,0.2)]',
 
@@ -5105,7 +5105,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowMilestoneTable(false)}>
 
-                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[80vh] flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+                      <div className="bg-[#1a1a2e] border border-white/15 rounded-2xl p-4 w-[95vw] max-w-[500px] max-h-[85vh] overflow-y-auto flex flex-col gap-3" onClick={e => e.stopPropagation()}>
 
                         <div className="flex items-center justify-between">
 
@@ -6326,7 +6326,7 @@ export function SelfDialogueChat({ onLongPress }: SelfDialogueChatProps) {
 
                       {/* Three-speaker switcher: anima, nafs, sovereign — all on the right */}
 
-                      <div dir="rtl" className="relative flex items-center justify-end gap-1 bg-white/5 backdrop-blur-md rounded-full p-0.5 border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
+                      <div dir="rtl" className="relative mx-auto flex w-fit items-center justify-center gap-1 bg-white/5 backdrop-blur-md rounded-full p-0.5 border border-white/10 select-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)]">
 
                         {SPEAKER_ORDER.map((sp) => {
 
