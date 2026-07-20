@@ -10,7 +10,7 @@ import { Textarea } from './ui/textarea';
 
 import { ScrollArea } from './ui/scroll-area';
 
-import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets, Baby } from 'lucide-react';
+import { MessageCircleHeart, Send, User, Heart, Repeat, Cloud, CloudOff, RefreshCw, AlertCircle, Loader2, Lock, Edit2, Sparkles, Plus, X, GripVertical, Download, Trash2, Trophy, Star, Table2, Copy, Flame, HeartHandshake, Brain, Zap, Droplets, Baby, Bolt, ArrowDownSquare } from 'lucide-react';
 
 import { Input } from './ui/input';
 
