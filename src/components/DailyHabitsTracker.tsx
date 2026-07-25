@@ -77,18 +77,24 @@ const calcAverage = (scores: Scores) => {
   return values.reduce((a, b) => a + b, 0) / HABIT_ITEMS.length;
 };
 
-const formatDayText = (dateIso: string, scores: Scores) => {
+const formatScore = (v: number) => `${Number(v).toFixed(1)}/10`;
+
+const formatDayText = (dateIso: string, scores: Scores, includeTitle = true) => {
   const lines = HABIT_ITEMS.map((h) => {
     const v = scores[h.key] ?? 0;
-    return `• ${h.label}: ${Number(v).toFixed(1)}`;
+    return `• ${h.label}: ${formatScore(v)}`;
   });
   const avg = calcAverage(scores);
-  return [
+  const body = [
     `📅 ${formatArabicDate(dateIso)}`,
-    `المتوسط: ${avg.toFixed(1)} / 10`,
+    `المتوسط: ${formatScore(avg)}`,
     "────────────",
     ...lines,
-  ].join("\n");
+  ];
+  if (includeTitle) {
+    return ["التقرير اليومي للعادات الأكثر فاعلية", "", ...body].join("\n");
+  }
+  return body.join("\n");
 };
 
 export const DailyHabitsTracker = () => {
@@ -183,7 +189,7 @@ export const DailyHabitsTracker = () => {
   };
 
   const handleCopyToday = async () => {
-    const text = formatDayText(selectedDate, scores);
+    const text = formatDayText(selectedDate, scores, true);
     await copyToClipboard(text, "تم نسخ تقييمات اليوم");
   };
 
@@ -206,9 +212,10 @@ export const DailyHabitsTracker = () => {
         return;
       }
 
-      const sections = rows.map((row) => formatDayText(row.habit_date, row.scores || {}));
+      const sections = rows.map((row) => formatDayText(row.habit_date, row.scores || {}, false));
       const header = [
-        "═══ سجل تتبع العادات اليومي ═══",
+        "التقرير اليومي للعادات الأكثر فاعلية",
+        "",
         `عدد الأيام: ${rows.length}`,
         `تاريخ النسخ: ${formatArabicDate(todayISO)}`,
         "",
