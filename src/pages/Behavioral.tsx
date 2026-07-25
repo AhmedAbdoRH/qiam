@@ -5,6 +5,7 @@ import { ChatWidget } from "@/components/ChatWidget";
 import { CalendarTaskList } from "@/components/CalendarTaskList";
 import { ShadowsList } from "@/components/ShadowsList";
 import { DivineCommandsTaskList } from "@/components/DivineCommandsTaskList";
+import { DailyHabitsTracker } from "@/components/DailyHabitsTracker";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { downloadComprehensiveReport, downloadMasculineValuesReport } from "@/utils/reportGenerator";
@@ -63,6 +64,11 @@ const Behavioral = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
+
+        {/* تتبع العادات اليومي */}
+        <section className="mb-6" dir="rtl">
+          <DailyHabitsTracker />
+        </section>
 
         {/* قائمة التذكيرية (Reminders List) */}
         <section className="mb-6" dir="rtl">
