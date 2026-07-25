@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { ChevronLeft, ChevronRight, Target, Flame, Copy, History } from "lucide-react";
 import { toast } from "sonner";
 
-export const HABIT_ITEMS = [
+export const DEFAULT_HABITS = [
   { key: "sleep", label: "النوم السليم", icon: "🌙" },
   { key: "eating", label: "نظام الأكل الصحي", icon: "🥗" },
   { key: "exercise", label: "الرياضة / الجيم", icon: "💪" },
@@ -19,8 +19,12 @@ export const HABIT_ITEMS = [
   { key: "purification", label: "جلسة تطهير شعور كاملة", icon: "✨" },
 ] as const;
 
-type HabitKey = (typeof HABIT_ITEMS)[number]["key"];
+// backward-compatible export
+export const HABIT_ITEMS = DEFAULT_HABITS;
+
+type HabitKey = (typeof DEFAULT_HABITS)[number]["key"];
 type Scores = Partial<Record<HabitKey, number>>;
+type Labels = Partial<Record<HabitKey, string>>;
 
 const formatDateISO = (d: Date) => {
   const y = d.getFullYear();
@@ -79,16 +83,24 @@ const getBarGradient = (score: number): string => {
 };
 
 const calcAverage = (scores: Scores) => {
-  const values = HABIT_ITEMS.map((h) => scores[h.key] ?? 0);
-  return values.reduce((a, b) => a + b, 0) / HABIT_ITEMS.length;
+  const values = DEFAULT_HABITS.map((h) => scores[h.key] ?? 0);
+  return values.reduce((a, b) => a + b, 0) / DEFAULT_HABITS.length;
 };
 
 const formatScore = (v: number) => `${Number(v).toFixed(1)}/10`;
 
-const formatDayText = (dateIso: string, scores: Scores, includeTitle = true) => {
-  const lines = HABIT_ITEMS.map((h) => {
+const getLabel = (key: HabitKey, labels: Labels) =>
+  (labels[key]?.trim() || DEFAULT_HABITS.find((h) => h.key === key)?.label || key);
+
+const formatDayText = (
+  dateIso: string,
+  scores: Scores,
+  labels: Labels,
+  includeTitle = true
+) => {
+  const lines = DEFAULT_HABITS.map((h) => {
     const v = scores[h.key] ?? 0;
-    return `• ${h.label}: ${formatScore(v)}`;
+    return `• ${getLabel(h.key, labels)}: ${formatScore(v)}`;
   });
   const avg = calcAverage(scores);
   const body = [
@@ -108,6 +120,8 @@ export const DailyHabitsTracker = () => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(() => getYesterdayISO());
   const [copying, setCopying] = useState(false);
+  const [editingKey, setEditingKey] = useState<HabitKey | null>(null);
+  const [editValue, setEditValue] = useState("");
   const todayISO = formatDateISO(new Date());
   const yesterdayISO = getYesterdayISO();
   const isToday = selectedDate === todayISO;
@@ -129,10 +143,26 @@ export const DailyHabitsTracker = () => {
     enabled: !!user,
   });
 
+  const { data: labelsRecord } = useQuery({
+    queryKey: ["habitSettings", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await (supabase as any)
+        .from("habit_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; labels: Labels } | null;
+    },
+    enabled: !!user,
+  });
+
   const scores: Scores = record?.scores || {};
+  const labels: Labels = labelsRecord?.labels || {};
   const average = useMemo(() => calcAverage(scores), [scores]);
   const filledCount = useMemo(
-    () => HABIT_ITEMS.filter((h) => (scores[h.key] ?? 0) > 0).length,
+    () => DEFAULT_HABITS.filter((h) => (scores[h.key] ?? 0) > 0).length,
     [scores]
   );
 
@@ -179,6 +209,60 @@ export const DailyHabitsTracker = () => {
     [user, scores, selectedDate, record, queryClient]
   );
 
+  const saveLabel = useCallback(
+    async (key: HabitKey, newLabel: string) => {
+      if (!user) return;
+      const trimmed = newLabel.trim();
+      const defaultLabel = DEFAULT_HABITS.find((h) => h.key === key)?.label || "";
+      const nextLabels: Labels = { ...labels };
+
+      if (!trimmed || trimmed === defaultLabel) {
+        delete nextLabels[key];
+      } else {
+        nextLabels[key] = trimmed;
+      }
+
+      queryClient.setQueryData(["habitSettings", user.id], (old: any) => {
+        if (old) return { ...old, labels: nextLabels };
+        return { id: "temp", labels: nextLabels };
+      });
+
+      try {
+        const { data, error } = await (supabase as any)
+          .from("habit_settings")
+          .upsert(
+            {
+              user_id: user.id,
+              labels: nextLabels,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          )
+          .select("*")
+          .single();
+        if (error) throw error;
+        queryClient.setQueryData(["habitSettings", user.id], data);
+      } catch {
+        toast.error("تعذر حفظ الاسم");
+        queryClient.invalidateQueries({ queryKey: ["habitSettings", user.id] });
+      }
+    },
+    [user, labels, queryClient]
+  );
+
+  const startEdit = (key: HabitKey) => {
+    setEditingKey(key);
+    setEditValue(getLabel(key, labels));
+  };
+
+  const commitEdit = async () => {
+    if (!editingKey) return;
+    const key = editingKey;
+    const value = editValue;
+    setEditingKey(null);
+    await saveLabel(key, value);
+  };
+
   const shiftDate = (delta: number) => {
     const d = new Date(selectedDate + "T12:00:00");
     d.setDate(d.getDate() + delta);
@@ -197,7 +281,7 @@ export const DailyHabitsTracker = () => {
   };
 
   const handleCopyToday = async () => {
-    const text = formatDayText(selectedDate, scores, true);
+    const text = formatDayText(selectedDate, scores, labels, true);
     await copyToClipboard(text, "تم نسخ تقييمات اليوم");
   };
 
@@ -220,7 +304,9 @@ export const DailyHabitsTracker = () => {
         return;
       }
 
-      const sections = rows.map((row) => formatDayText(row.habit_date, row.scores || {}, false));
+      const sections = rows.map((row) =>
+        formatDayText(row.habit_date, row.scores || {}, labels, false)
+      );
       const header = [
         "التقرير اليومي للعادات الأكثر فاعلية",
         "",
@@ -319,7 +405,7 @@ export const DailyHabitsTracker = () => {
           />
         </div>
         <span className="text-[9px] text-white/35 whitespace-nowrap">
-          {filledCount}/{HABIT_ITEMS.length}
+          {filledCount}/{DEFAULT_HABITS.length}
         </span>
       </div>
 
@@ -328,8 +414,10 @@ export const DailyHabitsTracker = () => {
         {isLoading ? (
           <div className="text-center py-4 text-[10px] text-white/30">جاري التحميل...</div>
         ) : (
-          HABIT_ITEMS.map((habit) => {
+          DEFAULT_HABITS.map((habit) => {
             const value = scores[habit.key] ?? 0;
+            const label = getLabel(habit.key, labels);
+            const isEditing = editingKey === habit.key;
             return (
               <div
                 key={habit.key}
@@ -339,9 +427,33 @@ export const DailyHabitsTracker = () => {
                   <span className="text-sm shrink-0 leading-none" aria-hidden>
                     {habit.icon}
                   </span>
-                  <span className="text-xs font-medium text-white/85 flex-1 truncate leading-tight">
-                    {habit.label}
-                  </span>
+                  {isEditing ? (
+                    <input
+                      autoFocus
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={commitEdit}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitEdit();
+                        } else if (e.key === "Escape") {
+                          setEditingKey(null);
+                        }
+                      }}
+                      className="flex-1 min-w-0 text-xs font-medium text-white/90 bg-white/10 border border-cyan-400/40 rounded-md px-2 py-0.5 focus:outline-none focus:border-cyan-300/70"
+                      dir="rtl"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(habit.key)}
+                      className="text-xs font-medium text-white/85 flex-1 truncate leading-tight text-right hover:text-cyan-200 transition-colors"
+                      title="اضغط لتعديل الاسم"
+                    >
+                      {label}
+                    </button>
+                  )}
                   <span
                     className={`text-[11px] font-mono font-bold min-w-[2.4rem] text-center px-1.5 py-0.5 rounded-md border ${getScoreBg(value)} ${getScoreColor(value)}`}
                   >
