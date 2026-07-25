@@ -29,6 +29,12 @@ const formatDateISO = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+const getYesterdayISO = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return formatDateISO(d);
+};
+
 const formatArabicDate = (iso: string) => {
   const d = new Date(iso + "T12:00:00");
   return d.toLocaleDateString("ar-EG", {
@@ -100,10 +106,12 @@ const formatDayText = (dateIso: string, scores: Scores, includeTitle = true) => 
 export const DailyHabitsTracker = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(() => formatDateISO(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => getYesterdayISO());
   const [copying, setCopying] = useState(false);
   const todayISO = formatDateISO(new Date());
+  const yesterdayISO = getYesterdayISO();
   const isToday = selectedDate === todayISO;
+  const isYesterday = selectedDate === yesterdayISO;
 
   const { data: record, isLoading } = useQuery({
     queryKey: ["dailyHabits", user?.id, selectedDate],
@@ -284,6 +292,11 @@ export const DailyHabitsTracker = () => {
           {isToday && (
             <span className="text-[9px] text-cyan-300/80 bg-cyan-500/10 px-1.5 py-0.5 rounded-full">
               اليوم
+            </span>
+          )}
+          {isYesterday && (
+            <span className="text-[9px] text-amber-300/80 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+              أمس
             </span>
           )}
         </div>
