@@ -7,14 +7,9 @@ const BottomNavBar = () => {
 
   const navItems = [
     {
-      name: "الايمان",
-      path: "/divinity",
-      icon: Sparkles,
-    },
-    {
-      name: "العلاقات",
-      path: "/tasks",
-      icon: Heart,
+      name: "الأنوثة",
+      path: "/feelings",
+      icon: Target,
     },
     {
       name: "الذات السيادية",
@@ -22,15 +17,20 @@ const BottomNavBar = () => {
       icon: BrickWall,
     },
     {
-      name: "الأنوثة",
-      path: "/feelings",
-      icon: Target,
+      name: "العلاقات",
+      path: "/tasks",
+      icon: Heart,
+    },
+    {
+      name: "الايمان",
+      path: "/divinity",
+      icon: Sparkles,
     },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/50">
-      <nav className="flex justify-around items-center max-w-md mx-auto px-3 py-2.5" dir="rtl">
+      <nav className="flex justify-around items-center max-w-md mx-auto px-3 py-2.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
