@@ -310,9 +310,9 @@ export const DailyHabitsTracker = () => {
         </button>
       </div>
 
-      {/* Thin progress bar */}
-      <div className="mb-2.5 flex items-center gap-2 px-0.5">
-        <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
+      {/* Thin progress bar — fills from right to left (RTL) */}
+      <div className="mb-2.5 flex items-center gap-2 px-0.5" dir="rtl">
+        <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden flex justify-end">
           <div
             className={`h-full rounded-full bg-gradient-to-l ${getBarGradient(average)} transition-all duration-500`}
             style={{ width: `${(average / 10) * 100}%` }}
