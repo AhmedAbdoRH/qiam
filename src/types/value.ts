@@ -6,6 +6,7 @@ export interface ValueData {
   feelingsHealedDates?: Record<string, string>; // تواريخ مشاعر تم علاجها
   beliefs: Record<string, string>; // ملاحظات لكل شعور
   notes: string;
+  truth?: string; // الحقيقة
   balancePercentage: number;
   isPinned?: boolean; // حالة التثبيت
 }
