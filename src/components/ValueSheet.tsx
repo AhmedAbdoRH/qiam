@@ -10,7 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Save, StickyNote, X, Download } from "lucide-react";
+import { Save, StickyNote, X, Download, Copy } from "lucide-react";
 import { Pin, PinOff } from "lucide-react";
 import { FEELINGS, ValueData } from "@/types/value";
 import { getBalanceColor } from "@/utils/balanceCalculator";
@@ -181,6 +181,43 @@ export const ValueSheet = ({
     setLocalBalancePercentage(value[0]);
   }, []);
 
+  const getValueMarkdown = useCallback(() => {
+    const source = valueData ?? {
+      id: valueId ?? "",
+      name: valueName,
+      feelingsBeingHealed: localFeelingsBeingHealed,
+      feelingsHealed: localFeelingsHealed,
+      feelingsHealedDates: localFeelingsHealedDates,
+      beliefs: localBeliefs,
+      notes: localNotes,
+      balancePercentage: localBalancePercentage,
+      isPinned,
+    };
+
+    return buildValueMarkdown({
+      valueId: source.id ?? "",
+      valueName: source.name,
+      balancePercentage: source.balancePercentage ?? 50,
+      isPinned: !!source.isPinned,
+      feelingsBeingHealed: source.feelingsBeingHealed ?? [],
+      feelingsHealed: source.feelingsHealed ?? [],
+      feelingsHealedDates: source.feelingsHealedDates ?? {},
+      beliefs: source.beliefs ?? {},
+      notes: source.notes ?? "",
+      exportedAt: new Date().toISOString(),
+    });
+  }, [valueData, valueId, valueName, localFeelingsBeingHealed, localFeelingsHealed, localFeelingsHealedDates, localBeliefs, localNotes, localBalancePercentage, isPinned]);
+
+  const handleCopyValue = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(getValueMarkdown());
+      toast.success("تم نسخ بيانات القيمة");
+    } catch (err) {
+      toast.error("تعذر نسخ البيانات");
+      console.error(err);
+    }
+  }, [getValueMarkdown]);
+
   const handleDownloadValue = useCallback(() => {
     const source = valueData ?? {
       id: valueId ?? "",
@@ -194,18 +231,7 @@ export const ValueSheet = ({
       isPinned,
     };
 
-    const md = buildValueMarkdown({
-      valueId: source.id ?? "",
-      valueName: source.name,
-      balancePercentage: source.balancePercentage ?? 50,
-      isPinned: !!source.isPinned,
-      feelingsBeingHealed: source.feelingsBeingHealed ?? [],
-      feelingsHealed: source.feelingsHealed ?? [],
-      feelingsHealedDates: source.feelingsHealedDates ?? {},
-      beliefs: source.beliefs ?? {},
-      notes: source.notes ?? "",
-      exportedAt: new Date().toISOString(),
-    });
+    const md = getValueMarkdown();
 
     try {
       const blob = new Blob(["\ufeff" + md], { type: "text/markdown;charset=utf-8" });
@@ -223,7 +249,7 @@ export const ValueSheet = ({
       toast.error("تعذر تحميل الملف");
       console.error(err);
     }
-  }, [valueData, valueId, valueName, localFeelingsBeingHealed, localFeelingsHealed, localFeelingsHealedDates, localBeliefs, localNotes, localBalancePercentage, isPinned]);
+  }, [getValueMarkdown, valueData, valueId, valueName, localFeelingsBeingHealed, localFeelingsHealed, localFeelingsHealedDates, localBeliefs, localNotes, localBalancePercentage, isPinned]);
 
   const balanceColor = getBalanceColor(localBalancePercentage);
 
@@ -235,7 +261,7 @@ export const ValueSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto px-3">
+      <SheetContent className="w-full md:w-[500px] lg:w-[700px] overflow-y-auto px-3 pb-24">
         <SheetHeader>
           <SheetTitle className="text-3xl font-bold text-primary text-center mb-4">
             {valueName}
@@ -260,7 +286,17 @@ export const ValueSheet = ({
             </Button>
           </div>
         )}
-        <div className="absolute top-4 right-4 z-50">
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCopyValue}
+            title="نسخ كل محتوى القيمة"
+            className="rounded-full bg-background/60 backdrop-blur-lg hover:bg-background/80"
+          >
+            <Copy className="h-5 w-5 text-primary" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -288,6 +324,23 @@ export const ValueSheet = ({
               background: `linear-gradient(90deg, ${withAlpha(balanceColor, 0.3)} 0%, ${withAlpha(balanceColor, 0.6)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.1)} ${localBalancePercentage}%, ${withAlpha(balanceColor, 0.05)} 100%)`,
             } as React.CSSProperties}
           />
+
+          {/* الحقيقة */}
+          <div className="space-y-2">
+            <Label htmlFor="truth" className="text-base font-semibold text-foreground">
+              الحقيقة
+            </Label>
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setLocalTruth(e.currentTarget.textContent || "")}
+              data-placeholder="اكتب الحقيقة هنا..."
+              className="text-base text-foreground leading-relaxed whitespace-pre-wrap outline-none min-h-[2.75rem] max-h-44 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50 focus-within:border-primary/40 transition-colors"
+              style={{ direction: "rtl", lineHeight: "1.8" }}
+            >
+              {localTruth}
+            </div>
+          </div>
 
           <div className="space-y-3">
             <div className="space-y-2">
@@ -368,23 +421,6 @@ export const ValueSheet = ({
             </div>
           </div>
 
-          {/* الحقيقة */}
-          <div className="space-y-2">
-            <Label htmlFor="truth" className="text-base font-semibold text-foreground">
-              الحقيقة
-            </Label>
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              onBlur={(e) => setLocalTruth(e.currentTarget.textContent || "")}
-              data-placeholder="اكتب الحقيقة هنا..."
-              className="text-base text-foreground leading-relaxed whitespace-pre-wrap outline-none min-h-[2.75rem] max-h-44 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50 focus-within:border-primary/40 transition-colors"
-              style={{ direction: "rtl", lineHeight: "1.8" }}
-            >
-              {localTruth}
-            </div>
-          </div>
-
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Label htmlFor="notes" className="text-lg font-semibold text-foreground">
@@ -427,6 +463,7 @@ export const ValueSheet = ({
               </div>
             )}
           </div>
+
         </div>
         <button
           type="button"
