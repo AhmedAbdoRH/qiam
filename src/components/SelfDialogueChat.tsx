@@ -601,7 +601,7 @@ export const SPEAKER_META: Record<Speaker, {
 
   nafs: {
 
-    name: 'الأنيما (أمومية)',
+    name: 'النفس',
 
     bubbleClass: 'bg-[#9569C0]/20 backdrop-blur-md text-[#E8D8F0] border border-[#9569C0]/30 shadow-[inset_0_1px_12px_rgba(149,105,192,0.2)]',
 
@@ -625,7 +625,7 @@ export const SPEAKER_META: Record<Speaker, {
 
 
 
-const SPEAKER_ORDER: Speaker[] = ['anima', 'sovereign'];
+const SPEAKER_ORDER: Speaker[] = ['anima', 'nafs', 'sovereign'];
 
 
 
