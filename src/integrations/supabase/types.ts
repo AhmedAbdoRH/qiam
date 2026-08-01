@@ -555,6 +555,7 @@ export type Database = {
           positive_feelings: Json | null
           selected_feelings: Json | null
           session_id: string | null
+          truth: string | null
           updated_at: string | null
           user_id: string
           value_id: string
@@ -572,6 +573,7 @@ export type Database = {
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null
+          truth?: string | null
           updated_at?: string | null
           user_id: string
           value_id: string
@@ -589,6 +591,7 @@ export type Database = {
           positive_feelings?: Json | null
           selected_feelings?: Json | null
           session_id?: string | null
+          truth?: string | null
           updated_at?: string | null
           user_id?: string
           value_id?: string

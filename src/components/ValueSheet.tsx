@@ -27,8 +27,9 @@ interface ValueSheetProps {
   feelingsHealedDates?: Record<string, string>;
   beliefs: Record<string, string>;
   notes: string;
+  truth?: string;
   balancePercentage: number;
-  onUpdate: (feelingsBeingHealed: string[], feelingsHealed: string[], feelingsHealedDates: Record<string, string>, beliefs: Record<string, string>, notes: string, balancePercentage: number) => void;
+  onUpdate: (feelingsBeingHealed: string[], feelingsHealed: string[], feelingsHealedDates: Record<string, string>, beliefs: Record<string, string>, notes: string, balancePercentage: number, truth: string) => void;
   valueId?: string;
   isPinned?: boolean;
   onTogglePin?: () => void;
@@ -44,6 +45,7 @@ export const ValueSheet = ({
   feelingsHealedDates = {},
   beliefs,
   notes,
+  truth = "",
   balancePercentage,
   onUpdate,
   valueId,
@@ -57,6 +59,7 @@ export const ValueSheet = ({
   const [localBeliefs, setLocalBeliefs] = useState<Record<string, string>>(beliefs);
   const [localNotes, setLocalNotes] = useState(notes);
   const [localBalancePercentage, setLocalBalancePercentage] = useState(balancePercentage);
+  const [localTruth, setLocalTruth] = useState(truth);
   const [activeAddFeeling, setActiveAddFeeling] = useState<string | null>(null);
   const [showNotesForm, setShowNotesForm] = useState(false);
 
@@ -68,6 +71,7 @@ export const ValueSheet = ({
     localBeliefs,
     localNotes,
     localBalancePercentage,
+    localTruth,
   });
   latestRef.current = {
     localFeelingsBeingHealed,
@@ -76,6 +80,7 @@ export const ValueSheet = ({
     localBeliefs,
     localNotes,
     localBalancePercentage,
+    localTruth,
   };
 
   useEffect(() => {
@@ -84,8 +89,9 @@ export const ValueSheet = ({
     setLocalFeelingsHealedDates(feelingsHealedDates || {});
     setLocalBeliefs(beliefs);
     setLocalNotes(notes);
+    setLocalTruth(truth);
     setLocalBalancePercentage(balancePercentage);
-  }, [isOpen, feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, balancePercentage, valueName]);
+  }, [isOpen, feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, truth, balancePercentage, valueName]);
 
   // Save all data at once when closing the sheet (both button click + backdrop/cross click)
   const handleClose = useCallback(() => {
@@ -96,7 +102,8 @@ export const ValueSheet = ({
       latest.localFeelingsHealedDates,
       latest.localBeliefs,
       latest.localNotes,
-      latest.localBalancePercentage
+      latest.localBalancePercentage,
+      latest.localTruth
     );
     // Delay close slightly to avoid flicker - let state update settle first
     requestAnimationFrame(() => {
@@ -160,7 +167,8 @@ export const ValueSheet = ({
       latest.localFeelingsHealedDates,
       nextBeliefs,
       latest.localNotes,
-      latest.localBalancePercentage
+      latest.localBalancePercentage,
+      latest.localTruth
     );
     toast.success("تم حفظ الارتباط");
   }, [onUpdate]);
@@ -357,6 +365,23 @@ export const ValueSheet = ({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* الحقيقة */}
+          <div className="space-y-2">
+            <Label htmlFor="truth" className="text-base font-semibold text-foreground">
+              الحقيقة
+            </Label>
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => setLocalTruth(e.currentTarget.textContent || "")}
+              data-placeholder="اكتب الحقيقة هنا..."
+              className="text-base text-foreground leading-relaxed whitespace-pre-wrap outline-none min-h-[2.75rem] max-h-44 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50 focus-within:border-primary/40 transition-colors"
+              style={{ direction: "rtl", lineHeight: "1.8" }}
+            >
+              {localTruth}
             </div>
           </div>
 

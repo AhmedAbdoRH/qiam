@@ -51,6 +51,7 @@ const Index = () => {
       feelingsHealed: [],
       feelingsHealedDates: {},
       notes: "",
+      truth: "",
       balancePercentage: DEFAULT_BALANCE_PERCENTAGES[valueName] || 50,
       isPinned: false,
     };
@@ -95,6 +96,7 @@ const Index = () => {
           feelings_healed_dates: currentValue.feelingsHealedDates || {},
           beliefs: currentValue.beliefs,
           notes: currentValue.notes,
+          truth: currentValue.truth || "",
           balance_percentage: currentValue.balancePercentage,
           is_pinned: newPinnedState,
         }, { onConflict: 'user_id,value_id' });
@@ -171,6 +173,7 @@ const Index = () => {
             feelingsHealed,
             feelingsHealedDates,
             notes: item.notes || "",
+            truth: item.truth || "",
             balancePercentage: item.balance_percentage || 50,
             isPinned: item.is_pinned || false,
           };
@@ -197,7 +200,8 @@ const Index = () => {
     feelingsHealedDates: Record<string, string>,
     beliefs: Record<string, string>,
     notes: string,
-    balancePercentage: number
+    balancePercentage: number,
+    truth: string
   ) => {
     const valueIndex = parseInt(valueId);
     const valueName = !isNaN(valueIndex) && valueIndex >= 0 && valueIndex < VALUES.length ? VALUES[valueIndex] : "Unknown Value";
@@ -216,6 +220,7 @@ const Index = () => {
         feelingsHealedDates,
         beliefs,
         notes,
+        truth,
         balancePercentage,
         isPinned: currentIsPinned,
       },
@@ -240,6 +245,7 @@ const Index = () => {
           feelings_healed_dates: feelingsHealedDates || {},
           beliefs: beliefs,
           notes: notes,
+          truth: truth,
           balance_percentage: balancePercentage,
           is_pinned: currentIsPinned,
         }, { onConflict: 'user_id,value_id' })
@@ -465,9 +471,10 @@ const Index = () => {
           feelingsHealedDates={selectedValueData.feelingsHealedDates}
           beliefs={selectedValueData.beliefs}
           notes={selectedValueData.notes}
+          truth={selectedValueData.truth}
           balancePercentage={selectedValueData.balancePercentage}
           onClose={() => setSelectedValue(null)}
-          onUpdate={(feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, balancePercentage) => {
+          onUpdate={(feelingsBeingHealed, feelingsHealed, feelingsHealedDates, beliefs, notes, balancePercentage, truth) => {
             handleValueUpdate(
               selectedValueData.id,
               feelingsBeingHealed,
@@ -475,7 +482,8 @@ const Index = () => {
               feelingsHealedDates,
               beliefs,
               notes,
-              balancePercentage
+              balancePercentage,
+              truth
             );
           }}
           valueId={selectedValueData.id}
