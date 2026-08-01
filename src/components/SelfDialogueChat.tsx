@@ -625,7 +625,7 @@ export const SPEAKER_META: Record<Speaker, {
 
 
 
-const SPEAKER_ORDER: Speaker[] = ['anima', 'sovereign'];
+const SPEAKER_ORDER: Speaker[] = ['anima', 'nafs', 'sovereign'];
 
 
 
