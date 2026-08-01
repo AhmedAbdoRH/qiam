@@ -609,7 +609,7 @@ export const SPEAKER_META: Record<Speaker, {
 
     iconClass: 'text-[#B894D9]/70',
 
-    Icon: Sparkles,
+    Icon: Flame,
 
   },
 
