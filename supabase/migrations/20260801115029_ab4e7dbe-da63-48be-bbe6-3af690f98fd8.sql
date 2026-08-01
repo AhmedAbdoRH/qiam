@@ -1,0 +1,1 @@
+ALTER TABLE public.spiritual_values ADD COLUMN IF NOT EXISTS truth text NULL;
