@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ListTodo, Plus, CheckCircle2, Trash2, Minus } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Trash2, Minus, Pin, PinOff, ArrowLeft, ArrowRight, Pencil, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
