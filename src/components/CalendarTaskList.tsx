@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ListTodo, Plus, CheckCircle2, Trash2, Minus } from "lucide-react";
+import { ListTodo, Plus, CheckCircle2, Trash2, Minus, Pin, PinOff, ArrowLeft, ArrowRight, Pencil, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
@@ -17,6 +17,9 @@ export const CalendarTaskList = () => {
   const [editingTitle, setEditingTitle] = useState("");
   const [sortedItems, setSortedItems] = useState<any[]>([]);
   const [isReordering, setIsReordering] = useState(false);
+  const [tagMenu, setTagMenu] = useState<{ itemId: string; index: number } | null>(null);
+  const [editingTagValue, setEditingTagValue] = useState<string | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
@@ -28,12 +31,15 @@ export const CalendarTaskList = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []).map((c: any) => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: c.tags || [] }));
+      return (data || []).map((c: any) => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: c.tags || [], pinned: !!c.pinned }));
     },
     enabled: !!user
   });
 
-  const sorted = useMemo(() => [...items].sort((a, b) => a.progress - b.progress), [items]);
+  const sorted = useMemo(
+    () => [...items].sort((a: any, b: any) => (Number(b.pinned) - Number(a.pinned)) || (a.progress - b.progress)),
+    [items]
+  );
 
   // Delayed reordering with smooth animation
   useEffect(() => {
@@ -106,14 +112,63 @@ export const CalendarTaskList = () => {
     setTagTargetId(null);
   };
 
-  const handleDeleteTag = async (id: string, tagIndex: number) => {
+  const saveTags = async (id: string, tags: string[]) => {
     if (!user) return;
-    const item = items.find((i: any) => i.id === id);
-    if (!item) return;
-    const currentTags = [...((item as any).tags || [])];
-    currentTags.splice(tagIndex, 1);
-    await supabase.from('anima_calendar').update({ tags: currentTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) =>
+      old ? old.map((i: any) => (i.id === id ? { ...i, tags } : i)) : old
+    );
+    await supabase.from('anima_calendar').update({ tags } as any).eq('id', id).eq('user_id', user.id);
     invalidate();
+  };
+
+  const handleDeleteTag = async (id: string, tagIndex: number) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = [...(item.tags || [])];
+    currentTags.splice(tagIndex, 1);
+    await saveTags(id, currentTags);
+    toast.success('تم حذف السمة');
+  };
+
+  const handleMoveTag = async (id: string, tagIndex: number, dir: -1 | 1) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const tags = [...(item.tags || [])];
+    const target = tagIndex + dir;
+    if (target < 0 || target >= tags.length) return;
+    [tags[tagIndex], tags[target]] = [tags[target], tags[tagIndex]];
+    await saveTags(id, tags);
+    setTagMenu({ itemId: id, index: target });
+  };
+
+  const handleRenameTag = async (id: string, tagIndex: number, value: string) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item || !value.trim()) { setEditingTagValue(null); setTagMenu(null); return; }
+    const tags = [...(item.tags || [])];
+    tags[tagIndex] = value.trim();
+    await saveTags(id, tags);
+    setEditingTagValue(null);
+    setTagMenu(null);
+    toast.success('تم تعديل السمة');
+  };
+
+  const handleTogglePin = async (id: string, pinned: boolean) => {
+    if (!user) return;
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) =>
+      old ? old.map((i: any) => (i.id === id ? { ...i, pinned } : i)) : old
+    );
+    setIsReordering(true);
+    await supabase.from('anima_calendar').update({ pinned } as any).eq('id', id).eq('user_id', user.id);
+    invalidate();
+    toast.success(pinned ? 'تم تثبيت العنصر' : 'تم إلغاء التثبيت');
+  };
+
+  const startPress = (itemId: string, index: number) => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => setTagMenu({ itemId, index }), 500);
+  };
+  const cancelPress = () => {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
   };
 
   return (
@@ -145,7 +200,7 @@ export const CalendarTaskList = () => {
         {sortedItems.map((item: any, index: number) => (
           <div 
             key={item.id} 
-            className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all duration-500 ease-out hover:bg-white/8 active:bg-white/12 ${isReordering ? 'animate-pulse' : ''}`}
+            className={`bg-white/5 backdrop-blur-xl border rounded-2xl p-4 transition-all duration-500 ease-out hover:bg-white/8 active:bg-white/12 ${item.pinned ? 'border-lime-300/40 shadow-[0_0_20px_-8px_rgba(163,230,53,0.5)]' : 'border-white/10'} ${isReordering ? 'animate-pulse' : ''}`}
             style={{ 
               transitionDelay: isReordering ? `${index * 50}ms` : '0ms',
               transform: isReordering ? 'scale(0.98)' : 'scale(1)'
@@ -195,6 +250,9 @@ export const CalendarTaskList = () => {
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
+                <button onClick={() => handleTogglePin(item.id, !item.pinned)} className={`transition-colors active:scale-95 ${item.pinned ? 'text-lime-300' : 'text-white/20 hover:text-lime-300'}`} title={item.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
+                  {item.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                </button>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 active:text-red-500 transition-colors active:scale-95">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -210,11 +268,55 @@ export const CalendarTaskList = () => {
               />
             </div>
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {((item as any).tags || []).map((tag: string, idx: number) => (
-                <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 active:bg-red-500/10 transition-all" onClick={() => handleDeleteTag(item.id, idx)}>
-                  {tag}
-                </span>
-              ))}
+              {((item as any).tags || []).map((tag: string, idx: number) => {
+                const isOpen = tagMenu?.itemId === item.id && tagMenu.index === idx;
+                return (
+                  <div key={idx} className="relative">
+                    {isOpen && editingTagValue !== null ? (
+                      <input
+                        value={editingTagValue}
+                        onChange={(e) => setEditingTagValue(e.target.value)}
+                        onBlur={() => handleRenameTag(item.id, idx, editingTagValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRenameTag(item.id, idx, editingTagValue);
+                          if (e.key === 'Escape') { setEditingTagValue(null); setTagMenu(null); }
+                        }}
+                        autoFocus
+                        className="text-[10px] w-20 px-1.5 py-0.5 rounded bg-white/10 border border-lime-300/40 text-white/90 focus:outline-none"
+                      />
+                    ) : (
+                      <span
+                        onPointerDown={() => startPress(item.id, idx)}
+                        onPointerUp={cancelPress}
+                        onPointerLeave={cancelPress}
+                        onContextMenu={(e) => { e.preventDefault(); setTagMenu({ itemId: item.id, index: idx }); }}
+                        className={`inline-block select-none text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border text-white/70 cursor-pointer transition-all ${isOpen ? 'border-lime-300/40 text-lime-200' : 'border-white/10 hover:border-white/20'}`}
+                      >
+                        {tag}
+                      </span>
+                    )}
+                    {isOpen && editingTagValue === null && (
+                      <div className="absolute z-30 top-full right-0 mt-1 flex items-center gap-1 p-1 rounded-lg bg-black/70 backdrop-blur-xl border border-white/15 shadow-lg">
+                        <button onClick={() => handleMoveTag(item.id, idx, -1)} className="p-1 rounded text-white/60 hover:text-white hover:bg-white/10" title="تحريك يمين">
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => handleMoveTag(item.id, idx, 1)} className="p-1 rounded text-white/60 hover:text-white hover:bg-white/10" title="تحريك يسار">
+                          <ArrowLeft className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => setEditingTagValue(tag)} className="p-1 rounded text-white/60 hover:text-lime-300 hover:bg-white/10" title="تعديل">
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => { handleDeleteTag(item.id, idx); setTagMenu(null); }} className="p-1 rounded text-white/60 hover:text-red-400 hover:bg-white/10" title="حذف">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => setTagMenu(null)} className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10" title="إغلاق">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {tagTargetId === item.id ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleAddTag(item.id, newTag); }} className="flex gap-1">
                   <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none focus:border-lime-300/40" autoFocus />
