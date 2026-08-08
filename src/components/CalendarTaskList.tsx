@@ -17,6 +17,9 @@ export const CalendarTaskList = () => {
   const [editingTitle, setEditingTitle] = useState("");
   const [sortedItems, setSortedItems] = useState<any[]>([]);
   const [isReordering, setIsReordering] = useState(false);
+  const [tagMenu, setTagMenu] = useState<{ itemId: string; index: number } | null>(null);
+  const [editingTagValue, setEditingTagValue] = useState<string | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: items = [] } = useQuery({
     queryKey: ['animaCalendar', user?.id],
@@ -28,12 +31,15 @@ export const CalendarTaskList = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []).map((c: any) => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: c.tags || [] }));
+      return (data || []).map((c: any) => ({ id: c.id, title: c.title, progress: Number(c.progress), tags: c.tags || [], pinned: !!c.pinned }));
     },
     enabled: !!user
   });
 
-  const sorted = useMemo(() => [...items].sort((a, b) => a.progress - b.progress), [items]);
+  const sorted = useMemo(
+    () => [...items].sort((a: any, b: any) => (Number(b.pinned) - Number(a.pinned)) || (a.progress - b.progress)),
+    [items]
+  );
 
   // Delayed reordering with smooth animation
   useEffect(() => {
