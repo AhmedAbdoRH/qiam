@@ -200,7 +200,7 @@ export const CalendarTaskList = () => {
         {sortedItems.map((item: any, index: number) => (
           <div 
             key={item.id} 
-            className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 transition-all duration-500 ease-out hover:bg-white/8 active:bg-white/12 ${isReordering ? 'animate-pulse' : ''}`}
+            className={`bg-white/5 backdrop-blur-xl border rounded-2xl p-4 transition-all duration-500 ease-out hover:bg-white/8 active:bg-white/12 ${item.pinned ? 'border-lime-300/40 shadow-[0_0_20px_-8px_rgba(163,230,53,0.5)]' : 'border-white/10'} ${isReordering ? 'animate-pulse' : ''}`}
             style={{ 
               transitionDelay: isReordering ? `${index * 50}ms` : '0ms',
               transform: isReordering ? 'scale(0.98)' : 'scale(1)'
