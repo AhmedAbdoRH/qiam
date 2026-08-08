@@ -265,11 +265,55 @@ export const CalendarTaskList = () => {
               />
             </div>
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {((item as any).tags || []).map((tag: string, idx: number) => (
-                <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 cursor-pointer hover:border-red-400/30 hover:text-red-300 active:bg-red-500/10 transition-all" onClick={() => handleDeleteTag(item.id, idx)}>
-                  {tag}
-                </span>
-              ))}
+              {((item as any).tags || []).map((tag: string, idx: number) => {
+                const isOpen = tagMenu?.itemId === item.id && tagMenu.index === idx;
+                return (
+                  <div key={idx} className="relative">
+                    {isOpen && editingTagValue !== null ? (
+                      <input
+                        value={editingTagValue}
+                        onChange={(e) => setEditingTagValue(e.target.value)}
+                        onBlur={() => handleRenameTag(item.id, idx, editingTagValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRenameTag(item.id, idx, editingTagValue);
+                          if (e.key === 'Escape') { setEditingTagValue(null); setTagMenu(null); }
+                        }}
+                        autoFocus
+                        className="text-[10px] w-20 px-1.5 py-0.5 rounded bg-white/10 border border-lime-300/40 text-white/90 focus:outline-none"
+                      />
+                    ) : (
+                      <span
+                        onPointerDown={() => startPress(item.id, idx)}
+                        onPointerUp={cancelPress}
+                        onPointerLeave={cancelPress}
+                        onContextMenu={(e) => { e.preventDefault(); setTagMenu({ itemId: item.id, index: idx }); }}
+                        className={`inline-block select-none text-[10px] px-2 py-0.5 rounded-md bg-white/5 backdrop-blur-sm border text-white/70 cursor-pointer transition-all ${isOpen ? 'border-lime-300/40 text-lime-200' : 'border-white/10 hover:border-white/20'}`}
+                      >
+                        {tag}
+                      </span>
+                    )}
+                    {isOpen && editingTagValue === null && (
+                      <div className="absolute z-30 top-full right-0 mt-1 flex items-center gap-1 p-1 rounded-lg bg-black/70 backdrop-blur-xl border border-white/15 shadow-lg">
+                        <button onClick={() => handleMoveTag(item.id, idx, -1)} className="p-1 rounded text-white/60 hover:text-white hover:bg-white/10" title="تحريك يمين">
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => handleMoveTag(item.id, idx, 1)} className="p-1 rounded text-white/60 hover:text-white hover:bg-white/10" title="تحريك يسار">
+                          <ArrowLeft className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => setEditingTagValue(tag)} className="p-1 rounded text-white/60 hover:text-lime-300 hover:bg-white/10" title="تعديل">
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => { handleDeleteTag(item.id, idx); setTagMenu(null); }} className="p-1 rounded text-white/60 hover:text-red-400 hover:bg-white/10" title="حذف">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => setTagMenu(null)} className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10" title="إغلاق">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {tagTargetId === item.id ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleAddTag(item.id, newTag); }} className="flex gap-1">
                   <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="سمة..." className="text-[10px] w-16 px-1.5 py-0.5 rounded bg-white/5 border border-white/15 text-white/80 placeholder:text-white/20 focus:outline-none focus:border-lime-300/40" autoFocus />
