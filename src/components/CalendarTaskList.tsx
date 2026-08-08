@@ -250,6 +250,9 @@ export const CalendarTaskList = () => {
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
+                <button onClick={() => handleTogglePin(item.id, !item.pinned)} className={`transition-colors active:scale-95 ${item.pinned ? 'text-lime-300' : 'text-white/20 hover:text-lime-300'}`} title={item.pinned ? 'إلغاء التثبيت' : 'تثبيت'}>
+                  {item.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                </button>
                 <button onClick={() => handleDelete(item.id)} className="text-white/20 hover:text-red-400 active:text-red-500 transition-colors active:scale-95">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
