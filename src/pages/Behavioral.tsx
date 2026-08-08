@@ -65,11 +65,6 @@ const Behavioral = () => {
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
 
-        {/* تتبع العادات اليومي */}
-        <section className="mb-6" dir="rtl">
-          <DailyHabitsTracker />
-        </section>
-
         {/* قائمة التذكيرية (Reminders List) */}
         <section className="mb-6" dir="rtl">
           <CalendarTaskList />
@@ -79,6 +74,11 @@ const Behavioral = () => {
 
         <section className="mb-6" dir="rtl">
           <DivineCommandsTaskList />
+        </section>
+
+        {/* تتبع العادات اليومي */}
+        <section className="mb-6" dir="rtl">
+          <DailyHabitsTracker />
         </section>
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-8">
