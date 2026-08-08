@@ -1,0 +1,1 @@
+ALTER TABLE public.anima_calendar ADD COLUMN IF NOT EXISTS pinned boolean NOT NULL DEFAULT false;
