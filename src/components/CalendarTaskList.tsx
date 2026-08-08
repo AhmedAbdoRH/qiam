@@ -112,14 +112,63 @@ export const CalendarTaskList = () => {
     setTagTargetId(null);
   };
 
-  const handleDeleteTag = async (id: string, tagIndex: number) => {
+  const saveTags = async (id: string, tags: string[]) => {
     if (!user) return;
-    const item = items.find((i: any) => i.id === id);
-    if (!item) return;
-    const currentTags = [...((item as any).tags || [])];
-    currentTags.splice(tagIndex, 1);
-    await supabase.from('anima_calendar').update({ tags: currentTags } as any).eq('id', id).eq('user_id', user.id);
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) =>
+      old ? old.map((i: any) => (i.id === id ? { ...i, tags } : i)) : old
+    );
+    await supabase.from('anima_calendar').update({ tags } as any).eq('id', id).eq('user_id', user.id);
     invalidate();
+  };
+
+  const handleDeleteTag = async (id: string, tagIndex: number) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const currentTags = [...(item.tags || [])];
+    currentTags.splice(tagIndex, 1);
+    await saveTags(id, currentTags);
+    toast.success('تم حذف السمة');
+  };
+
+  const handleMoveTag = async (id: string, tagIndex: number, dir: -1 | 1) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item) return;
+    const tags = [...(item.tags || [])];
+    const target = tagIndex + dir;
+    if (target < 0 || target >= tags.length) return;
+    [tags[tagIndex], tags[target]] = [tags[target], tags[tagIndex]];
+    await saveTags(id, tags);
+    setTagMenu({ itemId: id, index: target });
+  };
+
+  const handleRenameTag = async (id: string, tagIndex: number, value: string) => {
+    const item: any = items.find((i: any) => i.id === id);
+    if (!item || !value.trim()) { setEditingTagValue(null); setTagMenu(null); return; }
+    const tags = [...(item.tags || [])];
+    tags[tagIndex] = value.trim();
+    await saveTags(id, tags);
+    setEditingTagValue(null);
+    setTagMenu(null);
+    toast.success('تم تعديل السمة');
+  };
+
+  const handleTogglePin = async (id: string, pinned: boolean) => {
+    if (!user) return;
+    queryClient.setQueryData(['animaCalendar', user.id], (old: any) =>
+      old ? old.map((i: any) => (i.id === id ? { ...i, pinned } : i)) : old
+    );
+    setIsReordering(true);
+    await supabase.from('anima_calendar').update({ pinned } as any).eq('id', id).eq('user_id', user.id);
+    invalidate();
+    toast.success(pinned ? 'تم تثبيت العنصر' : 'تم إلغاء التثبيت');
+  };
+
+  const startPress = (itemId: string, index: number) => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => setTagMenu({ itemId, index }), 500);
+  };
+  const cancelPress = () => {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
   };
 
   return (
