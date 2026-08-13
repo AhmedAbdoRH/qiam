@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { VALUES, FEELINGS } from "@/types/value";
+import { VALUES, FEELINGS, DEFAULT_BALANCE_PERCENTAGES } from "@/types/value";
 import { toast } from "sonner";
 
 interface MilestoneRecord {
@@ -686,18 +686,29 @@ const MASCULINE_VALUE_NAMES_ALL = [
 ];
 const MASCULINE_SET = new Set(MASCULINE_VALUE_NAMES_ALL);
 
-export async function downloadAllValuesReport(userId: string, userEmail: string | undefined): Promise<void> {
+export async function downloadAllValuesReport(
+  userId: string,
+  userEmail: string | undefined,
+  valuesMapOverride?: Map<string, any>
+): Promise<void> {
   try {
-    const valuesRes = await supabase.from("spiritual_values").select("*").eq("user_id", userId);
-
-    // Build map of saved value data by name
-    const valuesMap = new Map<string, any>();
-    for (const item of (valuesRes.data || []) as any[]) {
-      if (!item.value_id) continue;
-      const idx = parseInt(item.value_id);
-      const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
-      valuesMap.set(name, item);
+    // Build map of saved value data by name.
+    // Prefer the override (fresh in-memory state from the page) to avoid stale DB reads.
+    let valuesMap = valuesMapOverride;
+    if (!valuesMap) {
+      const valuesRes = await supabase.from("spiritual_values").select("*").eq("user_id", userId);
+      valuesMap = new Map<string, any>();
+      for (const item of (valuesRes.data || []) as any[]) {
+        if (!item.value_id) continue;
+        const idx = parseInt(item.value_id);
+        const name = !isNaN(idx) && idx >= 0 && idx < VALUES.length ? VALUES[idx] : item.value_name || "غير معروف";
+        valuesMap.set(name, item);
+      }
     }
+
+    // Fall back to the card's default balance when a value was never saved
+    const balanceOf = (item: any, name: string): number =>
+      typeof item?.balance_percentage === "number" ? item.balance_percentage : (DEFAULT_BALANCE_PERCENTAGES[name] ?? 50);
 
     // Split VALUES into masculine and feminine (preserving VALUES order)
     const masculineValues = VALUES.filter((name) => MASCULINE_SET.has(name));
@@ -717,10 +728,11 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += `### ${escapeMd(name)}${item?.is_pinned ? " 📌" : ""}\n\n`;
       md += `| الحقل | القيمة |\n`;
       md += `| --- | --- |\n`;
-      md += `| نسبة الاتزان | **${(item?.balance_percentage || 50) + "%"} |\n`;
+      md += `| نسبة الاتزان | **${balanceOf(item, name)}%** |\n`;
       md += `| مشاعر جاري علاجها | ${Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-"} |\n`;
       md += `| مشاعر تم علاجها | ${Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-"} |\n`;
       md += `| مثبّتة | ${item?.is_pinned ? "نعم" : "-"} |\n`;
+      md += `| الحقيقة | ${item?.truth ? escapeMd(item.truth) : "-"} |\n`;
       md += `| ملاحظات | ${item?.notes ? escapeMd(item.notes) : "-"} |\n\n`;
 
       // Beliefs section
@@ -779,10 +791,11 @@ export async function downloadAllValuesReport(userId: string, userEmail: string 
       md += `### ${escapeMd(name)}${item?.is_pinned ? " 📌" : ""}\n\n`;
       md += `| الحقل | القيمة |\n`;
       md += `| --- | --- |\n`;
-      md += `| نسبة الاتزان | **${(item?.balance_percentage || 50) + "%"} |\n`;
+      md += `| نسبة الاتزان | **${balanceOf(item, name)}%** |\n`;
       md += `| مشاعر جاري علاجها | ${Array.isArray(item?.feelings_being_healed) && item.feelings_being_healed.length ? (item.feelings_being_healed as string[]).join("، ") : "-"} |\n`;
       md += `| مشاعر تم علاجها | ${Array.isArray(item?.feelings_healed) && item.feelings_healed.length ? (item.feelings_healed as string[]).join("، ") : "-"} |\n`;
       md += `| مثبّتة | ${item?.is_pinned ? "نعم" : "-"} |\n`;
+      md += `| الحقيقة | ${item?.truth ? escapeMd(item.truth) : "-"} |\n`;
       md += `| ملاحظات | ${item?.notes ? escapeMd(item.notes) : "-"} |\n\n`;
 
       // Beliefs section

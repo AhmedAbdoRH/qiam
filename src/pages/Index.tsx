@@ -329,11 +329,25 @@ const Index = () => {
   }, [user]);
 
   const handleDownloadAllValuesReport = useCallback(async () => {
-    if (user) {
-      // Markdown export (matches the styling of the other reports)
-      await downloadAllValuesReport(user.id, user.email || undefined);
-    }
-  }, [user]);
+    if (!user) return;
+    // Build a fresh map from the current in-memory card state so the report
+    // always reflects the latest info (avoids stale DB reads).
+    const valuesMap = new Map<string, any>();
+    Object.values(valuesData).forEach((v) => {
+      if (!v || !v.name) return;
+      valuesMap.set(v.name, {
+        balance_percentage: v.balancePercentage,
+        feelings_being_healed: v.feelingsBeingHealed || [],
+        feelings_healed: v.feelingsHealed || [],
+        feelings_healed_dates: v.feelingsHealedDates || {},
+        beliefs: v.beliefs || {},
+        notes: v.notes || "",
+        truth: v.truth || "",
+        is_pinned: v.isPinned || false,
+      });
+    });
+    await downloadAllValuesReport(user.id, user.email || undefined, valuesMap);
+  }, [user, valuesData]);
 
   if (loading || dataLoading) {
     return (
